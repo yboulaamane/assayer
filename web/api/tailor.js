@@ -96,15 +96,19 @@ const fail = (msg, status) =>
   });
 
 /** Configured providers, primary first. A second one only exists if it has a key. */
+const named = (v, dflt) => PROVIDERS[String(v ?? dflt).trim().toLowerCase()];
+
 function configured() {
   const out = [];
-  const a = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
-  if (process.env.LLM_API_KEY && a) {
-    out.push({ p: a, key: process.env.LLM_API_KEY, model: process.env.LLM_MODEL || a.model });
+  const a = named(process.env.LLM_PROVIDER, "gemini");
+  if (process.env.LLM_API_KEY?.trim() && a) {
+    out.push({ p: a, key: process.env.LLM_API_KEY.trim(),
+               model: (process.env.LLM_MODEL || a.model).trim() });
   }
-  const b = PROVIDERS[process.env.LLM_PROVIDER_2 || ""];
-  if (process.env.LLM_API_KEY_2 && b) {
-    out.push({ p: b, key: process.env.LLM_API_KEY_2, model: process.env.LLM_MODEL_2 || b.model });
+  const b = named(process.env.LLM_PROVIDER_2, "");
+  if (process.env.LLM_API_KEY_2?.trim() && b) {
+    out.push({ p: b, key: process.env.LLM_API_KEY_2.trim(),
+               model: (process.env.LLM_MODEL_2 || b.model).trim() });
   }
   return out;
 }
