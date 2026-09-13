@@ -6,6 +6,10 @@
 // be named from the list the page supplies, which comes from the catalogue.
 //
 // Same environment variables as route.js: LLM_API_KEY, LLM_PROVIDER, LLM_MODEL.
+//
+// Free tiers run out. Set a second provider and the endpoint moves to it on a
+// quota error rather than dropping to keyword routing for the rest of the day:
+//   LLM_API_KEY_2, LLM_PROVIDER_2, LLM_MODEL_2
 // With no key it returns 501 and the page simply omits the section.
 
 export const config = { runtime: "edge" };
@@ -91,14 +95,25 @@ const fail = (msg, status) =>
     status, headers: { "Content-Type": "application/json" },
   });
 
+/** Configured providers, primary first. A second one only exists if it has a key. */
+function configured() {
+  const out = [];
+  const a = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
+  if (process.env.LLM_API_KEY && a) {
+    out.push({ p: a, key: process.env.LLM_API_KEY, model: process.env.LLM_MODEL || a.model });
+  }
+  const b = PROVIDERS[process.env.LLM_PROVIDER_2 || ""];
+  if (process.env.LLM_API_KEY_2 && b) {
+    out.push({ p: b, key: process.env.LLM_API_KEY_2, model: process.env.LLM_MODEL_2 || b.model });
+  }
+  return out;
+}
+
 export default async function handler(req) {
   if (req.method !== "POST") return fail("POST only", 405);
 
-  const key = process.env.LLM_API_KEY;
-  if (!key) return fail("no LLM_API_KEY configured", 501);
-  const provider = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
-  if (!provider) return fail("unknown LLM_PROVIDER", 501);
-  const model = process.env.LLM_MODEL || provider.model;
+  const providers = configured();
+  if (!providers.length) return fail("no LLM_API_KEY configured", 501);
 
   let input;
   try { input = await req.json(); } catch { return fail("bad request body", 400); }
@@ -108,20 +123,28 @@ export default async function handler(req) {
   input.steps = input.steps.slice(0, 12).map((s) => String(s).slice(0, 120));
   input.tools = (input.tools || []).slice(0, 60).map((t) => String(t).slice(0, 40));
 
-  let upstream;
-  try {
-    upstream = await fetch(provider.url(model, key), {
-      method: "POST",
-      headers: provider.headers(key),
-      body: JSON.stringify(provider.body(model, buildPrompt(input))),
-      signal: AbortSignal.timeout(30000),
-    });
-  } catch (e) {
-    return fail(`upstream unreachable: ${e.name}`, 502);
+  const prompt = buildPrompt(input);
+  let upstream, winner = null, detail = "";
+
+  for (const { p, key, model } of providers) {
+    try {
+      upstream = await fetch(p.url(model, key), {
+        method: "POST",
+        headers: p.headers(key),
+        body: JSON.stringify(p.body(model, prompt)),
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch (e) {
+      detail = `unreachable: ${e.name}`;
+      continue;                       // a dead provider is the next one's turn
+    }
+    if (upstream.ok) { winner = p; break; }
+    detail = `${upstream.status}: ${(await upstream.text()).slice(0, 140)}`;
+    // 429 means this free tier is spent for the day; anything else is unlikely
+    // to be fixed by the same request to a different provider, but trying costs
+    // nothing here since the alternative is showing the reader nothing.
   }
-  if (!upstream.ok) {
-    return fail(`upstream ${upstream.status}: ${(await upstream.text()).slice(0, 160)}`, 502);
-  }
+  if (!winner) return fail(`no provider answered (${detail})`, 502);
 
   // Re-emit the provider's SSE as plain text, so the page can just read chunks.
   const decoder = new TextDecoder();
@@ -141,7 +164,7 @@ export default async function handler(req) {
             const payload = line.slice(5).trim();
             if (!payload || payload === "[DONE]") continue;
             try {
-              const text = provider.chunk(JSON.parse(payload));
+              const text = winner.chunk(JSON.parse(payload));
               if (text) controller.enqueue(new TextEncoder().encode(text));
             } catch { /* partial frame; the next read completes it */ }
           }

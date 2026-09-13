@@ -10,6 +10,10 @@
 //   LLM_API_KEY   required — the provider key
 //   LLM_PROVIDER  gemini (default) | groq | openrouter
 //   LLM_MODEL     optional override, e.g. gemini-3.6-flash / llama-3.3-70b-versatile
+//
+// Free tiers run out. Set a second provider and the endpoint moves to it on a
+// quota error rather than dropping to keyword routing for the rest of the day:
+//   LLM_API_KEY_2, LLM_PROVIDER_2, LLM_MODEL_2
 //                 (set this to pin a model and skip the fallback ladder)
 //
 // With no key set the endpoint returns 501 and the page silently falls back to
@@ -17,12 +21,18 @@
 
 export const config = { runtime: "edge" };
 
+// Kept in step with PROTOCOLS in ../assets/workflow.js by hand: the list is
+// hardcoded here so a caller cannot talk this endpoint into arbitrary work.
+// An id the client does not know is rejected there too, so drift degrades to a
+// keyword fallback rather than a broken page.
 const INTENTS = [
   ["hit-discovery", "find hits/inhibitors/binders for a target; virtual screening; docking campaign"],
   ["lead-opt", "improve an existing series: potency, selectivity, SAR, free-energy ranking"],
   ["denovo", "generate new molecules, de novo design, scaffold hopping, PROTACs"],
   ["antibody", "antibodies, nanobodies, biologics, epitopes, developability"],
   ["admet", "ADMET, PK, toxicity, safety, hERG, metabolism for compounds"],
+  ["qsar", "building or validating a property/QSAR model: training data, splits, descriptors, applicability domain"],
+  ["resistance", "resistance or mutation effects: variant impact on binding, escape mutations, designing against a mutant"],
   ["fbdd", "fragment-based discovery: fragment screening, hits, growing, merging, linking, ligand efficiency"],
   ["selectivity", "selectivity and off-target profiling; counter-screening; isoform or family selectivity"],
   ["fep", "free energy perturbation / relative binding free energy to rank analogues"],
@@ -103,15 +113,25 @@ const IDS = new Set(INTENTS.map(([id]) => id));
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 
+/** Configured providers, primary first. A second one only exists if it has a key. */
+function configured() {
+  const out = [];
+  const a = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
+  if (process.env.LLM_API_KEY && a) {
+    out.push({ p: a, key: process.env.LLM_API_KEY, model: process.env.LLM_MODEL || a.model });
+  }
+  const b = PROVIDERS[process.env.LLM_PROVIDER_2 || ""];
+  if (process.env.LLM_API_KEY_2 && b) {
+    out.push({ p: b, key: process.env.LLM_API_KEY_2, model: process.env.LLM_MODEL_2 || b.model });
+  }
+  return out;
+}
+
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  const key = process.env.LLM_API_KEY;
-  if (!key) return json({ error: "no LLM_API_KEY configured", fallback: true }, 501);
-
-  const provider = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
-  if (!provider) return json({ error: "unknown LLM_PROVIDER", fallback: true }, 501);
-  const model = process.env.LLM_MODEL || provider.model;
+  const providers = configured();
+  if (!providers.length) return json({ error: "no LLM_API_KEY configured", fallback: true }, 501);
 
   let query;
   try {
@@ -122,45 +142,55 @@ export default async function handler(req) {
   if (typeof query !== "string" || !query.trim()) return json({ error: "empty query" }, 400);
   query = query.slice(0, 300); // the router needs a question, not a document
 
-  const candidates = process.env.LLM_MODEL ? [model] : [model, ...(provider.fallbacks || [])];
-  let upstream, detail = "", used = model, retried = false;
+  let upstream, detail = "", used = "", winner = null;
 
-  for (const candidate of candidates) {
-    used = candidate;
-    try {
-      upstream = await fetch(provider.url(candidate, key), {
-        method: "POST",
-        headers: provider.headers(key),
-        body: JSON.stringify(provider.body(candidate, query)),
-        signal: AbortSignal.timeout(6000), // the page must not hang on a slow model
-      });
-    } catch (e) {
-      return json({ error: `upstream unreachable: ${e.name}`, fallback: true }, 502);
-    }
-    if (upstream.ok) break;
-    detail = (await upstream.text()).slice(0, 200);
+  outer:
+  for (const { p, key, model } of providers) {
+    // A pinned LLM_MODEL means the caller chose; otherwise walk the ladder,
+    // since model names are retired with a 404 naming their replacement.
+    const candidates = process.env.LLM_MODEL ? [model] : [model, ...(p.fallbacks || [])];
+    let retried = false;
 
-    // 503 is the model being briefly overloaded — worth exactly one retry.
-    if (upstream.status === 503 && !retried) {
-      retried = true;
-      await new Promise((r) => setTimeout(r, 700));
-      candidates.unshift(candidate);   // same model, second attempt
-      continue;
+    for (const candidate of candidates) {
+      used = candidate;
+      try {
+        upstream = await fetch(p.url(candidate, key), {
+          method: "POST",
+          headers: p.headers(key),
+          body: JSON.stringify(p.body(candidate, query)),
+          signal: AbortSignal.timeout(6000), // the page must not hang on a slow model
+        });
+      } catch (e) {
+        detail = `unreachable: ${e.name}`;
+        continue outer;                      // try the next provider instead
+      }
+      if (upstream.ok) { winner = p; break outer; }
+      detail = (await upstream.text()).slice(0, 200);
+
+      // 503 is the model being briefly overloaded: worth exactly one retry.
+      if (upstream.status === 503 && !retried) {
+        retried = true;
+        await new Promise((r) => setTimeout(r, 700));
+        candidates.unshift(candidate);
+        continue;
+      }
+      // 404: this model is retired for this project, try the next name.
+      // 429: this tier is spent for today, so move to the next provider.
+      if (upstream.status === 429) continue outer;
+      if (upstream.status !== 404) continue outer;
     }
-    // 404 means this model is retired for this project — try the next name.
-    // Anything else (401 bad key, 429 quota spent) will not be fixed by retrying.
-    if (upstream.status !== 404) break;
   }
 
-  if (!upstream.ok) {
-    return json({ error: `upstream ${upstream.status}`, model: used, detail, fallback: true }, 502);
+  if (!upstream || !upstream.ok) {
+    return json({ error: upstream ? `upstream ${upstream.status}` : "no provider answered",
+                  model: used, detail, fallback: true }, 502);
   }
 
   let parsed, raw = "", finish = "";
   try {
     const body = await upstream.json();
     finish = body?.candidates?.[0]?.finishReason || body?.choices?.[0]?.finish_reason || "";
-    raw = provider.text(body) || "";
+    raw = winner.text(body) || "";
     const cleaned = String(raw).replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
     try {
       parsed = JSON.parse(cleaned);

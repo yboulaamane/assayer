@@ -114,9 +114,21 @@ Keyword matching handles roughly 80% of questions. For the rest — vague or odd
 phrased ones — `web/api/route.js` asks a model which protocol applies.
 
 Set `LLM_API_KEY` in Vercel's environment variables. A free Gemini key from
-[aistudio.google.com](https://aistudio.google.com/apikey) covers it; at ~1,500
-requests a day and a 20% call rate that's about 7,500 questions. `LLM_PROVIDER`
-(`gemini`, `groq`, `openrouter`) and `LLM_MODEL` are optional overrides.
+[aistudio.google.com](https://aistudio.google.com/apikey) covers it.
+`LLM_PROVIDER` (`gemini`, `groq`, `openrouter`) and `LLM_MODEL` are optional
+overrides.
+
+Free tiers run out, and they do it silently. Set a second provider and both
+endpoints move to it on a quota error instead of dropping to keyword routing
+for the rest of the day:
+
+```
+LLM_API_KEY_2, LLM_PROVIDER_2, LLM_MODEL_2
+```
+
+Two free tiers is usually enough. The per-case brief costs roughly twenty times
+what routing does, so it is offered behind a button rather than written for
+every plan, and never written for a question that matched nothing.
 
 The model only picks a protocol and pulls out the target and organism. It never
 writes steps and never names tools, so a confused model gives you a wrong route
