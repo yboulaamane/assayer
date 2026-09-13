@@ -114,15 +114,19 @@ const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 
 /** Configured providers, primary first. A second one only exists if it has a key. */
+const named = (v, dflt) => PROVIDERS[String(v ?? dflt).trim().toLowerCase()];
+
 function configured() {
   const out = [];
-  const a = PROVIDERS[process.env.LLM_PROVIDER || "gemini"];
-  if (process.env.LLM_API_KEY && a) {
-    out.push({ p: a, key: process.env.LLM_API_KEY, model: process.env.LLM_MODEL || a.model });
+  const a = named(process.env.LLM_PROVIDER, "gemini");
+  if (process.env.LLM_API_KEY?.trim() && a) {
+    out.push({ p: a, key: process.env.LLM_API_KEY.trim(),
+               model: (process.env.LLM_MODEL || a.model).trim() });
   }
-  const b = PROVIDERS[process.env.LLM_PROVIDER_2 || ""];
-  if (process.env.LLM_API_KEY_2 && b) {
-    out.push({ p: b, key: process.env.LLM_API_KEY_2, model: process.env.LLM_MODEL_2 || b.model });
+  const b = named(process.env.LLM_PROVIDER_2, "");
+  if (process.env.LLM_API_KEY_2?.trim() && b) {
+    out.push({ p: b, key: process.env.LLM_API_KEY_2.trim(),
+               model: (process.env.LLM_MODEL_2 || b.model).trim() });
   }
   return out;
 }
@@ -132,10 +136,21 @@ export default async function handler(req) {
   // keys. Edge functions inline process.env at build time, so "I added the
   // variable" and "the running code has it" are different facts.
   if (req.method === "GET") {
+    // Say what is wrong, not just what is missing. Values are never echoed:
+    // only whether a key is present and whether a provider name resolved.
+    const why = (keyVar, provVar, dflt) => ({
+      key: process.env[keyVar]?.trim() ? "set" : "missing",
+      provider: process.env[provVar]?.trim()
+        ? (named(process.env[provVar], dflt) ? "recognised" : "not a known provider")
+        : (dflt ? `defaulted to ${dflt}` : "missing"),
+    });
     return json({
       providers: configured().map(({ p, model }) => ({
         provider: Object.keys(PROVIDERS).find((k) => PROVIDERS[k] === p), model,
       })),
+      primary: why("LLM_API_KEY", "LLM_PROVIDER", "gemini"),
+      secondary: why("LLM_API_KEY_2", "LLM_PROVIDER_2", ""),
+      known: Object.keys(PROVIDERS),
       protocols: INTENTS.length,
     });
   }
