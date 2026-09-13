@@ -1,0 +1,441 @@
+#!/usr/bin/env python3
+"""Turn data/tools_index.json into the catalogue the web app serves.
+
+Three jobs:
+  1. Put every tool into one browsable stage. The scraped sources between them
+     use 702 free-text category labels; the curated stack uses 18 pipeline
+     stages. This maps everything onto one taxonomy of 23 stages.
+  2. Merge duplicates. The same tool appears in several sources (and the atlas
+     repeats a few itself), so rows sharing a GitHub repo or a normalised name
+     collapse into one entry that remembers every source it came from.
+  3. Emit web/catalog.json - flat, small, and the only data file the site loads.
+"""
+
+import json
+import os
+import re
+import sys
+import unicodedata
+from collections import Counter
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA = os.path.join(ROOT, "data")
+WEB = os.path.join(ROOT, "web")
+
+# slug, label, one-line blurb, accent hue (deg on the site's colour wheel)
+STAGES = [
+    ("target-id", "Target & druggability", "Is the target real, and is there a pocket worth attacking?", 265),
+    ("structure", "Protein structures", "Get and prepare the receptor you will design against.", 210),
+    ("binding-site", "Binding sites & pockets", "Find, characterise and score the site itself.", 145),
+    ("docking", "Docking & virtual screening", "Pose prediction, rescoring, screening at scale.", 25),
+    ("md", "Dynamics & free energy", "Simulation, enhanced sampling, binding free energies.", 15),
+    ("qm", "Quantum chemistry", "DFT, semiempirical methods, reaction profiles, parameters.", 5),
+    ("cheminformatics", "Cheminformatics", "Structures, descriptors, fingerprints, standardisation.", 45),
+    ("libraries", "Compounds & bioactivity", "Screening libraries, measured activity, patents.", 60),
+    ("generative", "Generative & de novo design", "New molecules, linkers, scaffolds, degraders.", 330),
+    ("qsar-ml", "QSAR & property models", "Predicting activity and properties, and the ML under it.", 345),
+    ("admet", "ADMET, PK & toxicity", "Absorption, metabolism, exposure, safety, liabilities.", 0),
+    ("synthesis", "Synthesis & retrosynthesis", "Can it be made, by what route, from what building blocks.", 35),
+    ("protein-design", "Peptides & protein design", "Macrocycles, peptides, biologics and protein engineering.", 175),
+    ("clinical", "Clinical & competitive", "Trials, labels, approvals, real-world safety signals.", 250),
+    ("benchmarks", "Benchmarks & datasets", "Reference sets that tell you whether a method works.", 120),
+    ("viz", "Visualisation", "Looking at poses, structures and molecules.", 100),
+    ("infra", "Workflow & infrastructure", "Pipelines, tracking, compute, helper utilities.", 200),
+]
+
+# Out of scope for a medicinal/computational chemistry atlas. Tools that land
+# here are dropped rather than shown: single-cell, imaging, genomics and
+# literature agents are real fields, just not this one.
+DROPPED = {"omics", "imaging", "nucleic-acids", "agents"}
+
+STAGE_ORDER = [s[0] for s in STAGES]
+
+# Curated stages that were merged into a broader browsing stage.
+CURATED_REMAP = {"biologics": "protein-design", "protein-ml": "structure"}
+
+# Exact category label -> stage. Covers most of the atlas rows on its own.
+CATEGORY_MAP = {
+    "protein prediction": "structure", "protein folding": "structure",
+    "structural bioinformatics": "structure", "protein similarity": "structure",
+    "protein structure prediction": "structure", "protein structure": "structure",
+    "protein language model": "protein-ml", "protein embeddings": "protein-ml",
+    "protein function prediction": "protein-ml",
+    "protein design": "protein-design", "enzyme prediction": "protein-design",
+    "protein mutation prediction": "protein-design", "protein engineering": "protein-design",
+    "directed evolution": "protein-design", "protein solubility prediction": "protein-design",
+    "termostability prediction": "protein-design", "thermostability prediction": "protein-design",
+    "antibody design": "biologics", "antibody developability": "biologics",
+    "hla binding prediction": "biologics", "macrocyclic peptide design": "biologics",
+    "peptide design": "biologics", "tcr": "biologics", "vaccine design": "biologics",
+    "single cell omics": "omics", "omics": "omics", "transcriptomics": "omics",
+    "proteomics": "omics", "genomics": "omics", "perturbation": "omics",
+    "perturbation prediction": "omics", "spatial omics foundation model": "omics",
+    "single cell foundation model / embeddings": "omics", "variant prediction": "omics",
+    "mass spectra": "omics", "molecular quantification": "omics", "epigenomics": "omics",
+    "biological imaging": "imaging", "medical imaging": "imaging", "pathology": "imaging",
+    "cell profiler": "imaging", "image retrieval": "imaging",
+    "gel electrophoresis segmentation": "imaging", "cryo-em": "imaging",
+    "genomic language model": "nucleic-acids", "rna language model": "nucleic-acids",
+    "rna folding": "nucleic-acids", "rna design": "nucleic-acids",
+    "mrna prediction": "nucleic-acids", "codon optimisation": "nucleic-acids",
+    "dna language model": "nucleic-acids", "crispr": "nucleic-acids",
+    "docking": "docking", "protein-ligand interaction": "docking",
+    "binding prediction": "docking", "molecular interaction prediction": "docking",
+    "structure-based drug design": "docking", "virtual screening": "docking",
+    "protein-protein interaction": "docking", "binding affinity": "docking",
+    "molecular dynamics": "md", "molecular simulation": "md", "protein dynamics": "md",
+    "free energy": "md",
+    "drug design & discovery": "generative", "molecule design": "generative",
+    "small molecule design": "generative", "generative chemistry": "generative",
+    "protac design": "generative", "antibiotic design": "generative",
+    "de novo design": "generative", "fragment based drug design": "generative",
+    "chemical prediction": "qsar-ml", "chemistry": "qsar-ml",
+    "chemistry foundation model": "qsar-ml", "molecular property prediction": "qsar-ml",
+    "qsar": "qsar-ml", "admet": "admet", "drug side effects": "admet",
+    "drug-induced liver injury": "admet", "toxicity": "admet",
+    "pharmacokinetics": "admet", "antimicrobial resistance": "admet",
+    "retrosynthetic planning": "synthesis", "retrosynthesis": "synthesis",
+    "synthesis planning": "synthesis", "reaction prediction": "synthesis",
+    "clinical trial": "clinical", "clinical prediction": "clinical",
+    "drug repurposing": "clinical", "clinical": "clinical",
+    "protein degradation prediction": "generative",
+    "biological agents": "agents", "agents": "agents", "literature search": "agents",
+    "literature mining": "agents", "knowledgegraph": "agents",
+    "biomedical knowledge": "agents", "name entity recognition": "agents",
+    "sql translator": "agents", "chemistry image extraction": "agents",
+    "benchmark": "benchmarks", "synthetic data generation": "benchmarks",
+    "dataset": "benchmarks",
+    "helper": "infra", "clustering": "infra", "lab automation": "infra",
+    "lab support": "infra", "data science/statistics": "infra",
+    "bioinformatics analysis": "infra", "design of experiment (doe)": "infra",
+    "visualisation": "viz", "visualization": "viz",
+
+    # --- EDAM topics and operations, as used by bio.tools ---------------
+    "molecular docking": "docking", "virtual screening": "docking",
+    "protein-ligand docking": "docking", "docking simulation": "docking",
+    "binding sites": "binding-site", "ligand-binding site prediction": "binding-site",
+    "binding site prediction": "binding-site", "protein binding site prediction": "binding-site",
+    "pocket detection": "binding-site", "active site prediction": "binding-site",
+    "molecular dynamics simulation": "md", "trajectory analysis": "md",
+    "free energy calculation": "md", "biophysics": "md",
+    "protein structure prediction": "structure", "structure prediction": "structure",
+    "protein structure analysis": "structure", "structural biology": "structure",
+    "homology modelling": "structure", "structure analysis": "structure",
+    "protein secondary structure prediction": "structure",
+    "protein folding stability and design": "protein-design",
+    "protein design": "protein-design", "protein engineering": "protein-design",
+    "protein stability prediction": "protein-design",
+    "computational chemistry": "qm", "quantum chemistry": "qm",
+    "compound libraries and screening": "libraries", "chemical database search": "libraries",
+    "toxicology": "admet", "toxicity prediction": "admet", "pharmacology": "admet",
+    "admet prediction": "admet", "pharmacokinetics": "admet",
+    "immunoproteins and antigens": "biologics", "immunology": "biologics",
+    "epitope prediction": "biologics", "antigen": "biologics",
+    "medicinal chemistry": "cheminformatics", "chemical structure": "cheminformatics",
+    "molecular descriptors": "cheminformatics", "format conversion": "cheminformatics",
+    "molecule design": "generative", "drug design": "generative",
+    "natural language processing": "agents", "text mining": "agents",
+    "gene expression analysis": "omics", "sequence analysis": "omics",
+    "imaging": "imaging", "image analysis": "imaging",
+    "workflows": "infra", "data management": "infra",
+    "molecular visualisation": "viz", "rendering": "viz",
+}
+
+# Fallback keyword scoring, checked against name + description + tags.
+KEYWORDS = {
+    "target-id": ["biomarker", "target prioriti", "genetic evidence", "target identification", "target validation", "druggability", "essentiality",
+                  "gene-disease", "disease association", "pathway enrichment", "gene set",
+                  "protein-protein association", "target-disease", "gwas", "eqtl"],
+    "omics": ["cell embedding", "methylation", "cpg", "epigenetic", "microbiome", "bacterial genome", "metagenom", "spatial", "flow cytometry", "cytometry", "atac", "chromatin", "gene expression", "biosynthetic gene cluster", "secondary metabolite", "single-cell", "single cell", "scrna", "rna-seq", "transcriptom", "proteom",
+              "differential expression", "cell type annotation", "sequencing", "genome annotation"],
+    "imaging": ["pathology", "biopsy", "radiolog", "tissue image", "cell image", "slide", "microscop", "histopatholog", "image analysis", "high-content", "segmentation",
+                "cell painting", "whole slide"],
+    "structure": ["conformation", "3d structure", "structural model", "protein complex", "structure prediction", "protein folding", "folding", "homology model",
+                  "structure alignment", "structural", "pdb", "cryo-em", "msa ", "complex prediction"],
+    "protein-ml": ["protein fitness", "fitness prediction", "sequence model", "esm", "plm ", "protein representation", "zero-shot variant", "language model", "protein embedding", "sequence embedding", "foundation model for protein"],
+    "protein-design": ["allergen", "protein optimi", "solubility", "expression optimi", "protein design", "sequence design", "enzyme", "mutation", "stability",
+                       "ddg", "inverse folding", "binder design"],
+    "biologics": ["antimicrobial peptide", "amp ", "immune", "mhc", "vaccine", "biologic", "antibody", "antibodies", "nanobody", "peptide", "epitope", "paratope",
+                  "immunogen", "tcr", "vhh", "developability"],
+    "nucleic-acids": ["crispr", "grna", "guide rna", "gene editing", "base editing", "splic", "transcription factor", "untranslated region", "codon", "rna", "dna", "mrna", "genomic language", "nucleotide", "promoter",
+                      "aptamer", "oligonucleotide", "guide design"],
+    "binding-site": ["binding site", "pocket", "cavity", "allosteric site", "hotspot"],
+    "docking": ["screening campaign", "hit identification", "hit finding", "ligand pose", "docking", "dock ", "virtual screen", "pose prediction", "rescoring",
+                "scoring function", "protein-ligand", "binding affinity", "interaction fingerprint"],
+    "md": ["molecular dynamics", "simulation", "force field", "trajectory", "free energy",
+           "enhanced sampling", "metadynamics", "mm-pbsa", "mm-gbsa", "fep", "coarse-grained"],
+    "qm": ["quantum", "dft", "ab initio", "semiempirical", "electronic structure",
+           "transition state", "conformer search"],
+    "cheminformatics": ["featuriz", "molecular feature", "molecular descriptor", "substructure", "chemical structure", "molecular fingerprint", "cheminformatic", "smiles", "fingerprint", "descriptor", "rdkit",
+                        "file format", "standardis", "standardiz", "molecular representation"],
+    "libraries": ["database of", "compound library", "screening library", "bioactivity",
+                  "purchasable", "chemical database", "patent", "natural product", "catalog"],
+    "generative": ["generative", "de novo", "molecule generation", "molecular generation",
+                   "scaffold hopping", "linker design", "protac", "lead optimi", "molecular design"],
+    "qsar-ml": ["deep learning framework", "prediction model", "predictive model", "chemistry model", "molecular machine learning", "activity prediction", "property prediction", "qsar", "admet prediction", "graph neural network",
+                "representation learning", "pretrained", "regression", "classifier",
+                "hyperparameter", "machine learning model"],
+    "admet": ["blood-brain", "bbb", "penetration", "clearance", "bioavailab", "safety", "liability", "off-target", "admet", "adme", "toxicity", "pharmacokinetic", "pbpk", "hepatotox", "cardiotox",
+              "side effect", "herg", "solubility prediction", "permeability", "metabolism"],
+    "synthesis": ["retrosynthe", "synthesis planning", "synthetic accessibility", "reaction",
+                  "route", "forward prediction"],
+    "clinical": ["electronic health", "ehr", "clinical event", "diagnosis", "diagnostic", "medical", "patient outcome", "treatment", "disease management", "healthcare", "clinical trial", "regulatory", "real-world", "patient", "electronic health",
+                 "drug label", "adverse event", "repurposing", "epidemiolog"],
+    "agents": ["curated list", "awesome", "tutorial", "course", "code generation", "reasoning", "benchmark for agents", "research assistant", "search engine", "agent", "llm", "literature", "knowledge graph", "question answering",
+               "chatbot", "retrieval-augmented", "text mining", "copilot", "assistant"],
+    "benchmarks": ["evaluating", "evaluate", "harness", "task suite", "benchmark", "evaluation", "leaderboard", "test set", "reference dataset"],
+    "infra": ["framework", "library", "toolkit", "platform", "package", "automation", "liquid handling", "high-throughput screening platform", "workflow", "pipeline", "experiment tracking", "orchestrat", "distributed",
+              "utility", "utilities", "helper", "data management", "versioning",
+              "notebook", "api client", "wrapper"],
+    "viz": ["viewer", "visualis", "visualiz", "rendering", "3d view", "plotting"],
+}
+
+
+def clean(s):
+    """Strip replacement characters and control codes from upstream text.
+
+    Some registry records were mis-decoded before we ever saw them (an α that
+    arrived as U+FFFD), and those bytes break a strict JSON consumer.
+    """
+    if not s:
+        return s
+    s = s.replace("\ufffd", "").replace("\u0000", "")
+    s = "".join(c for c in s if c >= " " or c in "\n\t")
+    return re.sub(r"\s{2,}", " ", s).strip() or None
+
+
+def norm(s):
+    s = unicodedata.normalize("NFKD", (s or "")).lower()
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def slugify(s):
+    s = unicodedata.normalize("NFKD", (s or "")).encode("ascii", "ignore").decode()
+    s = re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower()
+    return s or "tool"
+
+
+def classify(row):
+    if row["source"] == "curated" and row.get("stage"):
+        return CURATED_REMAP.get(row["stage"], row["stage"]), "curated"
+
+    cats = [norm(c) for c in (row.get("categories") or [])]
+    votes = Counter(CURATED_REMAP.get(CATEGORY_MAP[c], CATEGORY_MAP[c])
+                    for c in cats if c in CATEGORY_MAP)
+    if votes:
+        top = votes.most_common()
+        # a clear winner, or a single mapped category, settles it
+        if len(top) == 1 or top[0][1] > top[1][1]:
+            return top[0][0], "category"
+        tied = {s for s, n in top if n == top[0][1]}
+        # prefer the more specific stage when two are tied
+        for pref in ("binding-site", "docking", "md", "qm", "admet", "biologics",
+                     "generative", "protein-design", "cheminformatics", "libraries",
+                     "structure", "omics", "imaging", "agents", "viz", "infra"):
+            if pref in tied:
+                return pref, "category"
+        return top[0][0], "category"
+
+    hay_name = norm(row.get("name"))
+    hay_desc = norm(row.get("description"))
+    hay_cats = " ".join(cats)
+    scores = Counter()
+    for stage, words in KEYWORDS.items():
+        for w in words:
+            w = norm(w)
+            if not w:
+                continue
+            if w in hay_cats:
+                scores[stage] += 3
+            if w in hay_name:
+                scores[stage] += 2
+            if w in hay_desc:
+                scores[stage] += 1
+    scores = Counter({CURATED_REMAP.get(k, k): v for k, v in scores.items()})
+    if scores:
+        ranked = scores.most_common(2)
+        best, score = ranked[0]
+        # a clear winner, or the only stage that matched at all
+        if score >= 2 or len(ranked) == 1:
+            return best, "keyword"
+        if score > ranked[1][1]:
+            return best, "keyword"
+    return "other", "unmatched"
+
+
+def merge_key(row):
+    if row.get("repo"):
+        # Curated entries are deliberately distinct even when they ship from one
+        # repository (fpocket and mdpocket, say), so they key on name as well.
+        # The name pass below still folds each with its scraped counterpart.
+        if row["source"] == "curated":
+            return f"repo:{row['repo']}#{norm(row.get('name'))}"
+        return "repo:" + row["repo"]
+    name = norm(row.get("name"))
+    name = re.sub(r"\b(v?\d+(\.\d+)?)$", "", name).strip()
+    return "name:" + name if name else "row:" + (row.get("url") or "")
+
+
+def pick(*vals):
+    for v in vals:
+        if v:
+            return v
+    return None
+
+
+def load_extras():
+    """Install commands (resolved from PyPI/conda-forge) and hand-written usage."""
+    pkg_path = os.path.join(DATA, "packages.json")
+    packages = json.load(open(pkg_path)) if os.path.exists(pkg_path) else {}
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from snippets import SNIPPETS
+    except Exception:
+        SNIPPETS = {}
+    # match on name, squashed name and repo basename, like the site does
+    snips = {}
+    for name, (lang, code) in SNIPPETS.items():
+        key = norm(name)
+        snips[key] = {"lang": lang, "code": code}
+        snips[key.replace(" ", "")] = {"lang": lang, "code": code}
+    return packages, snips
+
+
+def main():
+    packages, snips = load_extras()
+    rows = json.load(open(os.path.join(DATA, "tools_index.json")))
+    groups = {}
+    for row in rows:
+        stage, how = classify(row)
+        row["_stage"], row["_how"] = stage, how
+        groups.setdefault(merge_key(row), []).append(row)
+
+    # Second pass: a tool listed with a repo in one source and only a homepage
+    # in another lands in two groups. Fold groups that share a canonical name.
+    canon = {}
+    for key, members in list(groups.items()):
+        names = [norm(m.get("name")) for m in members if m.get("name") and "/" not in m["name"]]
+        # A group whose only names are "owner/repo" still has an identity: the
+        # repo's own name. Without this, openbabel/openbabel never folds into
+        # Open Babel.
+        if not names and members[0].get("repo"):
+            names = [norm(members[0]["repo"].split("/")[1])]
+        # Compare with punctuation and spacing removed: "Open Babel" and
+        # "openbabel" are one tool, and so are "Uni-Dock" and "unidock".
+        name = re.sub(r"\s+v?\d+(\.\d+)*$", "", names[0]).strip() if names else None
+        name = name.replace(" ", "") if name else None
+        if not name or len(name) < 3:   # "xtb" is a real tool
+            continue
+        if name in canon and canon[name] != key:
+            groups[canon[name]] += members
+            del groups[key]
+        else:
+            canon[name] = key
+
+    catalogue = []
+    for key, members in groups.items():
+        if all(m["_stage"] in DROPPED for m in members):
+            continue
+        # curated entries win on description and stage; they were written for this
+        members.sort(key=lambda r: (r["source"] != "curated", -(len(r.get("description") or ""))))
+        head = members[0]
+        # "owner/repo" is a fallback identity, not a name: prefer a real one
+        if "/" in (head.get("name") or ""):
+            nicer = next((m for m in members if "/" not in (m.get("name") or "")), None)
+            if nicer:
+                head = dict(head, name=nicer["name"])
+        stages = [m["_stage"] for m in members if m["_stage"] != "other"]
+        stage = head["_stage"] if head["_stage"] != "other" else (stages[0] if stages else "other")
+        tags, seen = [], set()
+        for m in members:
+            for t in (m.get("categories") or []):
+                if t.lower() not in seen and len(tags) < 8:
+                    seen.add(t.lower())
+                    tags.append(t)
+        stars = max([m.get("stars") or 0 for m in members] + [0])
+        curated = any(m["source"] == "curated" for m in members)
+        # Ranks what a person should look at first: our own picks, then the
+        # code people actually use, then anything with a paper behind it.
+        rank = (1000 if curated else 0) + min(stars, 20000) / 100 \
+             + (25 if any(m.get("has_paper") for m in members) else 0) \
+             + (10 if len(members) > 1 else 0)
+        entry = {
+            "id": slugify(head.get("name")) + ("-" + head["repo"].split("/")[0] if head.get("repo") and len(head["name"] or "") < 4 else ""),
+            "name": clean(head.get("name")),
+            "stage": stage,
+            "description": clean(pick(*[m.get("description") for m in members])),
+            "url": pick(*[m.get("url") for m in members]),
+            "code_url": pick(*[m.get("code_url") for m in members]),
+            "paper_url": pick(*[m.get("paper_url") for m in members]),
+            "repo": head.get("repo"),
+            "license": pick(*[m.get("license") for m in members]),
+            "year": pick(*[m.get("year") for m in members]),
+            "tags": tags[:4],
+            "sources": sorted({m["source"] for m in members}),
+            "curated": curated,
+            "stars": stars or None,
+            "rank": round(rank, 1),
+        }
+        pkg = packages.get(entry.get("repo") or "")
+        if pkg:
+            entry["pypi"] = pkg.get("pypi")
+            entry["conda"] = pkg.get("conda")
+        # Name only: two tools can ship from one repository (fpocket/mdpocket),
+        # and a repo-name fallback hands the wrong example to the second one.
+        for k in (norm(entry["name"]), norm(entry["name"]).replace(" ", "")):
+            if k in snips:
+                entry["snippet"] = snips[k]
+                break
+        if entry["description"] and len(entry["description"]) > 300:
+            entry["description"] = entry["description"][:297].rstrip() + "…"
+        entry = {k: v for k, v in entry.items() if v not in (None, [], False) or k == "curated"}
+        catalogue.append(entry)
+
+    # unique ids
+    seen = Counter()
+    for e in catalogue:
+        seen[e["id"]] += 1
+        if seen[e["id"]] > 1:
+            e["id"] = f"{e['id']}-{seen[e['id']]}"
+
+    catalogue.sort(key=lambda e: (STAGE_ORDER.index(e["stage"]) if e["stage"] in STAGE_ORDER else 99,
+                                  -e.get("rank", 0), (e["name"] or "").lower()))
+
+    stage_counts = Counter(e["stage"] for e in catalogue)
+    payload = {
+        "generated_from": "data/tools_index.json",
+        "stages": [
+            {"slug": s, "label": l, "blurb": b, "hue": h, "count": stage_counts.get(s, 0)}
+            for (s, l, b, h) in STAGES
+        ] + ([{"slug": "other", "label": "Everything else", "blurb": "Not yet placed in a stage.",
+               "hue": 220, "count": stage_counts["other"]}] if stage_counts.get("other") else []),
+        "tools": catalogue,
+    }
+    os.makedirs(WEB, exist_ok=True)
+    with open(os.path.join(WEB, "catalog.json"), "w") as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+
+    # keep the static <meta> description honest about the counts
+    idx = os.path.join(WEB, "index.html")
+    if os.path.exists(idx):
+        html = open(idx).read()
+        n_stages = sum(1 for s in payload["stages"] if s["count"])
+        html = re.sub(r"A browsable atlas of [\d,]+ drug-discovery tools across \d+ pipeline stages",
+                      f"A browsable atlas of {len(catalogue)} drug-discovery tools across {n_stages} pipeline stages",
+                      html)
+        open(idx, "w").write(html)
+
+    how = Counter(r["_how"] for r in rows)
+    print(f"{len(rows)} index rows -> {len(catalogue)} unique tools "
+          f"({len(rows) - len(catalogue)} merged as duplicates)")
+    print("classified by:", dict(how))
+    for s, l, _b, _h in STAGES:
+        print(f"  {stage_counts.get(s, 0):4d}  {l}")
+    if stage_counts.get("other"):
+        print(f"  {stage_counts['other']:4d}  (unplaced)")
+    print(f"wrote {os.path.join(WEB, 'catalog.json')} "
+          f"({os.path.getsize(os.path.join(WEB, 'catalog.json'))/1024:.0f} KB)")
+
+
+if __name__ == "__main__":
+    main()

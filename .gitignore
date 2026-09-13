@@ -1,0 +1,8 @@
+# cached raw API responses — re-fetched by the scrapers on demand
+data/.cache/
+
+__pycache__/
+*.pyc
+.DS_Store
+.vercel
+node_modules/

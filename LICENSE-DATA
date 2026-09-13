@@ -1,0 +1,38 @@
+Assayer catalogue data — Creative Commons Attribution 4.0 International
+=======================================================================
+
+Applies to: data/ and web/catalog.json
+(The code — scripts/ and web/ — is MIT licensed; see LICENSE.)
+
+You are free to share and adapt this data, including commercially, provided
+you give appropriate credit. Full terms:
+
+    https://creativecommons.org/licenses/by/4.0/
+    https://creativecommons.org/licenses/by/4.0/legalcode
+
+
+Attribution for reuse
+---------------------
+    Assayer catalogue (https://github.com/yboulaamane/assayer), CC BY 4.0.
+    Contains records from bio.tools, CC BY 4.0.
+
+
+Upstream sources and their terms
+--------------------------------
+bio.tools — the ELIXIR registry of life-science software.
+    https://bio.tools · content under CC BY 4.0.
+    Assayer selects records from 12 drug-discovery EDAM topics; the records
+    are theirs, the selection and the staging are ours. This dataset is
+    licensed CC BY 4.0 in turn, as that licence requires.
+
+GitHub repository metadata — names, URLs, descriptions, stars, licences and
+    push dates, retrieved through the public API. Facts about public
+    repositories; each repository remains under its own licence.
+
+PyPI and conda-forge package metadata — retrieved through their public APIs.
+
+Curated entries, stage taxonomy, protocols, gates and usage examples are
+    original work by the Assayer authors, released here under CC BY 4.0.
+
+Structure data (UniProt, RCSB PDB, AlphaFold DB) is fetched live by the
+    browser at use time and is not redistributed in this repository.
