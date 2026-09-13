@@ -61,7 +61,10 @@ const PROVIDERS = {
     headers: () => ({ "Content-Type": "application/json" }),
     body: (m, q) => ({
       contents: [{ parts: [{ text: PROMPT + q }] }],
-      generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 200 },
+      // Reasoning models spend output tokens thinking before they answer, so a
+      // budget sized for the answer alone truncates it mid-object. The reply we
+      // want is ~60 tokens; the rest of this headroom is for the thinking.
+      generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 2048 },
     }),
     text: (d) =>
       (d?.candidates?.[0]?.content?.parts || [])
@@ -76,7 +79,7 @@ const PROVIDERS = {
     url: () => "https://api.groq.com/openai/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
-      model: m, temperature: 0, max_tokens: 200,
+      model: m, temperature: 0, max_tokens: 1024,
       response_format: { type: "json_object" },
       messages: [{ role: "user", content: PROMPT + q }],
     }),
@@ -88,7 +91,7 @@ const PROVIDERS = {
     url: () => "https://openrouter.ai/api/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
-      model: m, temperature: 0, max_tokens: 200,
+      model: m, temperature: 0, max_tokens: 1024,
       response_format: { type: "json_object" },
       messages: [{ role: "user", content: PROMPT + q }],
     }),
@@ -145,9 +148,11 @@ export default async function handler(req) {
     return json({ error: `upstream ${upstream.status}`, model: used, detail, fallback: true }, 502);
   }
 
-  let parsed, raw = "";
+  let parsed, raw = "", finish = "";
   try {
-    raw = provider.text(await upstream.json()) || "";
+    const body = await upstream.json();
+    finish = body?.candidates?.[0]?.finishReason || body?.choices?.[0]?.finish_reason || "";
+    raw = provider.text(body) || "";
     const cleaned = String(raw).replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
     try {
       parsed = JSON.parse(cleaned);
@@ -161,6 +166,7 @@ export default async function handler(req) {
     return json({
       error: "model did not return usable JSON",
       detail: String(raw).slice(0, 200) || `(empty response: ${e.message})`,
+      finishReason: finish,
       model: used,
       fallback: true,
     }, 502);
