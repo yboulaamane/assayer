@@ -448,6 +448,9 @@ async function drawPlan(q) {
     box.innerHTML = `<p class="count-note" style="margin-bottom:18px"><span class="spin"></span> Resolving <b>${esc(parsed.target)}</b> in UniProt…</p>`;
     try {
       const hits = await findTarget(parsed.target, parsed.organism);
+      const asked = parsed.organism?.label || null;
+      const got = hits[0]?.organism || null;
+      const mismatch = asked && got && !got.toLowerCase().startsWith(asked.toLowerCase().split(" ")[0]);
       if (!hits.length) {
         box.innerHTML = `<p class="note" style="margin:0 0 20px">No reviewed UniProt entry matched “${esc(parsed.target)}”. The protocol below still applies — resolve the target by hand and carry on.</p>`;
       } else {
@@ -461,6 +464,10 @@ async function drawPlan(q) {
               · ${esc(target.gene || "—")} · ${esc(target.organism || "")} · ${target.length} aa
               ${hits.length > 1 ? ` · <span style="color:var(--ink-3)">${hits.length - 1} other match${hits.length > 2 ? "es" : ""}</span>` : ""}
             </div>
+            ${mismatch || hits.droppedOrganism ? `<p class="note" style="margin:12px 0 0">
+              <b>Not the species you asked for.</b> You said ${esc(asked)}; the closest entry UniProt holds
+              for “${esc(parsed.target)}” is <b>${esc(got || "another organism")}</b>. Sequence and pocket may
+              differ — confirm the orthologue before building anything on it.</p>` : ""}
           </div>`;
         if (slot()) {
           slot().innerHTML = `<p class="count-note" style="margin:0 0 12px"><span class="spin"></span> Ranking PDB entries for ${esc(target.accession)}…</p>`;
