@@ -116,14 +116,24 @@ const json = (obj, status = 200) =>
 /** Configured providers, primary first. A second one only exists if it has a key. */
 const named = (v, dflt) => PROVIDERS[String(v ?? dflt).trim().toLowerCase()];
 
+/** Work out the provider from the key when nobody said. Each vendor's keys
+ *  carry a distinct prefix, so a second key alone is enough to act on. */
+function inferred(key) {
+  const k = (key || "").trim();
+  if (k.startsWith("gsk_")) return "groq";
+  if (k.startsWith("sk-or-")) return "openrouter";
+  if (k.startsWith("AIza")) return "gemini";
+  return null;
+}
+
 function configured() {
   const out = [];
-  const a = named(process.env.LLM_PROVIDER, "gemini");
+  const a = named(process.env.LLM_PROVIDER, inferred(process.env.LLM_API_KEY) || "gemini");
   if (process.env.LLM_API_KEY?.trim() && a) {
     out.push({ p: a, key: process.env.LLM_API_KEY.trim(),
                model: (process.env.LLM_MODEL || a.model).trim() });
   }
-  const b = named(process.env.LLM_PROVIDER_2, "");
+  const b = named(process.env.LLM_PROVIDER_2, inferred(process.env.LLM_API_KEY_2) || "");
   if (process.env.LLM_API_KEY_2?.trim() && b) {
     out.push({ p: b, key: process.env.LLM_API_KEY_2.trim(),
                model: (process.env.LLM_MODEL_2 || b.model).trim() });
@@ -138,12 +148,17 @@ export default async function handler(req) {
   if (req.method === "GET") {
     // Say what is wrong, not just what is missing. Values are never echoed:
     // only whether a key is present and whether a provider name resolved.
-    const why = (keyVar, provVar, dflt) => ({
-      key: process.env[keyVar]?.trim() ? "set" : "missing",
-      provider: process.env[provVar]?.trim()
-        ? (named(process.env[provVar], dflt) ? "recognised" : "not a known provider")
-        : (dflt ? `defaulted to ${dflt}` : "missing"),
-    });
+    const why = (keyVar, provVar, dflt) => {
+      const guess = inferred(process.env[keyVar]);
+      return {
+        key: process.env[keyVar]?.trim() ? "set" : "missing",
+        provider: process.env[provVar]?.trim()
+          ? (named(process.env[provVar], dflt) ? "recognised" : "not a known provider")
+          : guess ? `not set, inferred ${guess} from the key`
+          : dflt ? `not set, defaulted to ${dflt}`
+          : "not set, and the key prefix matches no known provider",
+      };
+    };
     return json({
       providers: configured().map(({ p, model }) => ({
         provider: Object.keys(PROVIDERS).find((k) => PROVIDERS[k] === p), model,

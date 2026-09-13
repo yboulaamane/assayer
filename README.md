@@ -126,6 +126,14 @@ for the rest of the day:
 LLM_API_KEY_2, LLM_PROVIDER_2, LLM_MODEL_2
 ```
 
+`LLM_PROVIDER_2` is optional: keys carry a distinguishable prefix (`gsk_` for
+Groq, `sk-or-` for OpenRouter, `AIza` for Gemini) so a key on its own is enough.
+
+`GET /api/route` reports which providers the running deployment can see and
+whether each half of the configuration resolved. It never echoes a key. Worth
+checking after any environment change, because edge functions inline
+`process.env` at build time and a cached redeploy keeps the old values.
+
 Two free tiers is usually enough. The per-case brief costs roughly twenty times
 what routing does, so it is offered behind a button rather than written for
 every plan, and never written for a question that matched nothing.
