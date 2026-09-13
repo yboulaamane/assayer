@@ -128,6 +128,17 @@ function configured() {
 }
 
 export default async function handler(req) {
+  // GET reports which providers this deployment can see. Names only, never
+  // keys. Edge functions inline process.env at build time, so "I added the
+  // variable" and "the running code has it" are different facts.
+  if (req.method === "GET") {
+    return json({
+      providers: configured().map(({ p, model }) => ({
+        provider: Object.keys(PROVIDERS).find((k) => PROVIDERS[k] === p), model,
+      })),
+      protocols: INTENTS.length,
+    });
+  }
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
   const providers = configured();
