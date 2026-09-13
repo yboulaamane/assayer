@@ -545,9 +545,10 @@ async function drawPlan(q) {
     }
   }
 
-  // The protocol is fixed; this is the part that knows about your target.
-  // Skip it when nothing matched: commentary on a guess is worse than none.
-  if (parsed.matched !== false) tailorPlan(plan, parsed, target, structures);
+  // The protocol is fixed; this is the part that knows about your target. It
+  // costs a model call, so it is offered rather than spent automatically, and
+  // never offered for a guess.
+  if (parsed.matched !== false) offerTailor(plan, parsed, target, structures);
 
   const md = () => planToMarkdown(plan, target, structures);
   document.getElementById("dl").onclick = () => {
@@ -562,6 +563,20 @@ async function drawPlan(q) {
     e.target.textContent = "Copied";
     setTimeout(() => (e.target.textContent = "Copy protocol"), 1400);
   };
+}
+
+function offerTailor(plan, parsed, target, structures) {
+  const slot = document.getElementById("tailor-slot");
+  if (!slot) return;
+  const what = target ? `${target.gene || target.name}` : "this question";
+  slot.innerHTML = `<div class="offer">
+    <div><b>Want this read for your case?</b> The protocol above is fixed. A short brief can say
+      what is specific to ${esc(what)}: what the structure implies, which steps matter most here,
+      what usually goes wrong for this system.</div>
+    <button class="btn primary" id="ask-tailor">Write the brief</button>
+  </div>`;
+  document.getElementById("ask-tailor").onclick = () =>
+    tailorPlan(plan, parsed, target, structures);
 }
 
 async function tailorPlan(plan, parsed, target, structures) {
