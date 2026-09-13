@@ -190,6 +190,34 @@ KEYWORDS = {
     "viz": ["viewer", "visualis", "visualiz", "rendering", "3d view", "plotting"],
 }
 
+# Families that kept landing in "Everything else". Checked before the general
+# keyword scoring because they are specific enough to be decisive.
+LATE_RULES = [
+    ("structure", r"structure refinement|loop modell?ing|homology model|comparative model|"
+                  r"crystallograph|x-ray data|cryo-?em|model quality|backbone|side.chain|"
+                  r"3d structure compar|structure superpos|structure alignment|"
+                  r"protein model|c-?alpha|rotamer"),
+    ("docking", r"drug.target interaction|compound.protein interaction|compound.protein affinity|"
+                r"protein.ligand interaction|binding affinity predict|interaction predict"),
+    ("clinical", r"drug reposition|drug repurpos|drug combination|drug sensitivit|"
+                 r"drug resistance|adverse drug|drug.drug interaction|pharmacovigilance"),
+    ("cheminformatics", r"tautomer|protonation state|subgraph min|chemical space|"
+                        r"molecular representation"),
+    ("generative", r"grows? new ligand|ligand growing|peptide design|genetic algorithm.*peptide"),
+    ("binding-site", r"molecular surface|interaction fingerprint|surface.based|water molecule"),
+    ("libraries", r"\bdatabase of\b|compendium|curated database|data portal|knowledgebase"),
+]
+
+# Real tools, real science, different field. They arrive through broad EDAM
+# topics like "Molecular modelling" and only surface here because nothing in
+# the medicinal-chemistry taxonomy fits them.
+OUT_OF_SCOPE = re.compile(
+    r"phylogenet|genome assembl|sequence assembl|read align|comparative genomic|"
+    r"boolean network|gene regulatory network|metabolic model|systems biolog|"
+    r"homologous sequence|distant homolog|\bblast\b|domain architecture|"
+    r"polyketide synthase|chromosome|transcription factor binding site|"
+    r"phenotype ontolog|causal model|scale-free network", re.I)
+
 
 def clean(s):
     """Strip replacement characters and control codes from upstream text.
@@ -265,6 +293,13 @@ def classify(row):
             return best, "keyword"
         if score > ranked[1][1]:
             return best, "keyword"
+
+    # Nothing else placed it. These families are specific enough to decide on
+    # their own, and only run here so they can never override a good match.
+    hay_all = f"{hay_name} {hay_desc} {hay_cats}"
+    for stage, pattern in LATE_RULES:
+        if re.search(pattern, hay_all, re.I):
+            return stage, "late-rule"
     return "other", "unmatched"
 
 
@@ -355,6 +390,12 @@ def main():
     for key, members in groups.items():
         if all(m["_stage"] in DROPPED for m in members):
             continue
+        # Unplaceable *and* recognisably another field: drop rather than file
+        # under a label that tells the reader nothing.
+        if all(m["_stage"] == "other" for m in members) and any(
+                OUT_OF_SCOPE.search(f"{m.get('name','')} {m.get('description','')}")
+                for m in members):
+            continue
         # curated entries win on description and stage; they were written for this
         members.sort(key=lambda r: (r["source"] != "curated", -(len(r.get("description") or ""))))
         head = members[0]
@@ -426,7 +467,8 @@ def main():
         "stages": [
             {"slug": s, "label": l, "blurb": b, "hue": h, "count": stage_counts.get(s, 0)}
             for (s, l, b, h) in STAGES
-        ] + ([{"slug": "other", "label": "Everything else", "blurb": "Not yet placed in a stage.",
+        ] + ([{"slug": "other", "label": "Unsorted",
+               "blurb": "Nothing else fitted: niche, cross-field, or too thinly described to place.",
                "hue": 220, "count": stage_counts["other"]}] if stage_counts.get("other") else []),
         "tools": catalogue,
     }
