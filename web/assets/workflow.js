@@ -123,6 +123,25 @@ const ALIASES = {
 // cyclophilin, not cytochrome P450.
 const FAMILY_SPLIT = /\b([A-Z]{2,6})\s+(\d[A-Z0-9]{0,5})\b/g;
 
+/**
+ * Map informal names onto something UniProt can resolve.
+ *
+ * Applied to the model's answer as well as the user's words: asked the same
+ * question twice the model may say "AURKA" or "Aurora kinase", and the alias
+ * table is what makes both land on the same accession.
+ */
+export function aliasTarget(text, substring = false) {
+  if (!text) return null;
+  const low = String(text).toLowerCase().trim();
+  if (ALIASES[low]) return ALIASES[low];
+  for (const k of Object.keys(ALIASES)) {
+    if (substring ? low.includes(k) : false) return ALIASES[k];
+  }
+  // "aurora kinase" -> "aurora"; drop a trailing descriptor and retry
+  const trimmed = low.replace(/\s+(kinase|receptor|protein|enzyme|transporter|channel|synthase|reductase)s?$/, "");
+  return ALIASES[trimmed] || null;
+}
+
 export function parseQuery(raw) {
   const q = (raw || "").replace(FAMILY_SPLIT, "$1$2").trim();
   const low = q.toLowerCase();
@@ -147,9 +166,7 @@ export function parseQuery(raw) {
 
   let target = null;
   if (NO_PROTEIN.has(intent)) return { query: q, intent, organism, target: null, score, via: "keywords" };
-  for (const k of Object.keys(ALIASES)) {
-    if (low.includes(k)) { target = ALIASES[k]; break; }
-  }
+  target = aliasTarget(low, true);
   if (!target) {
     // Gene-ish tokens: 2-9 chars, upper-case/digits, at least one letter, so
     // "3A4" and "G12C" are caught alongside "EGFR".
@@ -201,7 +218,9 @@ export async function resolveQuery(raw) {
     return {
       query: raw,
       intent: d.intent,
-      target: d.target || kw.target,
+      // The model answers in prose as readily as in gene symbols; run it
+      // through the same alias table so both spellings reach one accession.
+      target: (d.target && (aliasTarget(d.target) || d.target)) || kw.target,
       organism: organismByTaxid(d.organism_taxid) || kw.organism,
       score: kw.score,
       via: "llm",
