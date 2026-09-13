@@ -198,6 +198,7 @@ function renderBrowse(params) {
     const next = browseState.list.slice(browseState.shown, browseState.shown + 60);
     grid.insertAdjacentHTML("beforeend", next.map(card).join(""));
     browseState.shown += next.length;
+    refreshStars(grid);
   };
   more();
   const sent = document.getElementById("sentinel");
@@ -237,12 +238,62 @@ function card(t) {
     <p class="desc">${esc(t.description || "No description recorded in the source.")}</p>
     <div class="foot">
       ${t.curated ? `<span class="pill star">standard</span>` : ""}
-      ${t.stars ? `<span class="pill">★ ${t.stars >= 1000 ? (t.stars / 1000).toFixed(1) + "k" : t.stars}</span>` : ""}
+      ${t.repo ? `<span class="pill stars" data-repo="${esc(t.repo)}"${t.stars ? "" : " hidden"}>${t.stars ? "★ " + fmtStars(t.stars) : ""}</span>` : ""}
       ${t.license ? `<span class="pill acc">${esc(t.license)}</span>` : ""}
       ${t.repo ? `<span class="pill">${esc(t.repo.split("/")[0])}</span>` : ""}
     </div>
   </button>`;
 }
+const fmtStars = (n) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "k" : String(n));
+
+// repo -> count, so a repo is asked about once per session however many times
+// it appears on screen
+const STAR_CACHE = new Map();
+let starsDisabled = false;
+
+/** Fill in live star counts for any .pill.stars in `root`. */
+async function refreshStars(root) {
+  if (starsDisabled || !root) return;
+  const slots = [...root.querySelectorAll(".stars[data-repo]")];
+  if (!slots.length) return;
+
+  // paint anything already known, then ask about the rest
+  const unknown = [];
+  for (const el of slots) {
+    const repo = el.dataset.repo;
+    if (STAR_CACHE.has(repo)) paintStars(el, STAR_CACHE.get(repo));
+    else if (!unknown.includes(repo)) unknown.push(repo);
+  }
+  if (!unknown.length) return;
+
+  for (let i = 0; i < unknown.length; i += 100) {
+    const batch = unknown.slice(i, i + 100);
+    let counts;
+    try {
+      const r = await fetch("api/stars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repos: batch }),
+      });
+      if (r.status === 501) { starsDisabled = true; return; }  // no token: keep baked values
+      if (!r.ok) return;
+      counts = await r.json();
+    } catch {
+      return;   // offline or no function: the catalogue values stay as they are
+    }
+    for (const [repo, n] of Object.entries(counts || {})) STAR_CACHE.set(repo, n);
+    for (const el of root.querySelectorAll(".stars[data-repo]")) {
+      if (counts[el.dataset.repo] != null) paintStars(el, counts[el.dataset.repo]);
+    }
+  }
+}
+
+function paintStars(el, n) {
+  // compact on a card, full number in the detail panel
+  el.textContent = el.classList.contains("pill") ? "★ " + fmtStars(n) : n.toLocaleString();
+  el.hidden = false;
+}
+
 window.updateTool = (id) => {
   const { path, params } = parseHash();
   params.set("tool", id);
@@ -320,7 +371,8 @@ function openDrawer(id) {
         ${t.license ? `<dt>Access</dt><dd>${esc(t.license)}</dd>` : ""}
         ${t.repo ? `<dt>Repo</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.repo)}</dd>` : ""}
         ${t.year ? `<dt>Year</dt><dd>${esc(t.year)}</dd>` : ""}
-        ${t.stars ? `<dt>GitHub stars</dt><dd>${t.stars.toLocaleString()}</dd>` : ""}
+        ${t.repo ? `<dt>GitHub stars</dt><dd class="stars" data-repo="${esc(t.repo)}">${
+          t.stars ? t.stars.toLocaleString() : "…"}</dd>` : ""}
         ${t.pypi || t.conda ? `<dt>Package</dt><dd style="font-family:var(--mono);font-size:12.5px">${
           [t.pypi ? "pypi: " + esc(t.pypi) : "", t.conda ? "conda-forge: " + esc(t.conda) : ""].filter(Boolean).join("<br>")}</dd>` : ""}
         <dt>Listed in</dt><dd>${t.sources.map((x) => esc({
@@ -334,6 +386,7 @@ function openDrawer(id) {
         <a class="btn" href="#/stage/${t.stage}">See all ${STAGE.get(t.stage)?.count ?? ""} in ${esc(s?.label || t.stage)}</a>
       </div>
     </div>`;
+  refreshStars(drawer);
   drawer.querySelectorAll(".copy").forEach((b) => {
     b.onclick = async () => {
       await navigator.clipboard.writeText(b.dataset.code);
