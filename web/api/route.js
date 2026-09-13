@@ -123,7 +123,7 @@ export default async function handler(req) {
   query = query.slice(0, 300); // the router needs a question, not a document
 
   const candidates = process.env.LLM_MODEL ? [model] : [model, ...(provider.fallbacks || [])];
-  let upstream, detail = "", used = model;
+  let upstream, detail = "", used = model, retried = false;
 
   for (const candidate of candidates) {
     used = candidate;
@@ -139,6 +139,14 @@ export default async function handler(req) {
     }
     if (upstream.ok) break;
     detail = (await upstream.text()).slice(0, 200);
+
+    // 503 is the model being briefly overloaded — worth exactly one retry.
+    if (upstream.status === 503 && !retried) {
+      retried = true;
+      await new Promise((r) => setTimeout(r, 700));
+      candidates.unshift(candidate);   // same model, second attempt
+      continue;
+    }
     // 404 means this model is retired for this project — try the next name.
     // Anything else (401 bad key, 429 quota spent) will not be fixed by retrying.
     if (upstream.status !== 404) break;
