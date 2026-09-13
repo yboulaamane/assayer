@@ -63,6 +63,7 @@ Question: `;
 const PROVIDERS = {
   gemini: {
     model: "gemini-3.6-flash",
+    list: (k) => `https://generativelanguage.googleapis.com/v1beta/models?key=${k}`,
     // Model names churn: Google retires them for new projects with a 404 whose
     // message names the replacement. Try the next one rather than silently
     // dropping to keyword routing for months.
@@ -84,8 +85,9 @@ const PROVIDERS = {
         .trim(),
   },
   groq: {
-    model: "llama-3.3-70b-versatile",
-    fallbacks: ["llama-3.1-8b-instant"],
+    model: "openai/gpt-oss-20b",
+    fallbacks: ["openai/gpt-oss-120b", "qwen/qwen3.6-27b"],
+    list: () => "https://api.groq.com/openai/v1/models",
     url: () => "https://api.groq.com/openai/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
@@ -97,7 +99,9 @@ const PROVIDERS = {
   },
   openrouter: {
     model: "meta-llama/llama-3.3-70b-instruct:free",
+    list: () => "https://openrouter.ai/api/v1/models",
     fallbacks: [],
+    list: () => "https://openrouter.ai/api/v1/models",
     url: () => "https://openrouter.ai/api/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
@@ -115,6 +119,32 @@ const json = (obj, status = 200) =>
 
 /** Configured providers, primary first. A second one only exists if it has a key. */
 const named = (v, dflt) => PROVIDERS[String(v ?? dflt).trim().toLowerCase()];
+
+/** Ask the provider what it actually serves.
+ *
+ *  Model names are retired on the vendor's schedule, not ours: three of the
+ *  names hardcoded here went stale within a few months. When every configured
+ *  name 404s, read the list rather than guess again.
+ */
+async function discover(p, key) {
+  if (!p.list) return [];
+  try {
+    const r = await fetch(p.list(key), {
+      headers: p.list.length ? {} : { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return [];
+    const d = await r.json();
+    const ids = (d.data || d.models || [])
+      .map((m) => String(m.id || m.name || "").replace(/^models\//, ""))
+      .filter((id) => id && !/embed|whisper|tts|guard|vision|image|rerank/i.test(id));
+    // prefer the small fast ones: this is a classification call, not an essay
+    return ids.sort((a, b) =>
+      (/mini|lite|small|8b|20b|flash/i.test(b) ? 1 : 0) - (/mini|lite|small|8b|20b|flash/i.test(a) ? 1 : 0));
+  } catch {
+    return [];
+  }
+}
 
 /** Work out the provider from the key when nobody said. Each vendor's keys
  *  carry a distinct prefix, so a second key alone is enough to act on. */
@@ -187,12 +217,13 @@ export default async function handler(req) {
 
   outer:
   for (const { p, key, model } of providers) {
-    // A pinned LLM_MODEL means the caller chose; otherwise walk the ladder,
-    // since model names are retired with a 404 naming their replacement.
-    const candidates = process.env.LLM_MODEL ? [model] : [model, ...(p.fallbacks || [])];
-    let retried = false;
+    // A pinned LLM_MODEL means the caller chose; otherwise walk the ladder and,
+    // if every name is retired, ask the provider what it serves today.
+    const queue = process.env.LLM_MODEL ? [model] : [model, ...(p.fallbacks || [])];
+    let retried = false, asked = false;
 
-    for (const candidate of candidates) {
+    while (queue.length) {
+      const candidate = queue.shift();
       used = candidate;
       try {
         upstream = await fetch(p.url(candidate, key), {
@@ -212,13 +243,18 @@ export default async function handler(req) {
       if (upstream.status === 503 && !retried) {
         retried = true;
         await new Promise((r) => setTimeout(r, 700));
-        candidates.unshift(candidate);
+        queue.unshift(candidate);
         continue;
       }
-      // 404: this model is retired for this project, try the next name.
-      // 429: this tier is spent for today, so move to the next provider.
+      // 429: this tier is spent for today, so move on to the next provider.
       if (upstream.status === 429) continue outer;
       if (upstream.status !== 404) continue outer;
+
+      // Every name we knew is retired. Read the model list and try again.
+      if (!queue.length && !asked) {
+        asked = true;
+        queue.push(...(await discover(p, key)).slice(0, 3));
+      }
     }
   }
 

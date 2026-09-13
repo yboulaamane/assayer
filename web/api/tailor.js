@@ -61,6 +61,7 @@ function buildPrompt({ query, label, steps, target, structures, tools }) {
 const PROVIDERS = {
   gemini: {
     model: "gemini-3.6-flash",
+    list: (k) => `https://generativelanguage.googleapis.com/v1beta/models?key=${k}`,
     url: (m, k) =>
       `https://generativelanguage.googleapis.com/v1beta/models/${m}:streamGenerateContent?alt=sse&key=${k}`,
     headers: () => ({ "Content-Type": "application/json" }),
@@ -73,7 +74,8 @@ const PROVIDERS = {
       .filter((x) => typeof x.text === "string" && !x.thought).map((x) => x.text).join(""),
   },
   groq: {
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-20b",
+    list: () => "https://api.groq.com/openai/v1/models",
     url: () => "https://api.groq.com/openai/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, p) => ({ model: m, temperature: 0.4, max_tokens: 700, stream: true,
@@ -82,6 +84,7 @@ const PROVIDERS = {
   },
   openrouter: {
     model: "meta-llama/llama-3.3-70b-instruct:free",
+    list: () => "https://openrouter.ai/api/v1/models",
     url: () => "https://openrouter.ai/api/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, p) => ({ model: m, temperature: 0.4, max_tokens: 700, stream: true,
@@ -97,6 +100,32 @@ const fail = (msg, status) =>
 
 /** Configured providers, primary first. A second one only exists if it has a key. */
 const named = (v, dflt) => PROVIDERS[String(v ?? dflt).trim().toLowerCase()];
+
+/** Ask the provider what it actually serves.
+ *
+ *  Model names are retired on the vendor's schedule, not ours: three of the
+ *  names hardcoded here went stale within a few months. When every configured
+ *  name 404s, read the list rather than guess again.
+ */
+async function discover(p, key) {
+  if (!p.list) return [];
+  try {
+    const r = await fetch(p.list(key), {
+      headers: p.list.length ? {} : { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return [];
+    const d = await r.json();
+    const ids = (d.data || d.models || [])
+      .map((m) => String(m.id || m.name || "").replace(/^models\//, ""))
+      .filter((id) => id && !/embed|whisper|tts|guard|vision|image|rerank/i.test(id));
+    // prefer the small fast ones: this is a classification call, not an essay
+    return ids.sort((a, b) =>
+      (/mini|lite|small|8b|20b|flash/i.test(b) ? 1 : 0) - (/mini|lite|small|8b|20b|flash/i.test(a) ? 1 : 0));
+  } catch {
+    return [];
+  }
+}
 
 /** Work out the provider from the key when nobody said. Each vendor's keys
  *  carry a distinct prefix, so a second key alone is enough to act on. */
@@ -141,19 +170,33 @@ export default async function handler(req) {
   let upstream, winner = null, detail = "";
 
   for (const { p, key, model } of providers) {
-    try {
-      upstream = await fetch(p.url(model, key), {
-        method: "POST",
-        headers: p.headers(key),
-        body: JSON.stringify(p.body(model, prompt)),
-        signal: AbortSignal.timeout(30000),
-      });
-    } catch (e) {
-      detail = `unreachable: ${e.name}`;
-      continue;                       // a dead provider is the next one's turn
+    const queue = process.env.LLM_MODEL ? [model] : [model, ...(p.fallbacks || [])];
+    let asked = false;
+
+    while (queue.length) {
+      const candidate = queue.shift();
+      try {
+        upstream = await fetch(p.url(candidate, key), {
+          method: "POST",
+          headers: p.headers(key),
+          body: JSON.stringify(p.body(candidate, prompt)),
+          signal: AbortSignal.timeout(30000),
+        });
+      } catch (e) {
+        detail = `unreachable: ${e.name}`;
+        break;                        // a dead provider is the next one's turn
+      }
+      if (upstream.ok) { winner = p; break; }
+      detail = `${upstream.status}: ${(await upstream.text()).slice(0, 140)}`;
+      if (upstream.status === 429) break;          // tier spent; next provider
+      if (upstream.status !== 404) break;
+      // every name we knew is retired: read the list and try again
+      if (!queue.length && !asked) {
+        asked = true;
+        queue.push(...(await discover(p, key)).slice(0, 3));
+      }
     }
-    if (upstream.ok) { winner = p; break; }
-    detail = `${upstream.status}: ${(await upstream.text()).slice(0, 140)}`;
+    if (winner) break;
     // 429 means this free tier is spent for the day; anything else is unlikely
     // to be fixed by the same request to a different provider, but trying costs
     // nothing here since the alternative is showing the reader nothing.
