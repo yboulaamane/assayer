@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,956 tools for medicinal and computational chemistry, plus 14
+A catalogue of 3,944 tools for medicinal and computational chemistry, plus 14
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -149,10 +149,19 @@ generated, so don't edit it by hand.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The 253 curated tools carry their stage
-  by hand; everything else goes through a category lookup table or keyword
-  scoring. 158 tools end up in "Everything else". To fix a misplaced tool, add
-  its label to `CATEGORY_MAP` in `scripts/build_catalog.py`.
+- **Stage assignment is keyword-driven.** The 243 curated tools carry their
+  stage by hand; everything else goes through a category lookup table, then
+  keyword scoring, then a short list of last-resort rules for families that
+  kept falling through (crystallography, drug repurposing, tautomer handling).
+  80 tools still land in "Unsorted", which is roughly 2% and about where the
+  returns stop: more rules start mis-filing things that are currently right.
+  To fix a misplaced tool, add its label to `CATEGORY_MAP` in
+  `scripts/build_catalog.py`.
+- **Some bio.tools records are real science from another field.** They arrive
+  through broad EDAM topics like "Molecular modelling": genome assemblers,
+  phylogenetics, Boolean network biology. Those are dropped when nothing in
+  this taxonomy fits them, rather than filed under a label that tells the
+  reader nothing.
 - **The curated list is a judgement call**, not a census. It's what I think a
   small-molecule project needs end to end. Commercial tools are included where
   they're the de facto standard (Glide, GOLD, FEP+, Simcyp). Add rows to the `T`
