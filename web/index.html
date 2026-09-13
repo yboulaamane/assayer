@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Assayer — med chem tools &amp; workflows</title>
+<meta name="description" content="A browsable atlas of 3973 drug-discovery tools across 18 pipeline stages, and a consultant that turns a research question into a step-by-step protocol with live structure selection from UniProt, RCSB PDB and AlphaFold.">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://rest.uniprot.org">
+<link rel="preconnect" href="https://search.rcsb.org">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='19' font-size='19'>🧬</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#/">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 3c0 4.5 10 6 10 10.5S7 19.5 7 21"/><path d="M17 3c0 4.5-10 6-10 10.5S17 19.5 17 21"/><path d="M8.6 7.5h6.8M8.6 16.5h6.8"/>
+        </svg>
+      </span>
+      <span>Assayer<small>tools &amp; workflows</small></span>
+    </a>
+    <nav class="main">
+      <a href="#/" data-route="home">Stages</a>
+      <a href="#/browse" data-route="browse">All tools</a>
+      <a href="#/workflow" data-route="workflow">Plan a workflow</a>
+    </nav>
+    <button class="iconbtn" id="theme" title="Switch theme" aria-label="Switch theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="app"><div class="wrap"><div class="empty">Loading the atlas…</div></div></main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Tool detail"></aside>
+
+<footer>
+  <div class="wrap">
+    Assayer is built on <a href="https://bio.tools" target="_blank" rel="noopener">bio.tools</a>, the ELIXIR
+    registry, whose records are used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>;
+    on public GitHub repository metadata; and on our own curated stack of the tools a discovery project
+    actually runs on. The selection, the staging and the protocols are ours.
+    Structure data is fetched live from
+    <a href="https://www.uniprot.org" target="_blank" rel="noopener">UniProt</a>,
+    <a href="https://www.rcsb.org" target="_blank" rel="noopener">RCSB PDB</a> and
+    <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold DB</a>.
+    Nothing is computed here — the protocols are yours to run.
+  </div>
+</footer>
+
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>
