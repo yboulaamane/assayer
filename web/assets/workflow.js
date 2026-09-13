@@ -15,6 +15,14 @@ const INTENTS = [
     "promiscuous", "promiscuity", "cross-react", "also hits", "hits other"]],
   ["fep", ["fep", "free energy perturbation", "relative binding free energy", "rbfe", "abfe",
     "alchemical", "thermodynamic integration", "predict affinity change", "ddg"]],
+  ["qsar", ["qsar", "qspr", "property model", "property prediction", "predict solubility",
+    "predict logp", "predict activity", "predict potency", "machine learning model", "ml model",
+    "train a model", "train a classifier", "regression model", "build a model", "model building",
+    "featuris", "featuriz", "descriptor", "chemprop", "random forest", "scaffold split",
+    "applicability domain", "predictive model"]],
+  ["resistance", ["resistance", "resistant", "mutation", "mutant", "variant effect", "escape",
+    "point mutation", "loses activity in the", "gatekeeper mutation", "\u0394\u0394g of mutation",
+    "stability of a mutation"]],
   ["hit-discovery", ["inhibitor", "inhibitors", "hit", "hits", "screen", "screening", "virtual screening",
     "vs campaign", "find compounds", "find molecules", "dock", "docking", "binders", "actives",
     "hit finding", "hit identification", "antagonist", "agonist", "block"]],
@@ -164,7 +172,9 @@ export function parseQuery(raw) {
   }
 
   let target = null;
-  if (NO_PROTEIN.has(intent)) return { query: q, intent, organism, target: null, score, via: "keywords" };
+  if (NO_PROTEIN.has(intent)) {
+    return { query: q, intent, organism, target: null, score, via: "keywords", matched: true };
+  }
   target = aliasTarget(low, true);
   if (!target) {
     // Gene-ish tokens: 2-9 chars, upper-case/digits, at least one letter, so
@@ -182,7 +192,7 @@ export function parseQuery(raw) {
   // orthologue, which is a silent, confident, wrong answer.
   if (target && !organism) organism = { id: 9606, label: "Homo sapiens", assumed: true };
 
-  return { query: q, intent, organism, target, score, via: "keywords" };
+  return { query: q, intent, organism, target, score, via: "keywords", matched: best > 0 };
 }
 
 function organismByTaxid(taxid) {
@@ -229,6 +239,10 @@ export async function resolveQuery(raw) {
     return kw; // offline, blocked by a preview sandbox, or no function deployed
   }
 }
+
+/** The protocols on offer, for telling someone what is actually covered. */
+export const PROTOCOL_LIST = () =>
+  Object.entries(PROTOCOLS).map(([id, p]) => ({ id, label: p.label }));
 
 /* ------------------------------------------------------- live data lookups */
 const UNIPROT = "https://rest.uniprot.org/uniprotkb";
@@ -467,6 +481,35 @@ export const PROTOCOLS = {
       S("Design assays that can see the hook effect", "Excess degrader forms binary complexes instead of ternary ones, so degradation falls at high concentration. A single-concentration assay can miss the active window entirely.", { gate: "Full dose-response every time, wide enough to show the hook. Report Dmax and DC50, not percent degradation at one dose.", pitfall: "Calling a degrader inactive because you tested it at one concentration on the wrong side of the hook.", tools: ["PROTAC-DB"] }),
       S("Prove the mechanism is degradation", "Loss of signal is not proof of degradation. Rescue experiments are what distinguish a real degrader from an inhibitor, a toxin or an artefact.", { gate: "Rescue with a proteasome inhibitor, with E3 knockdown, and with a non-binding epimer control.", tools: ["PROTAC-DB", "DepMap"] }),
       S("Accept the property penalty and plan for it", "Degraders sit well outside Rule-of-Five space. Permeability and solubility are the usual reasons a potent degrader does nothing in cells, and they need designing for from the start.", { pitfall: "Optimising degradation in a biochemical system, then discovering the compound never enters a cell.", tools: ["SwissADME", "ADMETlab 3.0", "ADMET-AI", "RDKit"] }),
+    ],
+  },
+  qsar: {
+    label: "Property model building",
+    summary: "A model is only useful if it is right about compounds you have not made yet. Almost everything that goes wrong is in the data and the split, not the architecture.",
+    decision: "Whether a model is good enough to make decisions with, and which compounds it may be trusted on.",
+    stop: "If it cannot beat a random forest on fingerprints using a realistic split, it is not ready. That baseline is the bar, not a formality.",
+    steps: [
+      S("Say what the model is for", "A model that informs \"which of these fifty do we make\" needs to rank well. One that informs \"is this safe enough to dose\" needs to be calibrated. These are different models and different success criteria, and choosing after training means choosing whatever the numbers flatter.", { gate: "Write down the decision the model informs and the error you can live with, before you look at any data.", pitfall: "Reporting R² on a random split when the actual job is ranking novel scaffolds." }),
+      S("Curate the data properly", "This is where the accuracy is won. Mixed units, duplicate measurements, undefined stereochemistry and salt forms all quietly become noise the model then learns.", { gate: "One canonical structure per compound, one value per compound-endpoint pair, and a written rule for how duplicates were resolved.", pitfall: "Averaging IC50s from different assay formats into one column because they share a name.", tools: ["ChEMBL Structure Pipeline", "RDKit", "Datamol", "ChEMBL", "Papyrus", "BindingDB"] }),
+      S("Split the way you will deploy", "A random split measures interpolation between near-duplicates. If the model will see new chemotypes, split by scaffold; if it will see next quarter's compounds, split by time.", { gate: "Scaffold or temporal split. Report the random-split number too if you like, but do not make decisions on it.", pitfall: "Near-duplicate analogues sitting on both sides of the split, which turns memorisation into apparent accuracy.", tools: ["RDKit", "ScaffoldGraph", "Polaris", "Therapeutics Data Commons"] }),
+      S("Establish the baseline first", "Gradient boosting or a random forest on fingerprints and descriptors is fast, hard to beat on small data, and the number every later model has to justify itself against.", { gate: "No deep model ships without beating this baseline on the same split.", tools: ["scikit-learn", "XGBoost", "RDKit", "Mordred", "scikit-mol", "DataWarrior"] }),
+      S("Only then reach for learned representations", "Message-passing networks and pretrained encoders earn their keep on larger datasets, and lose to the baseline on a few hundred compounds more often than the literature suggests.", { tools: ["Chemprop", "Uni-Mol", "MolFormer", "ChemBERTa", "DeepChem", "PyTorch Geometric", "DGL-LifeSci", "Optuna"] }),
+      S("Give every prediction an applicability domain", "A number without a domain is a guess wearing a decimal point. Chemists will act on it either way, so the model has to say when it does not know.", { gate: "Report an applicability domain and an uncertainty per prediction. Anything outside the domain is flagged, not quietly returned.", pitfall: "Shipping a point estimate. It will be treated as measured data within a week.", tools: ["QSARtuna", "OPERA", "vNN-ADMET", "ADMET-AI"] }),
+      S("Keep it reproducible and watch it drift", "The model that made a decision six months ago needs to be identifiable, and its performance on new chemistry needs watching as the project moves into space it never saw.", { tools: ["MLflow", "DVC", "Optuna", "Polaris"] }),
+    ],
+  },
+  resistance: {
+    label: "Resistance & mutation effects",
+    summary: "A mutation either changes a contact your compound depends on or it does not. Finding out which, before the clinic does, is the whole exercise.",
+    decision: "Whether a given mutation breaks this series, and whether it can be designed around.",
+    stop: "If the mutation removes a contact every analogue in the series depends on, and the pocket offers nothing else, the series is finished for that variant. Say so early.",
+    steps: [
+      S("Find the mutations that actually occur", "Start from what is observed in patients or in resistance selection, not from what is mutatable. Most positions never vary.", { live: "target", gate: "List the variants with real clinical or experimental frequency, and their prevalence.", tools: ["gnomAD", "cBioPortal", "Open Targets Platform", "UniProt", "DRESIS"] }),
+      S("Put them on the structure", "Where a mutation sits decides everything downstream. A direct-contact change, a second-shell change and a distant allosteric change need different responses.", { live: "structures", gate: "Classify each variant: in the binding site, second shell, or remote.", pitfall: "Assuming a remote mutation is harmless. Allosteric resistance is common and invisible in a static structure.", tools: ["RCSB PDB", "PDBe-KB", "ProLIF", "PLIP", "PyMOL (open source)"] }),
+      S("Estimate the effect on binding", "Relative free energy across a point mutation is one of the better-behaved applications, because the perturbation is small and the systems are nearly identical.", { gate: "Validate on mutations with measured effects before trusting a prediction on a new one.", tools: ["OpenFE", "BioSimSpace", "FoldX", "alchemlyb", "GROMACS"] }),
+      S("Check the protein still folds", "A mutation that destroys binding may also destabilise the protein, which changes what resistance even means for that variant.", { tools: ["FoldX", "PyRosetta", "ImmuneBuilder"] }),
+      S("Design against the variant, not around it", "Two routes: find contacts the mutation cannot touch, or accept a narrower compound and pair it. Decide which deliberately rather than drifting into one.", { gate: "Name the interaction your redesign depends on, and check it exists in both wild-type and mutant.", tools: ["CReM", "RDKit", "SeeSAR", "Fragmenstein", "REINVENT4"] }),
+      S("Measure against both", "Potency on wild-type alone hides the problem. The pair is the readout from here on.", { gate: "Every assay reports wild-type and mutant together, with the fold-shift.", tools: ["ChEMBL", "BindingDB"] }),
     ],
   },
   "hit-discovery": {

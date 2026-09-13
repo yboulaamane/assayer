@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,944 tools for medicinal and computational chemistry, plus 14
+A catalogue of 3,944 tools for medicinal and computational chemistry, plus 16
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -63,7 +63,7 @@ that remembers where it came from.
 
 ## The protocols
 
-14 of them, 91 steps. Each protocol says what decision it supports and when to
+16 of them, 104 steps. Each protocol says what decision it supports and when to
 walk away. Each step says what to do, why, which tools, and the gate it has to
 pass. 28 steps also name the specific way that step usually goes wrong.
 
@@ -83,7 +83,11 @@ gate is wrong, open an issue.
 
 Covered: hit discovery, lead optimisation, generative design, fragment-based
 discovery, selectivity, free energy, degraders, ADMET, conformational sampling,
-MD stability, retrosynthesis, target triage, structure selection, antibodies.
+MD stability, retrosynthesis, target triage, structure selection, antibodies,
+property-model building, resistance and mutation effects.
+
+When a question matches none of them, the page says so and lists what it does
+cover, rather than presenting the closest guess as an answer.
 
 ## Structure ranking
 

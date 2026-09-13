@@ -1,5 +1,5 @@
 import { icon } from "./icons.js";
-import { resolveQuery, findTarget, findStructures, alphafold, buildPlan, planToMarkdown } from "./workflow.js";
+import { resolveQuery, findTarget, findStructures, alphafold, buildPlan, planToMarkdown, PROTOCOL_LIST } from "./workflow.js";
 
 const app = document.getElementById("app");
 let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
@@ -466,6 +466,13 @@ async function drawPlan(q) {
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
+    ${parsed.matched === false ? `<div class="nomatch">
+      <b>Nothing matched that question.</b> Assayer plans a fixed set of workflows, and yours did not
+      land on one, so what follows is the closest guess rather than an answer. Try naming the task
+      directly, or pick one:
+      <div class="minitools" style="margin-top:10px">${PROTOCOL_LIST().map((p) =>
+        `<a class="minitool" style="--h:200" href="#/workflow?q=${encodeURIComponent(p.label)}">${esc(p.label)}</a>`).join("")}</div>
+    </div>` : ""}
     ${plan.decision || plan.stop ? `<div class="frame">
       ${plan.decision ? `<div class="dec"><span class="lab">This decides</span>${esc(plan.decision)}</div>` : ""}
       ${plan.stop ? `<div class="kill"><span class="lab">Stop if</span>${esc(plan.stop)}</div>` : ""}
@@ -539,7 +546,8 @@ async function drawPlan(q) {
   }
 
   // The protocol is fixed; this is the part that knows about your target.
-  tailorPlan(plan, parsed, target, structures);
+  // Skip it when nothing matched: commentary on a guess is worse than none.
+  if (parsed.matched !== false) tailorPlan(plan, parsed, target, structures);
 
   const md = () => planToMarkdown(plan, target, structures);
   document.getElementById("dl").onclick = () => {
