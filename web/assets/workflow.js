@@ -59,6 +59,24 @@ const ORGANISMS = [
   [["drosophila", "fruit fly"], 7227, "Drosophila melanogaster"],
   [["c. elegans", "caenorhabditis"], 6239, "Caenorhabditis elegans"],
   [["candida"], 237561, "Candida albicans"],
+  [["honey bee", "honeybee", "apis mellifera", "bee"], 7460, "Apis mellifera"],
+  [["dog", "canine", "beagle"], 9615, "Canis lupus familiaris"],
+  [["rabbit"], 9986, "Oryctolagus cuniculus"],
+  [["pig", "porcine", "swine"], 9823, "Sus scrofa"],
+  [["monkey", "macaque", "cynomolgus"], 9544, "Macaca mulatta"],
+  [["guinea pig"], 10141, "Cavia porcellus"],
+  [["hamster", "cho cell"], 10029, "Cricetulus griseus"],
+  [["mosquito", "anopheles"], 7165, "Anopheles gambiae"],
+  [["aedes"], 7159, "Aedes aegypti"],
+  [["daphnia"], 6668, "Daphnia pulex"],
+  [["tribolium", "flour beetle"], 7070, "Tribolium castaneum"],
+  [["xenopus", "frog"], 8355, "Xenopus laevis"],
+  [["chicken", "avian"], 9031, "Gallus gallus"],
+  [["cow", "bovine", "cattle"], 9913, "Bos taurus"],
+  [["trypanosoma", "trypanosome"], 5691, "Trypanosoma brucei"],
+  [["leishmania"], 5671, "Leishmania major"],
+  [["schistosoma"], 6183, "Schistosoma mansoni"],
+  [["pseudomonas"], 287, "Pseudomonas aeruginosa"],
   [["staph", "staphylococcus", "aureus", "mrsa"], 1280, "Staphylococcus aureus"],
 ];
 
@@ -66,6 +84,9 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
   "AN", "IS", "ARE", "WANT", "NEED", "FIND", "HOW", "WHAT", "CAN", "DO", "DNA", "RNA", "AI", "ML",
   "PDB", "MD", "FEP", "SAR", "PK", "US", "IT", "BE", "OR", "AT", "SO", "IF", "NEW", "ITS",
   "ADMET", "ADME", "HERG", "QSAR", "RMSD", "IC50", "EC50", "LLM", "GPU", "CPU", "HTS", "SMILES",
+  // family names, not genes — only meaningful with their number attached
+  "CYP", "UGT", "GST", "SULT", "ABC", "SLC", "PDE", "HDAC", "GPCR", "TRP", "HSP",
+  "CES", "FMO", "NAT", "MRP", "OATP", "AKR", "NQO",
   "THIS", "THAT", "MY", "SET", "ALL", "ANY", "BEST", "GOOD",
   "PROTAC", "PROTACS", "TPD", "FBDD", "FEP", "RBFE", "ABFE", "DEL", "HTS", "SPR",
   "ITC", "NMR", "SAR", "MMP", "LE", "LLE", "DMSO", "E3"]);
@@ -88,8 +109,14 @@ const ALIASES = {
   "1a2": "CYP1A2", "2b6": "CYP2B6", "3a5": "CYP3A5",
 };
 
+// Gene families are written with a space as often as not ("CYP 9Q3", "UGT 1A1").
+// Rejoin them before token extraction, or the family name alone becomes the
+// target — and a bare family name resolves to something unrelated: "CYP" hits
+// cyclophilin, not cytochrome P450.
+const FAMILY_SPLIT = /\b([A-Z]{2,6})\s+(\d[A-Z0-9]{0,5})\b/g;
+
 export function parseQuery(raw) {
-  const q = (raw || "").trim();
+  const q = (raw || "").replace(FAMILY_SPLIT, "$1$2").trim();
   const low = q.toLowerCase();
 
   // Short acronyms carry more signal than their length suggests: "FEP" names a
@@ -195,15 +222,22 @@ export async function findTarget(name, organism) {
   const esc = name.replace(/"/g, "");
   const org = organism ? ` AND organism_id:${organism.id}` : "";
   const fields = "accession,id,protein_name,gene_names,organism_name,length";
+  // Widen in steps: curated and in-species first, then TrEMBL, then drop the
+  // species filter. Insisting on reviewed:true returns nothing for most
+  // non-model organisms — every insect P450 lives in TrEMBL.
   const tries = [
-    `(gene:${esc} OR protein_name:"${esc}")${org} AND reviewed:true`,
-    `${esc}${org} AND reviewed:true`,
-    `${esc} AND reviewed:true`,
+    [`(gene:${esc} OR protein_name:"${esc}")${org} AND reviewed:true`, true],
+    [`(gene:${esc} OR protein_name:"${esc}")${org}`, true],
+    [`${esc}${org}`, true],
+    [`(gene:${esc} OR protein_name:"${esc}") AND reviewed:true`, false],
+    [`(gene:${esc} OR protein_name:"${esc}")`, false],
+    [`${esc} AND reviewed:true`, false],
+    [esc, false],
   ];
-  for (const q of tries) {
+  for (const [q, inSpecies] of tries) {
     const d = await jget(`${UNIPROT}/search?query=${encodeURIComponent(q)}&fields=${fields}&size=5&format=json`);
     if (d.results && d.results.length) {
-      return d.results.map((r) => ({
+      const hits = d.results.map((r) => ({
         accession: r.primaryAccession,
         id: r.uniProtkbId,
         name: r.proteinDescription?.recommendedName?.fullName?.value
@@ -212,6 +246,9 @@ export async function findTarget(name, organism) {
         organism: r.organism?.scientificName || null,
         length: r.sequence?.length || null,
       }));
+      // Tell the caller when we had to leave the requested species behind.
+      hits.droppedOrganism = Boolean(organism) && !inSpecies;
+      return hits;
     }
   }
   return [];
