@@ -63,7 +63,12 @@ const PROVIDERS = {
       contents: [{ parts: [{ text: PROMPT + q }] }],
       generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 200 },
     }),
-    text: (d) => d?.candidates?.[0]?.content?.parts?.[0]?.text,
+    text: (d) =>
+      (d?.candidates?.[0]?.content?.parts || [])
+        .filter((p) => typeof p.text === "string" && !p.thought)
+        .map((p) => p.text)
+        .join("")
+        .trim(),
   },
   groq: {
     model: "llama-3.3-70b-versatile",
@@ -140,12 +145,25 @@ export default async function handler(req) {
     return json({ error: `upstream ${upstream.status}`, model: used, detail, fallback: true }, 502);
   }
 
-  let parsed;
+  let parsed, raw = "";
   try {
-    const raw = provider.text(await upstream.json());
-    parsed = JSON.parse(String(raw).replace(/^```(?:json)?|```$/g, "").trim());
-  } catch {
-    return json({ error: "model did not return usable JSON", fallback: true }, 502);
+    raw = provider.text(await upstream.json()) || "";
+    const cleaned = String(raw).replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Some models wrap the object in prose however firmly you ask them not to.
+      const block = cleaned.match(/\{[\s\S]*\}/);
+      if (!block) throw new Error("no JSON object in response");
+      parsed = JSON.parse(block[0]);
+    }
+  } catch (e) {
+    return json({
+      error: "model did not return usable JSON",
+      detail: String(raw).slice(0, 200) || `(empty response: ${e.message})`,
+      model: used,
+      fallback: true,
+    }, 502);
   }
 
   // Only ever hand back a protocol we actually have.
