@@ -419,6 +419,7 @@ async function drawPlan(q) {
       ${plan.stop ? `<div class="kill"><span class="lab">Stop if</span>${esc(plan.stop)}</div>` : ""}
     </div>` : ""}
     <div id="target-box"></div>
+    <div id="tailor-slot"></div>
     <div class="plan">${plan.steps.map((s, i) => `
       <div class="step">
         <div class="rail"><div class="dot">${i + 1}</div><div class="line"></div></div>
@@ -485,6 +486,9 @@ async function drawPlan(q) {
     }
   }
 
+  // The protocol is fixed; this is the part that knows about your target.
+  tailorPlan(plan, parsed, target, structures);
+
   const md = () => planToMarkdown(plan, target, structures);
   document.getElementById("dl").onclick = () => {
     const b = new Blob([md()], { type: "text/markdown" });
@@ -498,6 +502,78 @@ async function drawPlan(q) {
     e.target.textContent = "Copied";
     setTimeout(() => (e.target.textContent = "Copy protocol"), 1400);
   };
+}
+
+async function tailorPlan(plan, parsed, target, structures) {
+  const slot = document.getElementById("tailor-slot");
+  if (!slot) return;
+  const tools = [...new Set(plan.steps.flatMap((s) => s.tools || []))].slice(0, 60);
+  slot.innerHTML = `<div class="tailor"><div class="lab">For your case
+    <span class="count-note" style="text-transform:none;letter-spacing:0">thinking…</span></div>
+    <p id="tailor-text"></p></div>`;
+  const para = () => document.getElementById("tailor-text");
+
+  let res;
+  try {
+    res = await fetch("api/tailor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: parsed.query, label: plan.label,
+        steps: plan.steps.map((s) => s.title), tools,
+        target: target && { name: target.name, gene: target.gene, organism: target.organism,
+                            length: target.length, accession: target.accession },
+        structures: (structures || []).slice(0, 3).map((s) => ({
+          id: s.id, res: s.res, rfree: s.rfree, holo: s.holo,
+          ligand: s.ligands?.[0]?.id || null, title: (s.title || "").slice(0, 90) })),
+      }),
+    });
+    if (!res.ok || !res.body) throw new Error(String(res.status));
+  } catch {
+    slot.innerHTML = "";   // no key, no function, offline — just omit the section
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let text = "";
+  slot.querySelector(".count-note")?.remove();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    text += dec.decode(value, { stream: true });
+    para().innerHTML = paragraphs(text) + `<span class="caret"></span>`;
+  }
+  if (!text.trim()) { slot.innerHTML = ""; return; }
+
+  // Link any tool it named to its catalogue entry; that is also the check that
+  // it only named real ones.
+  para().innerHTML = paragraphs(text);
+  slot.querySelector(".tailor").insertAdjacentHTML("beforeend",
+    `<div class="src">Written for this question by the model, from the protocol above and the
+     resolved target. The steps, gates and tool list are curated and unchanged.</div>`);
+  linkTools(para());
+}
+
+function paragraphs(text) {
+  return text.trim().split(/\n{2,}/).map((p) => esc(p.trim())).filter(Boolean)
+    .join("</p><p>");
+}
+
+function linkTools(el) {
+  const names = [...BY_NAME.keys()].filter((n) => n.length > 3);
+  let html = el.innerHTML;
+  const seen = new Set();
+  for (const t of DATA.tools) {
+    const n = t.name;
+    if (!n || n.length < 4 || seen.has(n.toLowerCase())) continue;
+    const re = new RegExp(`(?<![\\w/-])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "g");
+    if (!re.test(html)) continue;
+    seen.add(n.toLowerCase());
+    html = html.replace(re, `<a class="tool" href="${window.updateTool(t.id)}">${esc(n)}</a>`);
+    if (seen.size > 12) break;
+  }
+  el.innerHTML = html;
 }
 
 function renderStructures(entries, total, af, target) {
