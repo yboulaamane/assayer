@@ -22,7 +22,8 @@ const INTENTS = [
     "applicability domain", "predictive model"]],
   ["resistance", ["resistance", "resistant", "mutation", "mutant", "variant effect", "escape",
     "point mutation", "loses activity in the", "gatekeeper mutation", "\u0394\u0394g of mutation",
-    "stability of a mutation"]],
+    "stability of a mutation", "missense", "variants", "polymorphism", "snp",
+    "mutants vs", "versus wild", "vs wild", "wild-type", "wildtype", "allele"]],
   ["hit-discovery", ["inhibitor", "inhibitors", "hit", "hits", "screen", "screening", "virtual screening",
     "vs campaign", "find compounds", "find molecules", "dock", "docking", "binders", "actives",
     "hit finding", "hit identification", "antagonist", "agonist", "block"]],
@@ -96,7 +97,10 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
   "CES", "FMO", "NAT", "MRP", "OATP", "AKR", "NQO",
   "THIS", "THAT", "MY", "SET", "ALL", "ANY", "BEST", "GOOD",
   "PROTAC", "PROTACS", "TPD", "FBDD", "FEP", "RBFE", "ABFE", "DEL", "HTS", "SPR",
-  "ITC", "NMR", "SAR", "MMP", "LE", "LLE", "DMSO", "E3"]);
+  "ITC", "NMR", "SAR", "MMP", "LE", "LLE", "DMSO", "E3",
+  // experimental shorthand, not proteins: "mutants vs WT" is not a request
+  // about Wilms tumor protein
+  "WT", "MT", "KO", "KD", "SNP", "SNPS", "VUS", "INDEL", "VS", "CTRL", "DMSO"]);
 
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
