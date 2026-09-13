@@ -107,6 +107,14 @@ const ALIASES = {
   // Cytochromes are almost always written as the bare isoform in conversation.
   "3a4": "CYP3A4", "2d6": "CYP2D6", "2c9": "CYP2C9", "2c19": "CYP2C19",
   "1a2": "CYP1A2", "2b6": "CYP2B6", "3a5": "CYP3A5",
+  // enzyme and family shorthand that does not match a gene symbol
+  "dhfr": "dihydrofolate reductase", "mtor": "MTOR", "aurora": "AURKA",
+  "aurora a": "AURKA", "aurora b": "AURKB", "pi3k alpha": "PIK3CA",
+  "pi3k beta": "PIK3CB", "pi3k": "PIK3CA", "beta-2 adrenergic": "ADRB2",
+  "beta2 adrenergic": "ADRB2", "thymidylate synthase": "TYMS",
+  "hmg-coa reductase": "HMGCR", "topoisomerase ii": "TOP2A",
+  "carbonic anhydrase": "CA2", "mao-b": "MAOB", "mao-a": "MAOA",
+  "5-lox": "ALOX5", "sglt2": "SLC5A2", "dpp-4": "DPP4", "dpp4": "DPP4",
 };
 
 // Gene families are written with a space as often as not ("CYP 9Q3", "UGT 1A1").
@@ -153,6 +161,11 @@ export function parseQuery(raw) {
     const m = q.match(/\b(?:of|for|against|targeting|inhibit(?:ing)?)\s+([A-Za-z0-9][\w-]{2,24})/i);
     if (m && !STOP.has(m[1].toUpperCase())) target = m[1];
   }
+  // Drug discovery means human unless told otherwise. Without this, UniProt's
+  // relevance ranking picks the species — "EGFR" alone returns the honey bee
+  // orthologue, which is a silent, confident, wrong answer.
+  if (target && !organism) organism = { id: 9606, label: "Homo sapiens", assumed: true };
+
   return { query: q, intent, organism, target, score, via: "keywords" };
 }
 
@@ -221,22 +234,50 @@ async function jpost(url, body) {
 export async function findTarget(name, organism) {
   const esc = name.replace(/"/g, "");
   const org = organism ? ` AND organism_id:${organism.id}` : "";
-  const fields = "accession,id,protein_name,gene_names,organism_name,length";
+  const fields = "accession,id,protein_name,gene_names,organism_name,organism_id,length";
   // Widen in steps: curated and in-species first, then TrEMBL, then drop the
   // species filter. Insisting on reviewed:true returns nothing for most
   // non-model organisms — every insect P450 lives in TrEMBL.
-  const tries = [
-    [`(gene:${esc} OR protein_name:"${esc}")${org} AND reviewed:true`, true],
-    [`(gene:${esc} OR protein_name:"${esc}")${org}`, true],
-    [`${esc}${org}`, true],
-    [`(gene:${esc} OR protein_name:"${esc}") AND reviewed:true`, false],
-    [`(gene:${esc} OR protein_name:"${esc}")`, false],
-    [`${esc} AND reviewed:true`, false],
-    [esc, false],
-  ];
+  const precise = `(gene:${esc} OR protein_name:"${esc}")`;
+  const tries = organism?.assumed
+    // Human was assumed, not asked for. Apply it only to precise gene/name
+    // matches: combining a guessed species with a free-text search returns
+    // whatever human protein merely mentions the term — "spike glycoprotein"
+    // lands on a human aminopeptidase that happens to be a coronavirus receptor.
+    ? [
+        [`${precise}${org} AND reviewed:true`, true],
+        [`${precise}${org}`, true],
+        [`${precise} AND reviewed:true`, false],
+        [precise, false],
+        [`${esc} AND reviewed:true`, false],
+        [esc, false],
+      ]
+    : [
+        [`${precise}${org} AND reviewed:true`, true],
+        [`${precise}${org}`, true],
+        [`${esc}${org}`, true],
+        [`${precise} AND reviewed:true`, false],
+        [precise, false],
+        [`${esc} AND reviewed:true`, false],
+        [esc, false],
+      ];
   for (const [q, inSpecies] of tries) {
     const d = await jget(`${UNIPROT}/search?query=${encodeURIComponent(q)}&fields=${fields}&size=5&format=json`);
     if (d.results && d.results.length) {
+      const scoreHit = (r) => {
+        const gene = (r.genes?.[0]?.geneName?.value || "").toLowerCase();
+        const nm = (r.proteinDescription?.recommendedName?.fullName?.value || "").toLowerCase();
+        const want = esc.toLowerCase();
+        let sc = 0;
+        if (gene === want) sc += 6;                       // exact gene symbol
+        else if (gene.startsWith(want)) sc += 3;
+        if (nm === want) sc += 4;
+        else if (nm.includes(want)) sc += 1;
+        if (r.entryType && /reviewed/i.test(r.entryType)) sc += 2;   // Swiss-Prot
+        if (organism && r.organism?.taxonId === organism.id) sc += 3;
+        return sc;
+      };
+      d.results.sort((a, b) => scoreHit(b) - scoreHit(a));
       const hits = d.results.map((r) => ({
         accession: r.primaryAccession,
         id: r.uniProtkbId,

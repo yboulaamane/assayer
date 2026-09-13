@@ -9,7 +9,8 @@
 // Configure with environment variables in Vercel:
 //   LLM_API_KEY   required — the provider key
 //   LLM_PROVIDER  gemini (default) | groq | openrouter
-//   LLM_MODEL     optional override, e.g. gemini-2.5-flash / llama-3.3-70b-versatile
+//   LLM_MODEL     optional override, e.g. gemini-3.6-flash / llama-3.3-70b-versatile
+//                 (set this to pin a model and skip the fallback ladder)
 //
 // With no key set the endpoint returns 501 and the page silently falls back to
 // its keyword router, which is also what happens on quota exhaustion.
@@ -51,7 +52,11 @@ Question: `;
 
 const PROVIDERS = {
   gemini: {
-    model: "gemini-2.5-flash",
+    model: "gemini-3.6-flash",
+    // Model names churn: Google retires them for new projects with a 404 whose
+    // message names the replacement. Try the next one rather than silently
+    // dropping to keyword routing for months.
+    fallbacks: ["gemini-2.5-flash", "gemini-flash-latest"],
     url: (m, k) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,
     headers: () => ({ "Content-Type": "application/json" }),
     body: (m, q) => ({
@@ -62,6 +67,7 @@ const PROVIDERS = {
   },
   groq: {
     model: "llama-3.3-70b-versatile",
+    fallbacks: ["llama-3.1-8b-instant"],
     url: () => "https://api.groq.com/openai/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
@@ -73,6 +79,7 @@ const PROVIDERS = {
   },
   openrouter: {
     model: "meta-llama/llama-3.3-70b-instruct:free",
+    fallbacks: [],
     url: () => "https://openrouter.ai/api/v1/chat/completions",
     headers: (k) => ({ "Content-Type": "application/json", Authorization: `Bearer ${k}` }),
     body: (m, q) => ({
@@ -107,23 +114,30 @@ export default async function handler(req) {
   if (typeof query !== "string" || !query.trim()) return json({ error: "empty query" }, 400);
   query = query.slice(0, 300); // the router needs a question, not a document
 
-  const abort = AbortSignal.timeout(6000); // the page must not hang on a slow model
-  let upstream;
-  try {
-    upstream = await fetch(provider.url(model, key), {
-      method: "POST",
-      headers: provider.headers(key),
-      body: JSON.stringify(provider.body(model, query)),
-      signal: abort,
-    });
-  } catch (e) {
-    return json({ error: `upstream unreachable: ${e.name}`, fallback: true }, 502);
+  const candidates = process.env.LLM_MODEL ? [model] : [model, ...(provider.fallbacks || [])];
+  let upstream, detail = "", used = model;
+
+  for (const candidate of candidates) {
+    used = candidate;
+    try {
+      upstream = await fetch(provider.url(candidate, key), {
+        method: "POST",
+        headers: provider.headers(key),
+        body: JSON.stringify(provider.body(candidate, query)),
+        signal: AbortSignal.timeout(6000), // the page must not hang on a slow model
+      });
+    } catch (e) {
+      return json({ error: `upstream unreachable: ${e.name}`, fallback: true }, 502);
+    }
+    if (upstream.ok) break;
+    detail = (await upstream.text()).slice(0, 200);
+    // 404 means this model is retired for this project — try the next name.
+    // Anything else (401 bad key, 429 quota spent) will not be fixed by retrying.
+    if (upstream.status !== 404) break;
   }
 
   if (!upstream.ok) {
-    const detail = (await upstream.text()).slice(0, 200);
-    // 429 here means the free tier is spent for the day — the page falls back.
-    return json({ error: `upstream ${upstream.status}`, detail, fallback: true }, 502);
+    return json({ error: `upstream ${upstream.status}`, model: used, detail, fallback: true }, 502);
   }
 
   let parsed;
@@ -142,6 +156,7 @@ export default async function handler(req) {
     target: typeof parsed.target === "string" && parsed.target.trim() ? parsed.target.trim() : null,
     organism_taxid: Number.isInteger(parsed.organism_taxid) ? parsed.organism_taxid : null,
     reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 80) : null,
+    model: used,
     via: "llm",
   });
 }
