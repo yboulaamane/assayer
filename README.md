@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,960 tools for medicinal and computational chemistry, plus 14
+A catalogue of 3,956 tools for medicinal and computational chemistry, plus 14
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -49,7 +49,7 @@ because the first command you need is rarely the one in the README's quick start
 |---|--:|---|
 | [bio.tools](https://bio.tools), 12 drug-discovery EDAM topics | 3,092 | CC BY 4.0 |
 | GitHub repos with 30+ stars across 40 topics | 867 | public metadata |
-| Written for this project | 253 | ours |
+| Written for this project | 243 | ours |
 | My own starred repos, filtered | 130 | ours |
 
 bio.tools gives breadth. I filtered it to the topics a chemist would care about

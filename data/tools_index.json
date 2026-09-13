@@ -319,182 +319,6 @@
   {
     "source": "curated",
     "stars": null,
-    "stage": "omics",
-    "name": "Bioconductor",
-    "description": "The R ecosystem for genomics: ~2,300 curated, versioned and interoperable analysis packages.",
-    "url": "https://bioconductor.org",
-    "code_url": null,
-    "paper_url": null,
-    "categories": [
-      "r",
-      "genomics"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": null,
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "DESeq2",
-    "description": "Negative-binomial differential expression for bulk RNA-seq counts; the reference method for this step.",
-    "url": "https://bioconductor.org/packages/DESeq2/",
-    "code_url": null,
-    "paper_url": null,
-    "categories": [
-      "rna-seq",
-      "differential-expression"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": null,
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "limma",
-    "description": "Linear models with empirical Bayes moderation for microarray and, via voom, RNA-seq differential expression.",
-    "url": "https://bioconductor.org/packages/limma/",
-    "code_url": null,
-    "paper_url": null,
-    "categories": [
-      "differential-expression"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": null,
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "edgeR",
-    "description": "Count-based differential expression with robust dispersion estimation for small-replicate designs.",
-    "url": "https://bioconductor.org/packages/edgeR/",
-    "code_url": null,
-    "paper_url": null,
-    "categories": [
-      "rna-seq"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": null,
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "Seurat",
-    "description": "R toolkit for single-cell QC, clustering, integration and multimodal analysis.",
-    "url": "https://satijalab.org/seurat/",
-    "code_url": "https://github.com/satijalab/seurat",
-    "paper_url": null,
-    "categories": [
-      "single-cell",
-      "r"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "satijalab/seurat",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "scvi-tools",
-    "description": "Probabilistic deep generative models for single-cell (scVI, totalVI, scANVI) on a common API.",
-    "url": "https://scvi-tools.org",
-    "code_url": "https://github.com/scverse/scvi-tools",
-    "paper_url": null,
-    "categories": [
-      "single-cell",
-      "deep-learning"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "scverse/scvi-tools",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "Salmon",
-    "description": "Fast selective-alignment transcript quantification from RNA-seq reads.",
-    "url": "https://combine-lab.github.io/salmon/",
-    "code_url": "https://github.com/combine-lab/salmon",
-    "paper_url": null,
-    "categories": [
-      "rna-seq",
-      "quantification"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "combine-lab/salmon",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "STAR",
-    "description": "Splice-aware RNA-seq read aligner, the standard for gene-level alignment.",
-    "url": "https://github.com/alexdobin/STAR",
-    "code_url": "https://github.com/alexdobin/star",
-    "paper_url": null,
-    "categories": [
-      "alignment"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "alexdobin/star",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "samtools",
-    "description": "Core toolkit for SAM/BAM/CRAM manipulation underneath nearly every sequencing pipeline.",
-    "url": "https://www.htslib.org",
-    "code_url": "https://github.com/samtools/samtools",
-    "paper_url": null,
-    "categories": [
-      "sequencing"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "samtools/samtools",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
-    "stage": "omics",
-    "name": "CellProfiler",
-    "description": "Modular image analysis for high-content screening: segmentation, feature extraction, per-cell measurements.",
-    "url": "https://cellprofiler.org",
-    "code_url": "https://github.com/cellprofiler/cellprofiler",
-    "paper_url": null,
-    "categories": [
-      "imaging",
-      "hcs"
-    ],
-    "year": null,
-    "license": "open-source",
-    "repo": "cellprofiler/cellprofiler",
-    "also_in": []
-  },
-  {
-    "source": "curated",
-    "stars": null,
     "stage": "structure",
     "name": "RCSB PDB",
     "description": "The experimental structure archive plus search, validation and ligand chemistry services.",
@@ -2461,8 +2285,8 @@
     "source": "curated",
     "stars": null,
     "stage": "docking",
-    "name": "Vina-GPU 2.1 / QuickVina2-GPU",
-    "description": "GPU-parallel Vina variants giving 1-2 orders of magnitude speedup for large screens.",
+    "name": "Vina-GPU 2.1",
+    "description": "GPU-parallel Vina, and the QuickVina2-GPU variant alongside it, giving one to two orders of magnitude speedup on large screens.",
     "url": "https://github.com/DeltaGroupNJUPT/Vina-GPU-2.1",
     "code_url": "https://github.com/deltagroupnjupt/vina-gpu-2.1",
     "paper_url": null,
@@ -4676,8 +4500,8 @@
     "source": "curated",
     "stars": null,
     "stage": "viz",
-    "name": "py3Dmol / 3Dmol.js",
-    "description": "Inline 3D structure rendering in notebooks; the quickest way to eyeball docking poses in Python.",
+    "name": "3Dmol.js",
+    "description": "WebGL structure viewer, and through its py3Dmol binding the quickest way to eyeball docking poses inside a notebook.",
     "url": "https://github.com/3dmol/3Dmol.js",
     "code_url": "https://github.com/3dmol/3dmol.js",
     "paper_url": null,
