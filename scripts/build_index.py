@@ -84,6 +84,53 @@ def from_biotools(rows):
         }
 
 
+# A personal star list is not a curated catalogue: it collects video
+# downloaders, Windows activators and image generators alongside the science.
+# Denying the recognisable off-domain beats trying to prove relevance, because
+# plenty of real tools (RoseTTAFold-All-Atom, TankBind, QVina) carry no
+# description at all and would fail any positive test.
+OFF_DOMAIN = re.compile(
+    r"(spotify|youtube|yt-dlp|downloader|activation script|activator|windows and office|"
+    r"stable.?diffusion|midjourney|fooocus|chatgpt desktop|awesome chatgpt|prompts?\.chat|"
+    r"stock photograph|singing voice|voice conversion|job search|job application|"
+    r"wikipedia|wikitok|tiktok|\bgame\b|emulator|torrent|vpn|crack|patcher)", re.I)
+
+# Domain signal in the name, description, topics or owner. Deliberately broad:
+# a false keep is a stray card, a false drop loses a real tool.
+IN_DOMAIN = re.compile(
+    r"(chem|mol|drug|protein|ligand|dock|pharma|bio|compound|smiles|rdkit|"
+    r"admet|adme|qsar|qspr|pocket|bind|crystal|\bpdb\b|assay|screen|medicin|medicine|"
+    r"genom|peptide|enzyme|alphafold|rosetta|pymol|vina|masif|fold|dynamics|\bmd\b|"
+    r"gromacs|amber|openmm|conformer|scaffold|toxic|dili|cadd|fingerprint|descriptor|"
+    r"cheminfo|bioinfo|life ?science|biolog|clinical|therapeut|antibod|\brna\b|\bdna\b|"
+    r"omics|spectro|\bnmr\b|retrosynth|synthes|antismash|circos|traject|equivariant|"
+    r"virtual screen|[\b_]vs\b|structur|lab\b)", re.I)
+
+# Repos with no description and no topics that are nonetheless real: nothing in
+# the metadata can rescue these, so they are named. Add to this rather than
+# loosening the pattern, which starts letting video downloaders back in.
+KEEP_ANYWAY = {
+    "yujie-0202/pbcnet2.0",      # protein-ligand binding affinity network
+    "fimrie/densefs",            # dense feature structure-based scoring
+    "anyolabs/molai-publication",
+    "baker-laboratory/rosettafold-all-atom",
+    "lpdi-epfl/rosettasurf",
+    "lpdi-epfl/masif_seed",
+}
+
+
+def science_star(r):
+    hay = " ".join(filter(None, [
+        r.get("full_name"), r.get("description"), r.get("homepage"),
+        " ".join(r.get("topics") or []),
+    ]))
+    if (r.get("full_name") or "").lower() in KEEP_ANYWAY:
+        return True
+    if OFF_DOMAIN.search(hay):
+        return False
+    return bool(IN_DOMAIN.search(hay))
+
+
 def from_github_topics(rows):
     for r in rows:
         yield {
@@ -103,7 +150,12 @@ def from_github_topics(rows):
 
 
 def from_stars(rows, user):
-    for r in rows:
+    kept = [r for r in rows if science_star(r)]
+    dropped = [r["full_name"] for r in rows if r not in kept]
+    if dropped:
+        print(f"  {len(dropped)} starred repos excluded as off-domain: "
+              + ", ".join(sorted(dropped)[:6]) + (" …" if len(dropped) > 6 else ""))
+    for r in kept:
         yield {
             "source": f"github-stars:{user}",
             "stars": r.get("stars"),

@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,973 tools for medicinal and computational chemistry, plus 14
+A catalogue of 3,960 tools for medicinal and computational chemistry, plus 14
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -50,7 +50,7 @@ because the first command you need is rarely the one in the README's quick start
 | [bio.tools](https://bio.tools), 12 drug-discovery EDAM topics | 3,092 | CC BY 4.0 |
 | GitHub repos with 30+ stars across 40 topics | 867 | public metadata |
 | Written for this project | 253 | ours |
-| My own starred repos | 148 | ours |
+| My own starred repos, filtered | 130 | ours |
 
 bio.tools gives breadth. I filtered it to the topics a chemist would care about
 rather than taking the whole registry, which is mostly sequence analysis. The
@@ -160,8 +160,11 @@ generated, so don't edit it by hand.
 - **bio.tools skews classical.** It's thin on recent ML tooling, which lands on
   GitHub long before it reaches any registry. The GitHub and curated layers are
   what fill that gap.
-- **My starred repos are a reading list**, not a curated set. `yt-dlp` is in
-  there next to the cheminformatics.
+- **My starred repos are a reading list**, so `build_index.py` filters them.
+  18 are excluded as off-domain (video downloaders, image generators, awesome
+  lists). The filter denies the recognisable rather than demanding proof of
+  relevance, because several real tools carry no description or topics at all
+  and would fail any positive test. Those few are named in `KEEP_ANYWAY`.
 - **Some sites block automated requests.** DrugBank, GeneCards, Mcule and a few
   others return 403 to the link checker even from a browser user-agent. They're
   listed as bot-protected so the check doesn't cry wolf every run.
