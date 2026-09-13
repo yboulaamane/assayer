@@ -209,6 +209,11 @@ def norm(s):
     return re.sub(r"[^a-z0-9]+", " ", s).strip()
 
 
+def is_repo_name(s):
+    """True for "owner/repo", false for a display name like "py3Dmol / 3Dmol.js"."""
+    return bool(re.match(r"^[\w.-]+/[\w.-]+$", (s or "").strip()))
+
+
 def slugify(s):
     s = unicodedata.normalize("NFKD", (s or "")).encode("ascii", "ignore").decode()
     s = re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower()
@@ -310,11 +315,25 @@ def main():
         row["_stage"], row["_how"] = stage, how
         groups.setdefault(merge_key(row), []).append(row)
 
+    # A curated entry keys on repo+name so two curated tools from one repository
+    # stay apart (fpocket/mdpocket). That also keeps it away from the scraped
+    # row for the same repo, so rejoin them here when only one curated entry
+    # claims that repository.
+    by_repo = {}
+    for key in list(groups):
+        if key.startswith("repo:"):
+            by_repo.setdefault(key.split("#")[0], []).append(key)
+    for bare, keys in by_repo.items():
+        curated_keys = [k for k in keys if "#" in k]
+        if bare in groups and len(curated_keys) == 1:
+            groups[bare] += groups.pop(curated_keys[0])
+
     # Second pass: a tool listed with a repo in one source and only a homepage
     # in another lands in two groups. Fold groups that share a canonical name.
     canon = {}
     for key, members in list(groups.items()):
-        names = [norm(m.get("name")) for m in members if m.get("name") and "/" not in m["name"]]
+        names = [norm(m.get("name")) for m in members
+                 if m.get("name") and not is_repo_name(m["name"])]
         # A group whose only names are "owner/repo" still has an identity: the
         # repo's own name. Without this, openbabel/openbabel never folds into
         # Open Babel.
@@ -340,8 +359,8 @@ def main():
         members.sort(key=lambda r: (r["source"] != "curated", -(len(r.get("description") or ""))))
         head = members[0]
         # "owner/repo" is a fallback identity, not a name: prefer a real one
-        if "/" in (head.get("name") or ""):
-            nicer = next((m for m in members if "/" not in (m.get("name") or "")), None)
+        if is_repo_name(head.get("name")):
+            nicer = next((m for m in members if not is_repo_name(m.get("name"))), None)
             if nicer:
                 head = dict(head, name=nicer["name"])
         stages = [m["_stage"] for m in members if m["_stage"] != "other"]

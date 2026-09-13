@@ -11,7 +11,7 @@
       "target-validation",
       "genetics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DepMap",
@@ -25,7 +25,7 @@
       "essentiality",
       "cancer"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Pharos / TCRD",
@@ -38,7 +38,7 @@
     "tags": [
       "druggability"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "UniProt",
@@ -52,7 +52,7 @@
       "sequence",
       "annotation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Ensembl",
@@ -65,7 +65,7 @@
     "tags": [
       "genomics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Human Protein Atlas",
@@ -79,7 +79,7 @@
       "expression",
       "tissue"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GTEx Portal",
@@ -93,7 +93,7 @@
       "expression",
       "eqtl"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "cBioPortal",
@@ -107,7 +107,7 @@
       "cancer",
       "genomics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "STRING",
@@ -121,7 +121,7 @@
       "ppi",
       "network"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "BioGRID",
@@ -134,7 +134,7 @@
     "tags": [
       "ppi"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OmniPath",
@@ -148,7 +148,7 @@
       "network",
       "signalling"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Reactome",
@@ -161,7 +161,7 @@
     "tags": [
       "pathway"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "KEGG",
@@ -174,7 +174,7 @@
     "tags": [
       "pathway"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GSEA / MSigDB",
@@ -188,7 +188,7 @@
       "enrichment",
       "gene-sets"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Enrichr",
@@ -201,7 +201,7 @@
     "tags": [
       "enrichment"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "g:Profiler",
@@ -214,7 +214,7 @@
     "tags": [
       "enrichment"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DisGeNET",
@@ -227,7 +227,7 @@
     "tags": [
       "disease-association"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GeneCards",
@@ -240,143 +240,7 @@
     "tags": [
       "annotation"
     ],
-    "url_status": 200
-  },
-  {
-    "name": "Bioconductor",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "The R ecosystem for genomics: ~2,300 curated, versioned and interoperable analysis packages.",
-    "url": "https://bioconductor.org",
-    "repo": null,
-    "access": "open-source",
-    "tags": [
-      "r",
-      "genomics"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "DESeq2",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Negative-binomial differential expression for bulk RNA-seq counts; the reference method for this step.",
-    "url": "https://bioconductor.org/packages/DESeq2/",
-    "repo": null,
-    "access": "open-source",
-    "tags": [
-      "rna-seq",
-      "differential-expression"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "limma",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Linear models with empirical Bayes moderation for microarray and, via voom, RNA-seq differential expression.",
-    "url": "https://bioconductor.org/packages/limma/",
-    "repo": null,
-    "access": "open-source",
-    "tags": [
-      "differential-expression"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "edgeR",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Count-based differential expression with robust dispersion estimation for small-replicate designs.",
-    "url": "https://bioconductor.org/packages/edgeR/",
-    "repo": null,
-    "access": "open-source",
-    "tags": [
-      "rna-seq"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "Seurat",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "R toolkit for single-cell QC, clustering, integration and multimodal analysis.",
-    "url": "https://satijalab.org/seurat/",
-    "repo": "satijalab/seurat",
-    "access": "open-source",
-    "tags": [
-      "single-cell",
-      "r"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "scvi-tools",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Probabilistic deep generative models for single-cell (scVI, totalVI, scANVI) on a common API.",
-    "url": "https://scvi-tools.org",
-    "repo": "scverse/scvi-tools",
-    "access": "open-source",
-    "tags": [
-      "single-cell",
-      "deep-learning"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "Salmon",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Fast selective-alignment transcript quantification from RNA-seq reads.",
-    "url": "https://combine-lab.github.io/salmon/",
-    "repo": "combine-lab/salmon",
-    "access": "open-source",
-    "tags": [
-      "rna-seq",
-      "quantification"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "STAR",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Splice-aware RNA-seq read aligner, the standard for gene-level alignment.",
-    "url": "https://github.com/alexdobin/STAR",
-    "repo": "alexdobin/star",
-    "access": "open-source",
-    "tags": [
-      "alignment"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "samtools",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Core toolkit for SAM/BAM/CRAM manipulation underneath nearly every sequencing pipeline.",
-    "url": "https://www.htslib.org",
-    "repo": "samtools/samtools",
-    "access": "open-source",
-    "tags": [
-      "sequencing"
-    ],
-    "url_status": 200
-  },
-  {
-    "name": "CellProfiler",
-    "stage": "omics",
-    "stage_label": "Omics analysis",
-    "description": "Modular image analysis for high-content screening: segmentation, feature extraction, per-cell measurements.",
-    "url": "https://cellprofiler.org",
-    "repo": "cellprofiler/cellprofiler",
-    "access": "open-source",
-    "tags": [
-      "imaging",
-      "hcs"
-    ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RCSB PDB",
@@ -390,7 +254,7 @@
       "structures",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AlphaFold Protein Structure DB",
@@ -404,7 +268,7 @@
       "structure-prediction",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AlphaFold 3",
@@ -418,7 +282,7 @@
       "structure-prediction",
       "complexes"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Chai-1",
@@ -432,7 +296,7 @@
       "structure-prediction",
       "complexes"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MODELLER",
@@ -445,7 +309,7 @@
     "tags": [
       "homology-modelling"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SWISS-MODEL",
@@ -458,7 +322,7 @@
     "tags": [
       "homology-modelling"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MMseqs2",
@@ -472,7 +336,7 @@
       "msa",
       "search"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "HH-suite3",
@@ -486,7 +350,7 @@
       "msa",
       "remote-homology"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PDBFixer",
@@ -499,7 +363,7 @@
     "tags": [
       "preparation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PDB2PQR / APBS",
@@ -513,7 +377,7 @@
       "preparation",
       "electrostatics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PROPKA",
@@ -527,7 +391,7 @@
       "preparation",
       "pka"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Biopython",
@@ -540,7 +404,7 @@
     "tags": [
       "library"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DSSP",
@@ -553,7 +417,7 @@
     "tags": [
       "secondary-structure"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "fpocket",
@@ -567,7 +431,7 @@
       "pocket-detection",
       "druggability"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "P2Rank",
@@ -580,7 +444,7 @@
     "tags": [
       "pocket-detection"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PrankWeb",
@@ -593,7 +457,7 @@
     "tags": [
       "pocket-detection"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "CASTp",
@@ -606,7 +470,7 @@
     "tags": [
       "pocket-detection"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ProteinsPlus / DoGSiteScorer",
@@ -620,7 +484,7 @@
       "pocket-detection",
       "druggability"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RDKit",
@@ -635,7 +499,7 @@
       "descriptors",
       "fingerprints"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AutoDock Vina",
@@ -649,7 +513,7 @@
       "docking",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenMM",
@@ -664,7 +528,7 @@
       "python",
       "gpu"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Foldseek",
@@ -678,7 +542,7 @@
       "structure-search",
       "homology"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ProteinMPNN",
@@ -692,7 +556,7 @@
       "inverse-folding",
       "sequence-design"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RFdiffusion",
@@ -706,7 +570,7 @@
       "protein-design",
       "binder-design"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AiZynthFinder",
@@ -720,7 +584,7 @@
       "retrosynthesis",
       "route-planning"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ADMET-AI",
@@ -734,7 +598,7 @@
       "admet",
       "batch"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PoseBusters",
@@ -748,7 +612,7 @@
       "pose-validation",
       "benchmark"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ProLIF",
@@ -762,7 +626,7 @@
       "interactions",
       "fingerprints"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ABodyBuilder3",
@@ -776,7 +640,7 @@
       "antibody",
       "structure-prediction"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "REINVENT4",
@@ -790,7 +654,7 @@
       "generative",
       "reinforcement-learning"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DiffSBDD",
@@ -804,7 +668,7 @@
       "sbdd",
       "diffusion"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "TargetDiff",
@@ -819,7 +683,7 @@
       "diffusion",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "NeuralPLexer",
@@ -834,7 +698,7 @@
       "pose-prediction",
       "induced-fit"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "KarmaDock",
@@ -849,7 +713,7 @@
       "deep-learning",
       "speed"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SurfDock",
@@ -864,7 +728,7 @@
       "diffusion",
       "surface"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AIMNet2",
@@ -878,7 +742,7 @@
       "mlip",
       "semiempirical-replacement"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Auto3D",
@@ -893,7 +757,7 @@
       "3d-generation",
       "stereochemistry"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "mmpdb",
@@ -908,7 +772,7 @@
       "sar",
       "med-chem"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Lilly Medchem Rules",
@@ -923,7 +787,7 @@
       "triage",
       "med-chem"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Fragmenstein",
@@ -938,7 +802,7 @@
       "fbdd",
       "placement"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ScaffoldGraph",
@@ -952,7 +816,7 @@
       "scaffolds",
       "library-analysis"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MolFormer",
@@ -966,7 +830,7 @@
       "pretrained",
       "embeddings"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ChemBERTa",
@@ -981,7 +845,7 @@
       "smiles",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Chemformer",
@@ -995,7 +859,7 @@
       "retrosynthesis",
       "reaction-prediction"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenADMET",
@@ -1009,7 +873,7 @@
       "admet",
       "open-data"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PROTAC-DB",
@@ -1024,7 +888,7 @@
       "degrader",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SEA",
@@ -1038,7 +902,7 @@
       "off-target",
       "polypharmacology"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SwissBioisostere",
@@ -1053,7 +917,7 @@
       "med-chem",
       "sar"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RXNMapper",
@@ -1067,7 +931,7 @@
       "atom-mapping",
       "reaction-data"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Molecular Transformer",
@@ -1081,7 +945,7 @@
       "forward-prediction",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Retro*",
@@ -1095,7 +959,7 @@
       "retrosynthesis",
       "search"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "R-SMILES",
@@ -1109,7 +973,7 @@
       "retrosynthesis",
       "representation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RetroSim",
@@ -1124,7 +988,7 @@
       "baseline",
       "precedent"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PaRoutes",
@@ -1138,7 +1002,7 @@
       "benchmark",
       "routes"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AiZynthTrain",
@@ -1153,7 +1017,7 @@
       "training",
       "in-house"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Open Reaction Database",
@@ -1167,7 +1031,7 @@
       "reaction-data",
       "open-data"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DRFP",
@@ -1181,7 +1045,7 @@
       "reaction-fingerprint",
       "yield-prediction"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SYBA",
@@ -1194,7 +1058,7 @@
     "tags": [
       "synthetic-accessibility"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PostEra Manifold",
@@ -1209,7 +1073,7 @@
       "purchasability",
       "analogues"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Spaya",
@@ -1222,7 +1086,7 @@
     "tags": [
       "retrosynthesis"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Synthia",
@@ -1236,7 +1100,7 @@
       "retrosynthesis",
       "expert-rules"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Reaxys",
@@ -1250,7 +1114,7 @@
       "reaction-database",
       "precedent"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "eMolecules",
@@ -1264,7 +1128,7 @@
       "building-blocks",
       "suppliers"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Mcule",
@@ -1278,7 +1142,7 @@
       "building-blocks",
       "purchasable"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": null
   },
   {
     "name": "Chemspace",
@@ -1292,7 +1156,7 @@
       "building-blocks",
       "make-on-demand"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "canSAR",
@@ -1306,7 +1170,7 @@
       "druggability",
       "target-assessment"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Probe Miner",
@@ -1320,7 +1184,7 @@
       "chemical-probes",
       "tool-compounds"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "FTMap",
@@ -1335,7 +1199,7 @@
       "ligandability",
       "fragment-mapping"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Fragment Hotspot Maps",
@@ -1349,7 +1213,7 @@
       "hotspots",
       "fragment-growing"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DrugCentral",
@@ -1363,7 +1227,7 @@
       "approved-drugs",
       "precedent"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Therapeutic Target Database",
@@ -1377,7 +1241,7 @@
       "targets",
       "competitive"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PDBe-KB",
@@ -1391,7 +1255,7 @@
       "structural-annotation",
       "ligand-sites"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "KLIFS",
@@ -1406,7 +1270,7 @@
       "selectivity",
       "binding-mode"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GPCRdb",
@@ -1421,7 +1285,7 @@
       "structures",
       "family"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "gnomAD",
@@ -1435,7 +1299,7 @@
       "genetic-constraint",
       "target-safety"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GWAS Catalog",
@@ -1449,7 +1313,7 @@
       "genetics",
       "target-validation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "STITCH",
@@ -1463,7 +1327,7 @@
       "off-target",
       "chemical-protein"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Chemprop",
@@ -1478,7 +1342,7 @@
       "property-prediction",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PanDDA",
@@ -1493,7 +1357,7 @@
       "crystallography",
       "event-maps"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Fragalysis",
@@ -1508,7 +1372,7 @@
       "xchem",
       "hit-browser"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SeeSAR",
@@ -1523,7 +1387,7 @@
       "fragment-growing",
       "strain"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "HADDOCK3",
@@ -1538,7 +1402,7 @@
       "ternary-complex",
       "restraints"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Open Babel",
@@ -1552,7 +1416,7 @@
       "file-formats",
       "conversion"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Datamol",
@@ -1566,7 +1430,7 @@
       "rdkit",
       "preprocessing"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ChEMBL Structure Pipeline",
@@ -1580,7 +1444,7 @@
       "standardisation",
       "curation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Mordred",
@@ -1593,7 +1457,7 @@
     "tags": [
       "descriptors"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "CDK",
@@ -1607,7 +1471,7 @@
       "java",
       "library"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Indigo",
@@ -1621,7 +1485,7 @@
       "library",
       "rendering"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Ketcher",
@@ -1635,7 +1499,7 @@
       "editor",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OPSIN",
@@ -1648,7 +1512,7 @@
     "tags": [
       "name-to-structure"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DataWarrior",
@@ -1662,7 +1526,7 @@
       "visualisation",
       "sar"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "CReM",
@@ -1676,7 +1540,7 @@
       "enumeration",
       "fragments"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ChEMBL",
@@ -1690,7 +1554,7 @@
       "bioactivity",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PubChem",
@@ -1703,7 +1567,7 @@
     "tags": [
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ZINC22",
@@ -1717,7 +1581,7 @@
       "screening-library",
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Enamine REAL Space",
@@ -1731,7 +1595,7 @@
       "screening-library",
       "make-on-demand"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DrugBank",
@@ -1745,7 +1609,7 @@
       "drugs",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "BindingDB",
@@ -1759,7 +1623,7 @@
       "affinity",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PDBbind+",
@@ -1773,7 +1637,7 @@
       "affinity",
       "structures"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Papyrus",
@@ -1787,7 +1651,7 @@
       "bioactivity",
       "ml-ready"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SureChEMBL",
@@ -1800,7 +1664,7 @@
     "tags": [
       "patents"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "COCONUT",
@@ -1813,7 +1677,7 @@
     "tags": [
       "natural-products"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GtoPdb (Guide to Pharmacology)",
@@ -1827,7 +1691,7 @@
       "pharmacology",
       "tool-compounds"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Chemical Probes Portal",
@@ -1841,7 +1705,7 @@
       "tool-compounds",
       "target-validation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "smina",
@@ -1854,13 +1718,13 @@
     "tags": [
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
-    "name": "Vina-GPU 2.1 / QuickVina2-GPU",
+    "name": "Vina-GPU 2.1",
     "stage": "docking",
     "stage_label": "Docking & virtual screening",
-    "description": "GPU-parallel Vina variants giving 1-2 orders of magnitude speedup for large screens.",
+    "description": "GPU-parallel Vina, and the QuickVina2-GPU variant alongside it, giving one to two orders of magnitude speedup on large screens.",
     "url": "https://github.com/DeltaGroupNJUPT/Vina-GPU-2.1",
     "repo": "deltagroupnjupt/vina-gpu-2.1",
     "access": "open-source",
@@ -1868,7 +1732,7 @@
       "docking",
       "gpu"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Uni-Dock",
@@ -1882,7 +1746,7 @@
       "docking",
       "gpu"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DOCK 6",
@@ -1895,7 +1759,7 @@
     "tags": [
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "rDock",
@@ -1909,7 +1773,7 @@
       "docking",
       "rna"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Meeko",
@@ -1923,7 +1787,7 @@
       "preparation",
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Ringtail",
@@ -1937,7 +1801,7 @@
       "virtual-screening",
       "data-management"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "VirtualFlow",
@@ -1951,7 +1815,7 @@
       "virtual-screening",
       "hpc"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "EasyDock",
@@ -1965,7 +1829,7 @@
       "docking",
       "workflow"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DockStream",
@@ -1979,7 +1843,7 @@
       "docking",
       "generative-loop"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ODDT",
@@ -1993,7 +1857,7 @@
       "rescoring",
       "virtual-screening"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PLIP",
@@ -2007,7 +1871,7 @@
       "interactions",
       "analysis"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "LigPlot+",
@@ -2021,7 +1885,7 @@
       "interactions",
       "visualisation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Glide (Schrödinger)",
@@ -2034,7 +1898,7 @@
     "tags": [
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GOLD (CCDC)",
@@ -2047,7 +1911,7 @@
     "tags": [
       "docking"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MOE (CCG)",
@@ -2060,7 +1924,7 @@
     "tags": [
       "platform"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SwissDock",
@@ -2074,7 +1938,7 @@
       "docking",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Pharmit",
@@ -2088,7 +1952,7 @@
       "pharmacophore",
       "virtual-screening"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GROMACS",
@@ -2101,7 +1965,7 @@
     "tags": [
       "md-engine"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AMBER / AmberTools",
@@ -2115,7 +1979,7 @@
       "md-engine",
       "force-field"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "NAMD",
@@ -2129,7 +1993,7 @@
       "md-engine",
       "hpc"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "CHARMM-GUI",
@@ -2143,7 +2007,7 @@
       "system-preparation",
       "membrane"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MDAnalysis",
@@ -2157,7 +2021,7 @@
       "analysis",
       "trajectories"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MDTraj",
@@ -2171,7 +2035,7 @@
       "analysis",
       "trajectories"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PLUMED",
@@ -2185,7 +2049,7 @@
       "enhanced-sampling",
       "free-energy"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenFF Toolkit",
@@ -2199,7 +2063,7 @@
       "force-field",
       "parameterisation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ACPYPE",
@@ -2212,7 +2076,7 @@
     "tags": [
       "parameterisation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ParmEd",
@@ -2226,7 +2090,7 @@
       "topology",
       "conversion"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "gmx_MMPBSA",
@@ -2240,7 +2104,7 @@
       "free-energy",
       "mmpbsa"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenFE",
@@ -2254,7 +2118,7 @@
       "free-energy",
       "fep"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "BioSimSpace",
@@ -2268,7 +2132,7 @@
       "free-energy",
       "workflow"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "alchemlyb",
@@ -2282,7 +2146,7 @@
       "free-energy",
       "analysis"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "FEP+ (Schrödinger)",
@@ -2296,7 +2160,7 @@
       "free-energy",
       "fep"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MACE / MACE-OFF",
@@ -2310,7 +2174,7 @@
       "mlip",
       "force-field"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "TorchANI",
@@ -2323,7 +2187,7 @@
     "tags": [
       "mlip"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Espaloma",
@@ -2337,7 +2201,7 @@
       "force-field",
       "ml"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenMM-ML",
@@ -2351,7 +2215,7 @@
       "mlip",
       "qm-mm"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Martini",
@@ -2365,7 +2229,7 @@
       "coarse-grained",
       "membrane"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GaMD",
@@ -2380,7 +2244,7 @@
       "accelerated-md",
       "conformational-sampling"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "gamd-openmm",
@@ -2395,7 +2259,7 @@
       "accelerated-md",
       "openmm"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "WESTPA",
@@ -2410,7 +2274,7 @@
       "rare-events",
       "kinetics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SuMD",
@@ -2424,7 +2288,7 @@
       "enhanced-sampling",
       "binding-pathway"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OpenPathSampling",
@@ -2439,7 +2303,7 @@
       "rare-events",
       "mechanism"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "openmmtools",
@@ -2454,7 +2318,7 @@
       "replica-exchange",
       "openmm"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "mdpocket",
@@ -2469,7 +2333,7 @@
       "pocket-dynamics",
       "md-analysis"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PocketMiner",
@@ -2483,7 +2347,7 @@
       "cryptic-pocket",
       "machine-learning"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "deeptime",
@@ -2497,7 +2361,7 @@
       "msm",
       "kinetics"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Psi4",
@@ -2511,7 +2375,7 @@
       "dft",
       "ab-initio"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PySCF",
@@ -2525,7 +2389,7 @@
       "dft",
       "python"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ORCA",
@@ -2539,7 +2403,7 @@
       "dft",
       "ab-initio"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "xtb",
@@ -2553,7 +2417,7 @@
       "semiempirical",
       "conformers"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "CREST",
@@ -2566,7 +2430,7 @@
     "tags": [
       "conformers"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "NWChem",
@@ -2580,7 +2444,7 @@
       "hpc",
       "ab-initio"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "autodE",
@@ -2594,7 +2458,7 @@
       "reaction-mechanism",
       "transition-state"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MOSES",
@@ -2608,7 +2472,7 @@
       "benchmark",
       "generative"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GuacaMol",
@@ -2622,7 +2486,7 @@
       "benchmark",
       "generative"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SAFE",
@@ -2636,7 +2500,7 @@
       "representation",
       "generative"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Pocket2Mol",
@@ -2650,7 +2514,7 @@
       "sbdd",
       "3d-generation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DiffLinker",
@@ -2664,7 +2528,7 @@
       "linker-design",
       "fragments"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "LigandMPNN",
@@ -2678,7 +2542,7 @@
       "protein-design",
       "sequence-design"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "QSARtuna",
@@ -2692,7 +2556,7 @@
       "qsar",
       "automl"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Uni-Mol",
@@ -2706,7 +2570,7 @@
       "pretrained",
       "3d"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MolSkill",
@@ -2720,7 +2584,7 @@
       "scoring",
       "med-chem"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PyTorch Geometric",
@@ -2734,7 +2598,7 @@
       "gnn",
       "library"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DGL-LifeSci",
@@ -2748,7 +2612,7 @@
       "gnn",
       "models"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Optuna",
@@ -2761,7 +2625,7 @@
     "tags": [
       "hpo"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "scikit-learn",
@@ -2775,7 +2639,7 @@
       "ml",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "XGBoost",
@@ -2789,7 +2653,7 @@
       "ml",
       "boosting"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "KNIME",
@@ -2803,7 +2667,7 @@
       "workflow",
       "no-code"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ADMETlab 3.0",
@@ -2817,7 +2681,7 @@
       "admet",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SwissADME",
@@ -2831,7 +2695,7 @@
       "admet",
       "drug-likeness"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "pkCSM",
@@ -2844,7 +2708,7 @@
     "tags": [
       "admet"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ProTox 3.0",
@@ -2857,7 +2721,7 @@
     "tags": [
       "toxicity"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "vNN-ADMET",
@@ -2871,7 +2735,7 @@
       "admet",
       "applicability-domain"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "OPERA",
@@ -2886,7 +2750,7 @@
       "regulatory",
       "qsar"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Open Systems Pharmacology (PK-Sim/MoBi)",
@@ -2900,7 +2764,7 @@
       "pbpk",
       "qsp"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Simcyp (Certara)",
@@ -2914,7 +2778,7 @@
       "pbpk",
       "regulatory"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "GastroPlus",
@@ -2928,7 +2792,7 @@
       "pbpk",
       "absorption"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ASKCOS",
@@ -2942,7 +2806,7 @@
       "retrosynthesis",
       "planning"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Syntheseus",
@@ -2956,7 +2820,7 @@
       "retrosynthesis",
       "benchmark"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "IBM RXN for Chemistry",
@@ -2970,7 +2834,7 @@
       "retrosynthesis",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "rdchiral",
@@ -2984,7 +2848,7 @@
       "templates",
       "chirality"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SCScore",
@@ -2997,7 +2861,7 @@
     "tags": [
       "synthetic-accessibility"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RAscore",
@@ -3010,7 +2874,7 @@
     "tags": [
       "synthetic-accessibility"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PyRosetta",
@@ -3024,7 +2888,7 @@
       "protein-design",
       "rosetta"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "RosettaCommons",
@@ -3037,7 +2901,7 @@
     "tags": [
       "protein-design"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ANARCI",
@@ -3051,7 +2915,7 @@
       "antibody",
       "numbering"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ImmuneBuilder",
@@ -3065,7 +2929,7 @@
       "antibody",
       "structure-prediction"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "AbLang2",
@@ -3079,7 +2943,7 @@
       "antibody",
       "language-model"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SAbDab / SAbPred",
@@ -3093,7 +2957,7 @@
       "antibody",
       "database"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Observed Antibody Space (OAS)",
@@ -3107,7 +2971,7 @@
       "antibody",
       "repertoire"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "IgBLAST",
@@ -3121,7 +2985,7 @@
       "antibody",
       "repertoire"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "FoldX",
@@ -3135,7 +2999,7 @@
       "stability",
       "mutation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Therapeutics Data Commons",
@@ -3149,7 +3013,7 @@
       "benchmark",
       "datasets"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MoleculeNet",
@@ -3162,7 +3026,7 @@
     "tags": [
       "benchmark"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DUD-E",
@@ -3176,7 +3040,7 @@
       "benchmark",
       "virtual-screening"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "LIT-PCBA",
@@ -3190,7 +3054,7 @@
       "benchmark",
       "virtual-screening"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PoseCheck",
@@ -3204,7 +3068,7 @@
       "benchmark",
       "sbdd"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Polaris",
@@ -3218,7 +3082,7 @@
       "benchmark",
       "evaluation"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "ClinicalTrials.gov",
@@ -3232,7 +3096,7 @@
       "trials",
       "api"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "openFDA",
@@ -3246,7 +3110,7 @@
       "regulatory",
       "api"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Drugs@FDA",
@@ -3260,7 +3124,7 @@
       "regulatory",
       "approvals"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "EMA Medicines",
@@ -3274,7 +3138,7 @@
       "regulatory",
       "europe"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DailyMed",
@@ -3287,7 +3151,7 @@
     "tags": [
       "labels"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "SIDER",
@@ -3300,7 +3164,7 @@
     "tags": [
       "adverse-events"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Europe PMC",
@@ -3314,7 +3178,7 @@
       "literature",
       "api"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PubMed / NCBI E-utilities",
@@ -3328,7 +3192,7 @@
       "literature",
       "api"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Nextflow",
@@ -3342,7 +3206,7 @@
       "workflow",
       "reproducibility"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Snakemake",
@@ -3355,7 +3219,7 @@
     "tags": [
       "workflow"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "MLflow",
@@ -3369,7 +3233,7 @@
       "tracking",
       "mlops"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "DVC",
@@ -3382,7 +3246,7 @@
     "tags": [
       "data-versioning"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Ray",
@@ -3395,7 +3259,7 @@
     "tags": [
       "distributed"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Dask",
@@ -3409,7 +3273,7 @@
       "distributed",
       "dataframes"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PyTorch Lightning",
@@ -3422,7 +3286,7 @@
     "tags": [
       "training"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Hugging Face Hub",
@@ -3436,7 +3300,7 @@
       "models",
       "datasets"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "PyMOL (open source)",
@@ -3450,7 +3314,7 @@
       "visualisation",
       "structures"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "UCSF ChimeraX",
@@ -3464,7 +3328,7 @@
       "visualisation",
       "cryo-em"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "VMD",
@@ -3478,7 +3342,7 @@
       "visualisation",
       "md"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "Mol*",
@@ -3492,7 +3356,7 @@
       "visualisation",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
     "name": "NGL Viewer",
@@ -3506,13 +3370,13 @@
       "visualisation",
       "web"
     ],
-    "url_status": 200
+    "url_status": null
   },
   {
-    "name": "py3Dmol / 3Dmol.js",
+    "name": "3Dmol.js",
     "stage": "viz",
     "stage_label": "Structure & molecule visualisation",
-    "description": "Inline 3D structure rendering in notebooks; the quickest way to eyeball docking poses in Python.",
+    "description": "WebGL structure viewer, and through its py3Dmol binding the quickest way to eyeball docking poses inside a notebook.",
     "url": "https://github.com/3dmol/3Dmol.js",
     "repo": "3dmol/3dmol.js",
     "access": "open-source",
@@ -3520,6 +3384,6 @@
       "visualisation",
       "notebook"
     ],
-    "url_status": 200
+    "url_status": null
   }
 ]

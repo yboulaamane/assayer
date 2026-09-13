@@ -27,7 +27,6 @@ OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 STAGES = [
     ("target-id", "Target identification & validation"),
-    ("omics", "Omics analysis"),
     ("structure", "Protein structure & modelling"),
     ("binding-site", "Binding site detection"),
     ("cheminformatics", "Cheminformatics toolkits"),
@@ -66,18 +65,6 @@ T = [
     ("g:Profiler", "target-id", "Functional enrichment, ortholog mapping and ID conversion with a stable versioned API.", "https://biit.cs.ut.ee/gprofiler/gost", None, "free-web", ["enrichment"]),
     ("DisGeNET", "target-id", "Gene-disease and variant-disease association collection used for target-indication rationale.", "https://disgenet.com", None, "free-web", ["disease-association"]),
     ("GeneCards", "target-id", "Aggregated gene-centric annotation across ~150 sources; free for academic browsing.", "https://www.genecards.org", None, "academic", ["annotation"]),
-
-    # ---------------- omics analysis ----------------
-    ("Bioconductor", "omics", "The R ecosystem for genomics: ~2,300 curated, versioned and interoperable analysis packages.", "https://bioconductor.org", None, "open-source", ["r", "genomics"]),
-    ("DESeq2", "omics", "Negative-binomial differential expression for bulk RNA-seq counts; the reference method for this step.", "https://bioconductor.org/packages/DESeq2/", None, "open-source", ["rna-seq", "differential-expression"]),
-    ("limma", "omics", "Linear models with empirical Bayes moderation for microarray and, via voom, RNA-seq differential expression.", "https://bioconductor.org/packages/limma/", None, "open-source", ["differential-expression"]),
-    ("edgeR", "omics", "Count-based differential expression with robust dispersion estimation for small-replicate designs.", "https://bioconductor.org/packages/edgeR/", None, "open-source", ["rna-seq"]),
-    ("Seurat", "omics", "R toolkit for single-cell QC, clustering, integration and multimodal analysis.", "https://satijalab.org/seurat/", "satijalab/seurat", "open-source", ["single-cell", "r"]),
-    ("scvi-tools", "omics", "Probabilistic deep generative models for single-cell (scVI, totalVI, scANVI) on a common API.", "https://scvi-tools.org", "scverse/scvi-tools", "open-source", ["single-cell", "deep-learning"]),
-    ("Salmon", "omics", "Fast selective-alignment transcript quantification from RNA-seq reads.", "https://combine-lab.github.io/salmon/", "COMBINE-lab/salmon", "open-source", ["rna-seq", "quantification"]),
-    ("STAR", "omics", "Splice-aware RNA-seq read aligner, the standard for gene-level alignment.", "https://github.com/alexdobin/STAR", "alexdobin/STAR", "open-source", ["alignment"]),
-    ("samtools", "omics", "Core toolkit for SAM/BAM/CRAM manipulation underneath nearly every sequencing pipeline.", "https://www.htslib.org", "samtools/samtools", "open-source", ["sequencing"]),
-    ("CellProfiler", "omics", "Modular image analysis for high-content screening: segmentation, feature extraction, per-cell measurements.", "https://cellprofiler.org", "CellProfiler/CellProfiler", "open-source", ["imaging", "hcs"]),
 
     # ---------------- protein structure & modelling ----------------
     ("RCSB PDB", "structure", "The experimental structure archive plus search, validation and ligand chemistry services.", "https://www.rcsb.org", None, "free-web", ["structures", "database"]),
@@ -198,7 +185,7 @@ T = [
 
     # ---------------- docking & virtual screening ----------------
     ("smina", "docking", "Vina fork with flexible scoring-function specification and much easier custom-term development.", "https://github.com/mwojcikowski/smina", "mwojcikowski/smina", "open-source", ["docking"]),
-    ("Vina-GPU 2.1 / QuickVina2-GPU", "docking", "GPU-parallel Vina variants giving 1-2 orders of magnitude speedup for large screens.", "https://github.com/DeltaGroupNJUPT/Vina-GPU-2.1", "DeltaGroupNJUPT/Vina-GPU-2.1", "open-source", ["docking", "gpu"]),
+    ("Vina-GPU 2.1", "docking", "GPU-parallel Vina, and the QuickVina2-GPU variant alongside it, giving one to two orders of magnitude speedup on large screens.", "https://github.com/DeltaGroupNJUPT/Vina-GPU-2.1", "DeltaGroupNJUPT/Vina-GPU-2.1", "open-source", ["docking", "gpu"]),
     ("Uni-Dock", "docking", "GPU-accelerated docking engine reaching thousands of molecules per second per GPU.", "https://github.com/dptech-corp/Uni-Dock", "dptech-corp/Uni-Dock", "open-source", ["docking", "gpu"]),
     ("DOCK 6", "docking", "UCSF's long-standing anchor-and-grow docking program with a wide scoring-function suite.", "https://dock.compbio.ucsf.edu", None, "academic", ["docking"]),
     ("rDock", "docking", "Fast open-source docking for proteins and nucleic acids, with pharmacophore and tethered-scaffold restraints.", "https://rdock.github.io", "CBDD/rDock", "open-source", ["docking", "rna"]),
@@ -339,7 +326,7 @@ T = [
     ("VMD", "viz", "Trajectory visualisation and analysis for MD, with scripting and rendering for publication figures.", "https://www.ks.uiuc.edu/Research/vmd/", None, "academic", ["visualisation", "md"]),
     ("Mol*", "viz", "The web molecular viewer used by RCSB and PDBe; embeddable in any internal tool.", "https://github.com/molstar/molstar", "molstar/molstar", "open-source", ["visualisation", "web"]),
     ("NGL Viewer", "viz", "Lightweight WebGL structure viewer, and the nglview Jupyter widget built on it.", "https://github.com/nglviewer/ngl", "nglviewer/ngl", "open-source", ["visualisation", "web"]),
-    ("py3Dmol / 3Dmol.js", "viz", "Inline 3D structure rendering in notebooks; the quickest way to eyeball docking poses in Python.", "https://github.com/3dmol/3Dmol.js", "3dmol/3Dmol.js", "open-source", ["visualisation", "notebook"]),
+    ("3Dmol.js", "viz", "WebGL structure viewer, and through its py3Dmol binding the quickest way to eyeball docking poses inside a notebook.", "https://github.com/3dmol/3Dmol.js", "3dmol/3Dmol.js", "open-source", ["visualisation", "notebook"]),
 ]
 
 # Sites behind bot protection answer 403 to any automated request, including a
