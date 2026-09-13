@@ -157,10 +157,29 @@ export default async function handler(req) {
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      // Some models wrap the object in prose however firmly you ask them not to.
-      const block = cleaned.match(/\{[\s\S]*\}/);
-      if (!block) throw new Error("no JSON object in response");
-      parsed = JSON.parse(block[0]);
+      // Some models wrap the object in prose however firmly you ask them not
+      // to, and a reasoning model may print braces while thinking. Scan for
+      // each "{" and take the first that closes into valid JSON — a greedy
+      // /\{[\s\S]*\}/ would span from a brace in the reasoning to one at the
+      // very end and parse neither.
+      parsed = null;
+      for (let i = 0; i < cleaned.length && !parsed; i++) {
+        if (cleaned[i] !== "{") continue;
+        let depth = 0, inStr = false, esc = false;
+        for (let j = i; j < cleaned.length; j++) {
+          const ch = cleaned[j];
+          if (esc) { esc = false; continue; }
+          if (ch === "\\") { esc = true; continue; }
+          if (ch === '"') { inStr = !inStr; continue; }
+          if (inStr) continue;
+          if (ch === "{") depth++;
+          else if (ch === "}" && --depth === 0) {
+            try { parsed = JSON.parse(cleaned.slice(i, j + 1)); } catch {}
+            break;
+          }
+        }
+      }
+      if (!parsed) throw new Error("no parsable JSON object in response");
     }
   } catch (e) {
     return json({
