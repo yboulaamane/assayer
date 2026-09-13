@@ -49,7 +49,7 @@ function route() {
   const { path, params } = parseHash();
   const seg = path.split("/");
 
-  // Opening or closing a tool only changes the drawer — re-rendering the grid
+  // Opening or closing a tool only changes the drawer, re-rendering the grid
   // underneath would throw away scroll position and everything lazily loaded.
   const keyParams = new URLSearchParams(params);
   keyParams.delete("tool");
@@ -94,7 +94,7 @@ function renderHome() {
       </div>
       <div class="searchbar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="q" placeholder="Search ${DATA.tools.length} tools — docking, single cell, ADMET, foldseek…" autocomplete="off">
+        <input id="q" placeholder="Search ${DATA.tools.length} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
         <kbd>/</kbd>
       </div>
     </section>
@@ -113,7 +113,7 @@ function renderHome() {
       ${[
         ["Find inhibitors of EGFR in human", "hit-discovery", "docking"],
         ["Optimise my lead series against CDK2", "lead-opt", "generative"],
-        ["My fragment screen gave 40 hits — which should I grow?", "fbdd", "binding-site"],
+        ["My fragment screen gave 40 hits, which should I grow?", "fbdd", "binding-site"],
         ["Profile ADMET for my compound set", "admet", "admet"],
       ].map(([q, _i, s]) => `
         <a class="stage-card" href="#/workflow?q=${encodeURIComponent(q)}" style="--h:${hue(s)}">
@@ -284,7 +284,7 @@ function installBlock(t) {
   if (t.conda) lines.push(`conda install -c conda-forge ${t.conda}`);
   if (!lines.length && t.repo) lines.push(`git clone https://github.com/${t.repo}.git`);
   if (!lines.length) return "";
-  const note = t.pypi || t.conda ? "" : "\n# no published package — build from source, see the repo";
+  const note = t.pypi || t.conda ? "" : "\n# no published package, build from source, see the repo";
   return codeBlock("Install", lines.join("\n") + note, "bash");
 }
 
@@ -356,15 +356,14 @@ function renderWorkflow(params) {
   <div class="wrap">
     <section class="hero" style="padding-bottom:0">
       <h1 style="font-size:clamp(26px,3.6vw,36px)">Describe the research question.</h1>
-      <p class="lede">You get the protocol, the gates you have to pass, and the tools for each step —
-        with the target resolved and its structures ranked live. The computation stays with you.</p>
+      <p class="lede">You get the protocol, the gates you have to pass, and the tools for each step, with the target resolved and its structures ranked live. The computation stays with you.</p>
       <div class="wf-input">
         <input id="wq" placeholder="e.g. find inhibitors of EGFR in human" value="${esc(q)}" autocomplete="off">
         <button class="btn primary" id="go">Plan it</button>
       </div>
       <div class="examples">
         ${["Find inhibitors of EGFR in human",
-           "My fragment screen gave 40 hits — which should I grow?",
+           "My fragment screen gave 40 hits, which should I grow?",
            "Design a PROTAC for BRD4 using VHL",
            "Why is my series hitting the wrong kinase?",
            "Rank these analogues with FEP",
@@ -410,7 +409,7 @@ async function drawPlan(q) {
     <div class="section-head" style="margin-top:10px">
       <h2>${esc(plan.label)}</h2>
       <span>${plan.steps.length} steps${parsed.target ? ` · target: ${esc(parsed.target)}` : ""}${parsed.organism ? ` · ${esc(parsed.organism.label)}` : ""}
-        · <span title="${parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : "Matched on keywords — no model call needed"}">${parsed.via === "llm" ? "routed by model" : "routed by keywords"}${parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
+        · <span title="${parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : "Matched on keywords, no model call needed"}">${parsed.via === "llm" ? "routed by model" : "routed by keywords"}${parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
@@ -426,8 +425,8 @@ async function drawPlan(q) {
         <div class="body">
           <h3>${esc(s.title)}</h3>
           <p class="why">${esc(s.why)}</p>
-          ${s.gate ? `<p class="gate"><b>Gate —</b> ${esc(s.gate)}</p>` : ""}
-          ${s.pitfall ? `<p class="pit"><b>Common failure —</b> ${esc(s.pitfall)}</p>` : ""}
+          ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}</p>` : ""}
+          ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
           ${s.live === "structures" ? `<div id="struct-slot">${parsed.target ? "" :
             `<p class="count-note" style="margin:0 0 12px">Name a protein in your question and the ranked PDB table appears here.</p>`}</div>` : ""}
           ${s.tools?.length ? `<div class="minitools">${s.tools.map(toolChip).join("")}</div>` : ""}
@@ -438,7 +437,7 @@ async function drawPlan(q) {
       <button class="btn" id="dl">Download as Markdown</button>
       <button class="btn" id="cp">Copy protocol</button>
     </div>
-    <p class="note" style="margin-top:18px">Nothing on this page runs docking, MD or enrichment — those are yours to run
+    <p class="note" style="margin-top:18px">Nothing on this page runs docking, MD or enrichment, those are yours to run
       on your own machine or cluster. This plans the work and tells you what each step has to prove.</p>`;
 
   let target = null, structures = [];
@@ -453,7 +452,7 @@ async function drawPlan(q) {
       const got = hits[0]?.organism || null;
       const mismatch = asked && got && !got.toLowerCase().startsWith(asked.toLowerCase().split(" ")[0]);
       if (!hits.length) {
-        box.innerHTML = `<p class="note" style="margin:0 0 20px">No reviewed UniProt entry matched “${esc(parsed.target)}”. The protocol below still applies — resolve the target by hand and carry on.</p>`;
+        box.innerHTML = `<p class="note" style="margin:0 0 20px">No reviewed UniProt entry matched “${esc(parsed.target)}”. The protocol below still applies, resolve the target by hand and carry on.</p>`;
       } else {
         target = hits[0];
         box.innerHTML = `
@@ -468,7 +467,7 @@ async function drawPlan(q) {
             ${mismatch || hits.droppedOrganism ? `<p class="note" style="margin:12px 0 0">
               <b>Not the species you asked for.</b> You said ${esc(asked)}; the closest entry UniProt holds
               for “${esc(parsed.target)}” is <b>${esc(got || "another organism")}</b>. Sequence and pocket may
-              differ — confirm the orthologue before building anything on it.</p>` : ""}
+              differ, confirm the orthologue before building anything on it.</p>` : ""}
           </div>`;
         if (slot()) {
           slot().innerHTML = `<p class="count-note" style="margin:0 0 12px"><span class="spin"></span> Ranking PDB entries for ${esc(target.accession)}…</p>`;
@@ -480,7 +479,7 @@ async function drawPlan(q) {
       }
     } catch (err) {
       box.innerHTML = `<p class="note" style="margin:0 0 20px"><b>Couldn't reach UniProt / RCSB.</b>
-        Sandboxed previews block outbound requests — the deployed site does not. Every step below still applies;
+        Sandboxed previews block outbound requests, the deployed site does not. Every step below still applies;
         resolve the target and pick the structure by hand.</p>`;
       if (slot()) slot().innerHTML = "";
     }
@@ -530,7 +529,7 @@ async function tailorPlan(plan, parsed, target, structures) {
     });
     if (!res.ok || !res.body) throw new Error(String(res.status));
   } catch {
-    slot.innerHTML = "";   // no key, no function, offline — just omit the section
+    slot.innerHTML = "";   // no key, no function, offline, just omit the section
     return;
   }
 
@@ -579,8 +578,7 @@ function linkTools(el) {
 function renderStructures(entries, total, af, target) {
   if (!entries.length) {
     return `<div class="note" style="margin:0 0 12px">No experimental structure is linked to ${esc(target.accession)}.
-      ${af ? `Use the predicted model <a href="${esc(af.cif)}" target="_blank" rel="noopener">${esc(af.id)}</a> —
-      and treat low-pLDDT regions as unmodelled rather than flexible.` : ""}</div>`;
+      ${af ? `Use the predicted model <a href="${esc(af.cif)}" target="_blank" rel="noopener">${esc(af.id)}</a>, and treat low-pLDDT regions as unmodelled rather than flexible.` : ""}</div>`;
   }
   const top = entries.slice(0, 8);
   const best = top[0];
@@ -601,8 +599,7 @@ function renderStructures(entries, total, af, target) {
     </table>
   </div>
   <p class="count-note" style="margin:0 0 10px">Ranked ${entries.length} of ${total} linked entries on resolution,
-    R-free, ligand state, method and organism. Top pick: <b>${esc(best.id)}</b> —
-    ${esc(best.title.slice(0, 110))}${best.title.length > 110 ? "…" : ""}
+    R-free, ligand state, method and organism. Top pick: <b>${esc(best.id)}</b>, ${esc(best.title.slice(0, 110))}${best.title.length > 110 ? "…" : ""}
     ${af ? ` · predicted model available: <a href="https://alphafold.ebi.ac.uk/entry/${esc(target.accession)}" target="_blank" rel="noopener">${esc(af.id)}</a>` : ""}</p>
   <p class="note" style="margin:0 0 14px">Score ranks metadata, not biology. Before you commit: check the binding site has no
     missing residues, that the construct is wild-type where it matters, and that the conformational state
