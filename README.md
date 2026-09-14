@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,957 tools for medicinal and computational chemistry, plus 16
+A catalogue of 3,949 tools for medicinal and computational chemistry, plus 16
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -225,8 +225,9 @@ generated, so don't edit it by hand.
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).
-  80 tools still land in "Unsorted", which is roughly 2% and about where the
-  returns stop: more rules start mis-filing things that are currently right.
+  17 tools still land in "Unsorted", under half a percent. Nine of those have
+  no description at all, which is the real floor: nothing can be inferred from
+  an empty record.
   To fix a misplaced tool, add its label to `CATEGORY_MAP` in
   `scripts/build_catalog.py`.
 - **Some bio.tools records are real science from another field.** They arrive
