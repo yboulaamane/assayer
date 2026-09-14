@@ -46,22 +46,36 @@ const INTENTS = [
   ["structure", "get or model the structure of a protein; pick the best PDB entry"],
 ];
 
-const PROMPT = `You route drug-discovery questions to a protocol. Reply with JSON only.
+const PROMPT = `You route drug-discovery questions to a protocol. Classify the concrete outcome the user asks for, not the broad topic. Reply with JSON only.
 
 Protocols:
 ${INTENTS.map(([id, d]) => `- ${id}: ${d}`).join("\n")}
 
 Return exactly:
-{"intent": "<one id above, or unsupported>", "target": "<gene symbol or protein name, or null>", "organism_taxid": <NCBI taxon id or null>, "reason": "<8 words max>"}
+{"intent": "<one id above, or unsupported>", "confidence": "high|medium|low", "evidence": "<exact short quote from the question, or null>", "target": "<gene symbol or protein name, or null>", "organism_taxid": <NCBI taxon id or null>, "reason": "<8 words max>"}
 
 Rules:
 - Return unsupported when none of the protocols addresses the request. Do not force unrelated questions into a protocol.
+- Return unsupported with low confidence when the user names only a target, disease, project or broad topic without saying what result they need. Never fill ambiguity with hit discovery or generative design.
+- Evidence must quote the words that express the requested outcome. A protein, disease, compound or the phrase "drug discovery" is context, not evidence of a workflow.
+- Generative design is ONLY for an explicit request to generate, create or propose new molecules, chemotypes or scaffolds. "Drug design", "drug discovery", "work on a target" and "study a disease" alone are not generative design.
+- Hit discovery requires an explicit request to find, screen, dock or identify hits, binders or inhibitors. Lead optimisation requires an existing lead, series, analogues or SAR and a request to improve or rank them.
+- A request to understand, analyse or help with something is insufficient unless it names an operation covered by a protocol.
 - Respect negations and distinguish completed work from the requested next task. Return the primary target; a protein the user wants to spare is an off-target.
 - target is a PROTEIN. For a disease, an endpoint (ADMET, hERG) or an unnamed molecule, use null.
 - For network-pharmacology use target null: plant names and diseases are study context, not a single protein. Route plant-versus-disease network studies here, including Aloysia versus Parkinson's disease.
 - Expand informal names: "3A4" -> "CYP3A4", "Mpro"/"main protease" -> "3C-like proteinase", "PD-L1" -> "CD274".
 - organism_taxid: human 9606, mouse 10090, rat 10116, SARS-CoV-2 2697049, E. coli 83333, yeast 559292. null if unstated.
 - Choose conformational-sampling over md-stability whenever the question is about exploring conformations rather than checking stability.
+
+Examples:
+- "Help me with EGFR drug discovery" -> unsupported (goal is unspecified)
+- "Design a drug discovery workflow for Alzheimer's" -> unsupported (goal is unspecified; not generative design)
+- "Generate new EGFR inhibitor scaffolds" -> denovo
+- "Find inhibitors of EGFR" -> hit-discovery
+- "Improve potency in my EGFR lead series" -> lead-opt
+- "I have 200 measured compounds; build an activity model" -> qsar
+- "I have compounds for EGFR and want to understand them" -> unsupported (operation is unspecified)
 
 Question: `;
 
@@ -319,8 +333,38 @@ export default async function handler(req) {
   if (parsed.intent === "unsupported") return json({ intent: "unsupported", matched: false, via: "llm" });
   if (!IDS.has(parsed.intent)) return json({ error: "unknown intent", fallback: true }, 502);
 
+  const confidence = ["high", "medium", "low"].includes(parsed.confidence)
+    ? parsed.confidence : "low";
+  const evidence = typeof parsed.evidence === "string" ? parsed.evidence.trim() : "";
+  const normalized = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const quoted = evidence && normalized(query).includes(normalized(evidence));
+  // This is the costly false positive: broad drug-design language was being
+  // promoted to molecule generation. Require the request itself to say what
+  // is being created before accepting that route.
+  // Do not let a forbidden method count as affirmative evidence for that same
+  // workflow. Keep later comma/semicolon clauses so "without MD, find hits"
+  // still retains the actual request.
+  const requested = query.replace(
+    /\b(?:no|without|avoid|exclude|skip|do not|don['’]?t|cannot|can['’]?t)\b[^,.;]{0,60}/gi, " ");
+  const molecule = "(?:molecul\\w*|compound\\w*|chemotype\\w*|scaffold\\w*|ligand\\w*|inhibitor\\w*)";
+  const explicitGeneration = new RegExp(
+    `\\b(?:de[ -]?novo|scaffold[ -]?hop\\w*|generative\\s+(?:molecular\\s+)?design|` +
+    `(?:generat|creat|invent|propos|design)\\w*\\W{0,40}(?:new\\s+)?${molecule}|` +
+    `${molecule}\\W{0,20}generat\\w*)\\b`, "i").test(requested);
+  const explicitHitDiscovery = /\b(?:virtual\s+screen\w*|dock\w*|(?:find|discover|identify|screen|search\s+for)\W{0,30}(?:hit\w*|binder\w*|inhibitor\w*|compound\w*|molecule\w*|ligand\w*))\b/i.test(requested);
+  if (confidence === "low" || !quoted
+      || (parsed.intent === "denovo" && !explicitGeneration)
+      || (parsed.intent === "hit-discovery" && !explicitHitDiscovery)) {
+    return json({
+      intent: "unsupported", matched: false, via: "llm",
+      reason: "The requested outcome is not specific enough",
+    });
+  }
+
   return json({
     intent: parsed.intent,
+    confidence,
+    evidence,
     target: typeof parsed.target === "string" && parsed.target.trim() ? parsed.target.trim() : null,
     organism_taxid: Number.isInteger(parsed.organism_taxid) ? parsed.organism_taxid : null,
     reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 80) : null,

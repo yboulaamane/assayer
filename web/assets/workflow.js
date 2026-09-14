@@ -116,6 +116,7 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
 const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology"]);
+export const intentUsesProtein = (intent) => !NO_PROTEIN.has(intent);
 
 // Common informal names that UniProt search alone handles badly.
 const ALIASES = {
@@ -280,6 +281,8 @@ export async function resolveQuery(raw) {
       score: kw.score,
       via: "llm",
       reason: d.reason || null,
+      confidence: d.confidence || null,
+      evidence: d.evidence || null,
       matched: true,
       truncated: Boolean(d.truncated),
       constraints,

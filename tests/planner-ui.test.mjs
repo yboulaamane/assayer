@@ -79,3 +79,16 @@ test("the reported Aloysia request renders and exports the network workflow", as
   assert.ok(p.copied[0].includes(query));
   assert.ok(p.copied[0].includes("adjusted significance"));
 });
+
+test("tools named in a generated brief render as clean inline links", () => {
+  const p = page("Profile ADMET for my compound set");
+  vm.runInContext(`
+    DATA = { tools: [{ id: "rdkit", name: "RDKit" }] };
+    BY_NAME = new Map([["rdkit", DATA.tools[0]]]);
+    window.updateTool = (id) => "#/browse?tool=" + id;
+  `, p.context);
+  const el = { innerHTML: "Use RDKit to standardise the structures." };
+  p.context.linkTools(el);
+  assert.match(el.innerHTML, /class="tool-ref"/);
+  assert.doesNotMatch(el.innerHTML, /class="tool"/);
+});
