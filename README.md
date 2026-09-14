@@ -99,6 +99,18 @@ Run the planner regression and rendering checks with Node.js 24 or later:
 node --test tests/*.test.mjs
 ```
 
+Optional browser checks cover mobile and desktop navigation, catalogue recovery,
+licence filtering, workflow loading, structure rendering and Markdown export.
+With Playwright and Chromium installed, start the local server above, then run
+`node tests/browser-smoke.mjs`. External API responses are fixtures in these
+checks; they do not use provider quotas. Set `PLAYWRIGHT_MODULE` to an absolute
+Playwright module path if it is installed outside the project.
+
+The social sharing image is `web/assets/social-preview.png`. Edit
+`scripts/social-preview.html` and run `node scripts/build_social_preview.mjs`
+with Playwright to regenerate it. The image and Open Graph metadata ship with
+the static site. Feedback links to this repository's GitHub issue form.
+
 The checks use mocked routing responses and DOM stubs; they do not call providers
 or verify the live deployment's layout.
 

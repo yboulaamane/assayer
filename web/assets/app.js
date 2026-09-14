@@ -1,6 +1,7 @@
 import { icon } from "./icons.js";
 import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST } from "./workflow.js";
 import { buildBrief, compose, validate } from "./compose.js";
+import { matchesAccess } from "./catalog.js";
 
 const app = document.getElementById("app");
 let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
@@ -24,8 +25,22 @@ themeBtn.onclick = () => {
 
 /* -------------------------------------------------------------------- data */
 async function boot() {
-  const r = await fetch("catalog.json");
-  DATA = await r.json();
+  app.innerHTML = `<div class="wrap"><div class="empty" role="status">Loading the atlas…</div></div>`;
+  try {
+    const r = await fetch("catalog.json", { signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error(`Catalogue request failed: ${r.status}`);
+    const data = await r.json();
+    if (!Array.isArray(data.tools) || !Array.isArray(data.stages)) throw new Error("Invalid catalogue");
+    DATA = data;
+  } catch {
+    app.innerHTML = `<div class="wrap"><div class="empty" role="alert">
+      <h1>Couldn't load the tool catalogue.</h1>
+      <p>Check your connection and try again.</p>
+      <button class="btn primary" id="retry-catalog">Try again</button>
+    </div></div>`;
+    document.getElementById("retry-catalog").onclick = boot;
+    return;
+  }
   for (const s of DATA.stages) STAGE.set(s.slug, s);
   const alias = (k, t) => { if (k && !BY_NAME.has(k)) BY_NAME.set(k, t); };
   for (const t of DATA.tools) {
@@ -45,6 +60,7 @@ function parseHash() {
   return { path: path || "", params: new URLSearchParams(qs || "") };
 }
 let lastView = null;
+let planRevision = 0;
 
 function route() {
   const { path, params } = parseHash();
@@ -63,6 +79,7 @@ function route() {
     if (t) openDrawer(t); else closeDrawer();
     return;
   }
+  planRevision++;
 
   document.querySelectorAll("nav.main a").forEach((a) => a.classList.remove("on"));
   const mark = (r) => document.querySelector(`nav.main a[data-route="${r}"]`)?.classList.add("on");
@@ -95,7 +112,7 @@ function renderHome() {
       </div>
       <div class="searchbar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="q" placeholder="Search ${DATA.tools.length} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
+        <input id="q" aria-label="Search tools" placeholder="Search ${DATA.tools.length} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
         <kbd>/</kbd>
       </div>
     </section>
@@ -143,7 +160,7 @@ function renderBrowse(params) {
     if (stage && t.stage !== stage) return false;
     if (src === "curated" && !t.curated) return false;
     if (src === "code" && !t.repo) return false;
-    if (acc && (t.license || "").toLowerCase() !== acc) return false;
+    if (!matchesAccess(t.license, acc)) return false;
     if (q) {
       const hay = norm(`${t.name} ${t.description} ${(t.tags || []).join(" ")}`);
       if (!norm(q).split(" ").every((w) => hay.includes(w))) return false;
@@ -168,7 +185,7 @@ function renderBrowse(params) {
       <p class="lede">${esc(st ? st.blurb : "Everything in the atlas. Hover a card to read what it does, click for links and sources.")}</p>
       <div class="searchbar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="q" placeholder="Filter by name, description or tag…" value="${esc(q)}" autocomplete="off">
+        <input id="q" aria-label="Filter tools" placeholder="Filter by name, description or tag…" value="${esc(q)}" autocomplete="off">
         <kbd>/</kbd>
       </div>
     </section>
@@ -199,7 +216,6 @@ function renderBrowse(params) {
     const next = browseState.list.slice(browseState.shown, browseState.shown + 60);
     grid.insertAdjacentHTML("beforeend", next.map(card).join(""));
     browseState.shown += next.length;
-    refreshStars(grid);
   };
   more();
   const sent = document.getElementById("sentinel");
@@ -239,62 +255,11 @@ function card(t) {
     <p class="desc">${esc(t.description || "No description recorded in the source.")}</p>
     <div class="foot">
       ${t.curated ? `<span class="pill star">standard</span>` : ""}
-      ${t.repo ? `<span class="pill stars" data-repo="${esc(t.repo)}"${t.stars ? "" : " hidden"}>${t.stars ? "★ " + fmtStars(t.stars) : ""}</span>` : ""}
       ${t.license ? `<span class="pill acc">${esc(t.license)}</span>` : ""}
       ${t.repo ? `<span class="pill">${esc(t.repo.split("/")[0])}</span>` : ""}
     </div>
   </button>`;
 }
-const fmtStars = (n) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "k" : String(n));
-
-// repo -> count, so a repo is asked about once per session however many times
-// it appears on screen
-const STAR_CACHE = new Map();
-let starsDisabled = false;
-
-/** Fill in live star counts for any .pill.stars in `root`. */
-async function refreshStars(root) {
-  if (starsDisabled || !root) return;
-  const slots = [...root.querySelectorAll(".stars[data-repo]")];
-  if (!slots.length) return;
-
-  // paint anything already known, then ask about the rest
-  const unknown = [];
-  for (const el of slots) {
-    const repo = el.dataset.repo;
-    if (STAR_CACHE.has(repo)) paintStars(el, STAR_CACHE.get(repo));
-    else if (!unknown.includes(repo)) unknown.push(repo);
-  }
-  if (!unknown.length) return;
-
-  for (let i = 0; i < unknown.length; i += 100) {
-    const batch = unknown.slice(i, i + 100);
-    let counts;
-    try {
-      const r = await fetch("api/stars", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repos: batch }),
-      });
-      if (r.status === 501) { starsDisabled = true; return; }  // no token: keep baked values
-      if (!r.ok) return;
-      counts = await r.json();
-    } catch {
-      return;   // offline or no function: the catalogue values stay as they are
-    }
-    for (const [repo, n] of Object.entries(counts || {})) STAR_CACHE.set(repo, n);
-    for (const el of root.querySelectorAll(".stars[data-repo]")) {
-      if (counts[el.dataset.repo] != null) paintStars(el, counts[el.dataset.repo]);
-    }
-  }
-}
-
-function paintStars(el, n) {
-  // compact on a card, full number in the detail panel
-  el.textContent = el.classList.contains("pill") ? "★ " + fmtStars(n) : n.toLocaleString();
-  el.hidden = false;
-}
-
 window.updateTool = (id) => {
   const { path, params } = parseHash();
   params.set("tool", id);
@@ -372,14 +337,12 @@ function openDrawer(id) {
         ${t.license ? `<dt>Access</dt><dd>${esc(t.license)}</dd>` : ""}
         ${t.repo ? `<dt>Repo</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.repo)}</dd>` : ""}
         ${t.year ? `<dt>Year</dt><dd>${esc(t.year)}</dd>` : ""}
-        ${t.repo ? `<dt>GitHub stars</dt><dd class="stars" data-repo="${esc(t.repo)}">${
-          t.stars ? t.stars.toLocaleString() : "…"}</dd>` : ""}
         ${t.pypi || t.conda ? `<dt>Package</dt><dd style="font-family:var(--mono);font-size:12.5px">${
           [t.pypi ? "pypi: " + esc(t.pypi) : "", t.conda ? "conda-forge: " + esc(t.conda) : ""].filter(Boolean).join("<br>")}</dd>` : ""}
         <dt>Listed in</dt><dd>${t.sources.map((x) => esc({
           "biotools": "bio.tools (ELIXIR, CC-BY 4.0)", "github-topics": "GitHub topic search",
           "curated": "our curated stack",
-        }[x] || x.replace("github-stars:", "★ "))).join("<br>")}</dd>
+        }[x] || x.replace("github-stars:", "GitHub reading list: "))).join("<br>")}</dd>
       </dl>
       ${t.tags?.length ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">Tags from the source</div>
         <div class="foot" style="margin:0">${t.tags.map((x) => `<span class="pill">${esc(x)}</span>`).join("")}</div>` : ""}
@@ -387,7 +350,6 @@ function openDrawer(id) {
         <a class="btn" href="#/stage/${t.stage}">See all ${STAGE.get(t.stage)?.count ?? ""} in ${esc(s?.label || t.stage)}</a>
       </div>
     </div>`;
-  refreshStars(drawer);
   drawer.querySelectorAll(".copy").forEach((b) => {
     b.onclick = async () => {
       await navigator.clipboard.writeText(b.dataset.code);
@@ -412,9 +374,11 @@ function renderWorkflow(params) {
       <h1 style="font-size:clamp(26px,3.6vw,36px)">Describe the research question.</h1>
       <p class="lede">You get the protocol, the gates you have to pass, and the tools for each step, with the target resolved and its structures ranked live. The computation stays with you.</p>
       <div class="wf-input">
-        <input id="wq" placeholder="e.g. find inhibitors of EGFR in human" value="${esc(q)}" autocomplete="off">
+        <input id="wq" aria-label="Research question" placeholder="e.g. find inhibitors of EGFR in human" value="${esc(q)}" autocomplete="off">
         <button class="btn primary" id="go">Plan it</button>
       </div>
+      <details class="workflow-examples" ${q ? "" : "open"}>
+      <summary>Try an example</summary>
       <div class="examples">
         ${["Network pharmacology study of Aloysia plant vs Parkinson's disease",
            "Find inhibitors of EGFR in human",
@@ -427,6 +391,7 @@ function renderWorkflow(params) {
            "Plan a synthesis route for this molecule"]
           .map((x) => `<button data-q="${esc(x)}">${esc(x)}</button>`).join("")}
       </div>
+      </details>
     </section>
     <div id="plan"></div>
   </div>`;
@@ -453,11 +418,40 @@ function toolChip(name) {
   return `<a class="minitool" style="--h:${s?.hue ?? 220}" href="${window.updateTool(t.id)}">${icon(t.stage)}${esc(t.name)}</a>`;
 }
 
+function workflowLoading(stage, detail = "") {
+  const phases = ["Match question", "Resolve target", "Rank structures"];
+  const titles = ["Finding your workflow", "Getting to know your target", "Finding a structure to build on"];
+  const descriptions = [
+    "Matching your question to a protocol and checking its requirements.",
+    `Looking up ${detail} in UniProt.`,
+    `Comparing experimental structures for ${detail} and checking AlphaFold.`,
+  ];
+  return `<div class="workflow-loading" role="status" aria-live="polite">
+    <div class="loading-art" aria-hidden="true">
+      <svg viewBox="0 0 120 120" fill="none">
+        <circle class="loading-orbit" cx="60" cy="60" r="51"/>
+        <path class="loading-bonds" d="M35 43L63 28L89 46L83 78L53 92L28 73Z M35 43L59 60L89 46 M59 60L53 92"/>
+        <g class="loading-nodes"><circle cx="35" cy="43" r="5"/><circle cx="63" cy="28" r="4"/>
+          <circle cx="89" cy="46" r="5"/><circle cx="83" cy="78" r="4"/>
+          <circle cx="53" cy="92" r="5"/><circle cx="28" cy="73" r="4"/><circle cx="59" cy="60" r="6"/></g>
+      </svg>
+    </div>
+    <div class="loading-copy"><span class="loading-eyebrow">From question to workflow</span>
+      <h3>${titles[stage]}</h3><p>${esc(descriptions[stage])}</p>
+      <ol class="loading-phases">${phases.map((label, i) => `<li class="${i < stage ? "done" : i === stage ? "active" : ""}"${i === stage ? ' aria-current="step"' : ""}>
+        <span aria-hidden="true">${i < stage ? "✓" : i + 1}</span>${label}</li>`).join("")}</ol>
+    </div>
+    <div class="loading-track" aria-hidden="true"></div>
+  </div>`;
+}
+
 async function drawPlan(q) {
+  const revision = ++planRevision;
   const host = document.getElementById("plan");
-  host.innerHTML = `<p class="count-note" style="margin:18px 0"><span class="spin"></span> Working out which protocol this is…</p>`;
+  host.innerHTML = workflowLoading(0);
 
   const parsed = await resolveQuery(q);
+  if (revision !== planRevision) return;
   const brief = buildBrief(parsed);
   const plan = compose(brief);
   const issues = plan.ok ? validate(plan) : [];
@@ -532,7 +526,7 @@ async function drawPlan(q) {
         </div>
       </div>`).join("")}
     </div>
-    <div style="display:flex;gap:8px;margin:10px 0 0">
+    <div class="plan-actions">
       <button class="btn" id="dl">Download as Markdown</button>
       <button class="btn" id="cp">Copy protocol</button>
     </div>
@@ -544,9 +538,10 @@ async function drawPlan(q) {
   const slot = () => document.getElementById("struct-slot");
 
   if (parsed.target) {
-    box.innerHTML = `<p class="count-note" style="margin-bottom:18px"><span class="spin"></span> Resolving <b>${esc(parsed.target)}</b> in UniProt…</p>`;
+    box.innerHTML = workflowLoading(1, parsed.target);
     try {
       const hits = await findTarget(parsed.target, parsed.organism);
+      if (revision !== planRevision) return;
       const asked = parsed.organism?.label || null;
       const got = hits[0]?.organism || null;
       const mismatch = asked && got && !got.toLowerCase().startsWith(asked.toLowerCase().split(" ")[0]);
@@ -569,17 +564,19 @@ async function drawPlan(q) {
               differ, confirm the orthologue before building anything on it.</p>` : ""}
           </div>`;
         if (slot()) {
-          slot().innerHTML = `<p class="count-note" style="margin:0 0 12px"><span class="spin"></span> Ranking PDB entries for ${esc(target.accession)}…</p>`;
+          slot().innerHTML = workflowLoading(2, target.accession);
           const { entries, total } = await findStructures(target.accession, target.organism);
+          if (revision !== planRevision) return;
           structures = entries;
           const af = await alphafold(target.accession);
+          if (revision !== planRevision) return;
           slot().innerHTML = renderStructures(entries, total, af, target);
         }
       }
     } catch (err) {
+      if (revision !== planRevision) return;
       box.innerHTML = `<p class="note" style="margin:0 0 20px"><b>Couldn't reach UniProt / RCSB.</b>
-        Sandboxed previews block outbound requests, the deployed site does not. Every step below still applies;
-        resolve the target and pick the structure by hand.</p>`;
+        The lookup failed or took too long. You can retry the question later or review the target and structures yourself.</p>`;
       if (slot()) slot().innerHTML = "";
     }
   }

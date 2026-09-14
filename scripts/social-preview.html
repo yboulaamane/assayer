@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Assayer social preview source</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1200px; height: 630px; background: #fbfaf8; color: #1b1a17; font-family: Arial, sans-serif; padding: 54px 60px; }
+  header { display: flex; align-items: center; gap: 14px; font-size: 28px; font-weight: 600; }
+  .mark { width: 46px; height: 46px; background: #1f5c4d; border-radius: 12px; display: grid; place-items: center; }
+  .mark svg { width: 32px; height: 32px; }
+  .edition { margin-left: auto; font-size: 14px; letter-spacing: 2px; font-weight: 400; color: #55524b; }
+  main { display: grid; grid-template-columns: 640px 1fr; gap: 40px; margin-top: 54px; }
+  h1 { margin: 0; font: 54px/1.1 Georgia, serif; letter-spacing: -1.8px; }
+  h1 em { color: #1f5c4d; font-weight: normal; }
+  .description { font-size: 21px; line-height: 1.5; color: #55524b; margin: 24px 0 0; max-width: 560px; }
+  .steps { padding-top: 2px; }
+  .step { background: #fff; border: 1px solid #e4e0d9; border-radius: 12px; padding: 21px; display: flex; gap: 16px; align-items: center; }
+  .num { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #e6f0ec; color: #1f5c4d; font-size: 15px; flex: none; }
+  .step b { display: block; font-size: 19px; font-weight: 500; }
+  .step small { display: block; font-size: 14px; color: #55524b; margin-top: 5px; }
+  .line { height: 18px; margin-left: 37px; border-left: 1px solid #d2ccc1; }
+  footer { position: absolute; left: 60px; right: 60px; top: 540px; border-top: 1px solid #e4e0d9; padding-top: 23px; display: flex; justify-content: space-between; font-size: 17px; color: #55524b; }
+  footer b { color: #1f5c4d; font-weight: 500; }
+</style>
+<header>
+  <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fbfaf8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.3 20.6 L12 3.9 L19.7 20.6"/><path d="M8.1 12.4 L15.9 12.4"/><path d="M9.4 15.5 L14.6 15.5"/></svg></span>
+  Assayer <span class="edition">MEDICINAL &amp; COMPUTATIONAL CHEMISTRY</span>
+</header>
+<main>
+  <div>
+    <h1>Drug-discovery tools,<br>and <em>the workflow to<br>put them to work.</em></h1>
+    <p class="description">Find the tools. Plan the steps.<br>Know what each step needs to prove.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><span class="num">1</span><div><b>Explore tools</b><small>Across the discovery pipeline</small></div></div>
+    <div class="line"></div>
+    <div class="step"><span class="num">2</span><div><b>Plan a workflow</b><small>Tools and decision gates</small></div></div>
+    <div class="line"></div>
+    <div class="step"><span class="num">3</span><div><b>Run the research</b><small>On your own infrastructure</small></div></div>
+  </div>
+</main>
+<footer><b>assayer.vercel.app</b><span>Curated by Yassir Boulaamane</span></footer>
+</html>

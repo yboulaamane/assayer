@@ -258,6 +258,7 @@ export async function resolveQuery(raw) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: raw }),
+      signal: AbortSignal.timeout(15000),
     });
     if (!r.ok) return { ...kw, degraded: true };
     const d = await r.json();
@@ -336,13 +337,14 @@ const RCSB_GQL = "https://data.rcsb.org/graphql";
 const AFDB = "https://alphafold.ebi.ac.uk/api/prediction";
 
 async function jget(url) {
-  const r = await fetch(url, { headers: { Accept: "application/json" } });
+  const r = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return r.json();
 }
 async function jpost(url, body) {
   const r = await fetch(url, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000),
   });
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return r.json();
