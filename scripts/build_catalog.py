@@ -223,6 +223,38 @@ LATE_RULES = [
     ("generative", r"grows? new ligand|ligand growing|peptide design|genetic algorithm.*peptide"),
     ("binding-site", r"molecular surface|interaction fingerprint|surface.based|water molecule"),
     ("libraries", r"\bdatabase of\b|compendium|curated database|data portal|knowledgebase"),
+
+    # A second sweep over what was still unsorted. Each pattern below came from
+    # reading the bucket, not from guessing at vocabulary.
+    ("structure", r"small angle x-ray|\bsaxs\b|x-ray data collection|connected c-alphas|"
+                  r"secondary structure|architectures of all|angles between helices|"
+                  r"superimpos\w+|chemical shift perturbation|conserved functional region|"
+                  r"protein crystals|structure refinement"),
+    ("docking", r"interaction property field|molecular interaction potential|"
+                r"ligand/receptor|protein-ligand complex structure|affinity prediction|"
+                r"compound affinity|ligand-specific|virtual screening front"),
+    ("md", r"markov model|interfacial analysis|lammps|molecular simulations?|"
+           r"dynamical architecture|phase separation|kinetics of protein|"
+           r"autoregressive equivariant|force-free md"),
+    ("qsar-ml", r"in silico prediction of|activity prediction|drug response|"
+             r"drug.target interaction prediction|regularized least squares|hypergraph|"
+             r"representation for graphs|pre-training deep learning|molecular image|"
+             r"multi-modal molecule|graph neural network"),
+    ("cheminformatics", r"bemis-?murcko|molecular features|pandas dataframe|"
+                        r"decomposition of molecules"),
+    ("generative", r"molecular design|programmable protein design|molecule generation"),
+    ("target-id", r"synthetic lethal|gene targets of|resistant target|target database|"
+                  r"complementary functional|drug treatment based on gene"),
+    ("viz", r"\bpymol\b|displays the information"),
+    ("infra", r"recipes|implementation of nsga|group factor analysis|"
+              r"introduction to|code repository|bayesian optimi[sz]ation|"
+              r"algorithms? (?:repository|and)|jupyter environment"),
+    ("structure", r"nmr spectra|2d nmr|two-dimensional nmr"),
+    ("qm", r"quantum mechanical|qm/mm|qm-mm"),
+    ("md", r"molecular dynamics"),
+    ("docking", r"quickvina|autodock|\bvina\b"),
+    ("cheminformatics", r"fingerprints?\b"),
+    ("qsar-ml", r"masked autoencoder|self-supervised|pretrain\w*|representation learning"),
 ]
 
 # Real tools, real science, different field. They arrive through broad EDAM
@@ -233,7 +265,12 @@ OUT_OF_SCOPE = re.compile(
     r"boolean network|gene regulatory network|metabolic model|systems biolog|"
     r"homologous sequence|distant homolog|\bblast\b|domain architecture|"
     r"polyketide synthase|chromosome|transcription factor binding site|"
-    r"phenotype ontolog|causal model|scale-free network", re.I)
+    r"phenotype ontolog|causal model|scale-free network|"
+    r"boolean (?:molecular )?network|metabolic system|biochemical model|"
+    r"copy number|sequencing reads|virulence gene|biosynthetic gene cluster|"
+    r"mass screening of contigs|next-gen\w* sequencing|"
+    r"coverage track|bam file|single-?cell|circos|antismash|"
+    r"variant calling|read simulat", re.I)
 
 
 def clean(s):
@@ -269,7 +306,10 @@ def classify(row):
     if row["source"] == "curated" and row.get("stage"):
         return CURATED_REMAP.get(row["stage"], row["stage"]), "curated"
 
-    hay_early = f"{norm(row.get('name'))} {norm(row.get('description'))}"
+    # Raw, not normalised: norm() removes the hyphens and slashes these
+    # patterns match on, so "x-ray" and "bemis-murcko" would never fire.
+    raw = f"{row.get('name') or ''} {row.get('description') or ''} {' '.join(row.get('categories') or [])}".lower()
+    hay_early = raw
     for stage, pattern in EARLY_RULES:
         if re.search(pattern, hay_early, re.I):
             return stage, "early-rule"
@@ -318,9 +358,8 @@ def classify(row):
 
     # Nothing else placed it. These families are specific enough to decide on
     # their own, and only run here so they can never override a good match.
-    hay_all = f"{hay_name} {hay_desc} {hay_cats}"
     for stage, pattern in LATE_RULES:
-        if re.search(pattern, hay_all, re.I):
+        if re.search(pattern, raw, re.I):
             return stage, "late-rule"
     return "other", "unmatched"
 
@@ -408,6 +447,15 @@ def main():
         else:
             canon[name] = key
 
+    # DROPPED stages are legitimate intermediate classifications: a tool is
+    # filed as omics and then dropped for being out of scope. Only a stage
+    # nothing knows about is a typo.
+    known = set(STAGE_ORDER) | DROPPED | {"other"}
+    for row in rows:
+        if row["_stage"] not in known:
+            print(f"  !! rule produced an unknown stage {row['_stage']!r}; filed as other")
+            row["_stage"] = "other"
+
     catalogue = []
     for key, members in groups.items():
         if all(m["_stage"] in DROPPED for m in members):
@@ -415,7 +463,7 @@ def main():
         # Unplaceable *and* recognisably another field: drop rather than file
         # under a label that tells the reader nothing.
         if all(m["_stage"] == "other" for m in members) and any(
-                OUT_OF_SCOPE.search(f"{m.get('name','')} {m.get('description','')}")
+                OUT_OF_SCOPE.search(f"{m.get('name') or ''} {m.get('description') or ''}")
                 for m in members):
             continue
         # curated entries win on description and stage; they were written for this
@@ -426,8 +474,12 @@ def main():
             nicer = next((m for m in members if not is_repo_name(m.get("name"))), None)
             if nicer:
                 head = dict(head, name=nicer["name"])
-        stages = [m["_stage"] for m in members if m["_stage"] != "other"]
-        stage = head["_stage"] if head["_stage"] != "other" else (stages[0] if stages else "other")
+        # A merged tool can inherit a dropped stage from whichever record won
+        # the head slot. Prefer a stage this catalogue actually shows.
+        usable = [m["_stage"] for m in members
+                  if m["_stage"] != "other" and m["_stage"] not in DROPPED]
+        stage = (head["_stage"] if head["_stage"] in usable
+                 else (usable[0] if usable else "other"))
         tags, seen = [], set()
         for m in members:
             for t in (m.get("categories") or []):
