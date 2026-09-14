@@ -162,7 +162,7 @@ export default async function handler(req) {
   try { input = await req.json(); } catch { return fail("bad request body", 400); }
   if (!input?.query || !Array.isArray(input.steps)) return fail("query and steps required", 400);
 
-  input.query = String(input.query).slice(0, 300);
+  input.query = String(input.query).slice(0, 1500);
   input.steps = input.steps.slice(0, 12).map((s) => String(s).slice(0, 120));
   input.tools = (input.tools || []).slice(0, 60).map((t) => String(t).slice(0, 40));
 

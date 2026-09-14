@@ -88,6 +88,10 @@ const ORGANISMS = [
   [["staph", "staphylococcus", "aureus", "mrsa"], 1280, "Staphylococcus aureus"],
 ];
 
+const ORGANISM_TERMS = ORGANISMS
+  .flatMap(([words, id, label]) => words.map((w) => [w, id, label]))
+  .sort((a, b) => b[0].length - a[0].length);
+
 const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WITH", "MY", "WE",
   "AN", "IS", "ARE", "WANT", "NEED", "FIND", "HOW", "WHAT", "CAN", "DO", "DNA", "RNA", "AI", "ML",
   "PDB", "MD", "FEP", "SAR", "PK", "US", "IT", "BE", "OR", "AT", "SO", "IF", "NEW", "ITS",
@@ -141,12 +145,19 @@ const FAMILY_SPLIT = /\b([A-Z]{2,6})\s+(\d[A-Z0-9]{0,5})\b/g;
  * question twice the model may say "AURKA" or "Aurora kinase", and the alias
  * table is what makes both land on the same accession.
  */
+// Longest first, so "aurora b" is tried before "aurora" and "pi3k alpha"
+// before "pi3k". Matched on word boundaries, because plain substring search
+// finds "mpro" inside "improve" and hands back SARS-CoV-2 main protease.
+const ALIAS_KEYS = Object.keys(ALIASES).sort((a, b) => b.length - a.length);
+const WORDISH = (k) => new RegExp(`(?<![\\w-])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "i");
+const ALIAS_RE = new Map(ALIAS_KEYS.map((k) => [k, WORDISH(k)]));
+
 export function aliasTarget(text, substring = false) {
   if (!text) return null;
   const low = String(text).toLowerCase().trim();
   if (ALIASES[low]) return ALIASES[low];
-  for (const k of Object.keys(ALIASES)) {
-    if (substring ? low.includes(k) : false) return ALIASES[k];
+  for (const k of ALIAS_KEYS) {
+    if (substring && ALIAS_RE.get(k).test(low)) return ALIASES[k];
   }
   // "aurora kinase" -> "aurora"; drop a trailing descriptor and retry
   const trimmed = low.replace(/\s+(kinase|receptor|protein|enzyme|transporter|channel|synthase|reductase)s?$/, "");
@@ -170,9 +181,10 @@ export function parseQuery(raw) {
   if (!best) intent = "hit-discovery";
 
   const score = best;
+  // Flattened and sorted by phrase length so "guinea pig" beats "pig".
   let organism = null;
-  for (const [words, id, label] of ORGANISMS) {
-    if (words.some((w) => low.includes(w))) { organism = { id, label }; break; }
+  for (const [w, id, label] of ORGANISM_TERMS) {
+    if (WORDISH(w).test(low)) { organism = { id, label }; break; }
   }
 
   let target = null;
@@ -217,7 +229,12 @@ export async function resolveQuery(raw) {
   // Confident when the router matched real signal AND either found a protein or
   // is on a protocol that needs none; or when the intent match alone is strong.
   const resolved = kw.target || NO_PROTEIN.has(kw.intent);
-  if ((kw.score >= 2 && resolved) || kw.score >= 4) return kw;
+  // A high keyword score on a request with explicit exclusions is confidence in
+  // the wrong thing: "do not run docking" contains every docking keyword there
+  // is. Always ask when constraints are stated.
+  const constraints = statedConstraints(raw);
+  kw.constraints = constraints;
+  if (!constraints.length && ((kw.score >= 2 && resolved) || kw.score >= 4)) return kw;
 
   try {
     const r = await fetch("api/route", {
@@ -231,17 +248,50 @@ export async function resolveQuery(raw) {
     return {
       query: raw,
       intent: d.intent,
-      // The model answers in prose as readily as in gene symbols; run it
-      // through the same alias table so both spellings reach one accession.
-      target: (d.target && (aliasTarget(d.target) || d.target)) || kw.target,
+      // The model answers in prose as readily as in gene symbols, so run it
+      // through the same alias table. An explicit null means it judged there to
+      // be no protein here, which has to beat the keyword guess rather than
+      // fall back to it.
+      target: "target" in d
+        ? (d.target ? aliasTarget(d.target) || d.target : null)
+        : kw.target,
       organism: organismByTaxid(d.organism_taxid) || kw.organism,
       score: kw.score,
       via: "llm",
       reason: d.reason || null,
+      matched: kw.matched,
+      constraints,
     };
   } catch {
     return kw; // offline, blocked by a preview sandbox, or no function deployed
   }
+}
+
+// Things people state that change what the plan should be, and that this
+// planner cannot yet act on. Detecting them is not the same as honouring them,
+// so they are surfaced rather than quietly ignored.
+const CONSTRAINT_PATTERNS = [
+  [/\b(?:no|without|avoid|exclude|skip|don'?t (?:use|want)|do not (?:use|run|want)|not run|cannot run|can'?t run|rather not|no need for)\s+((?:docking|md\b|molecular dynamics|fep\b|free energy|screening|virtual screening|simulation|synthesis|crystallograph\w*)[\w\s,/-]{0,40})/gi, "excluded method"],
+  [/\b(cpu[- ]only|no gpu|without a gpu|single (?:cpu|core)|laptop only)\b/gi, "compute limit"],
+  [/\b(?:in|within|only)\s+(\w+\s+(?:day|days|week|weeks|hour|hours))\b/gi, "time limit"],
+  [/\b(?:spare|selective over|selectivity over|but not|whilst sparing|while sparing)\s+([A-Z][A-Z0-9-]{1,9})\b/g, "off-target"],
+  [/\b(?:i have|we have|already have|existing|my)\s+((?:\d+\s+)?(?:measured|assayed|known)?\s*(?:compounds?|analogues?|trajector\w+|structures?|hits?|actives?|variants?|mutations?))\b/gi, "existing asset"],
+  [/\b(\d+\s+(?:measured|assayed|known|screened)?\s*(?:compounds?|analogues?|hits?|actives?|variants?|mutations?|structures?))\b/gi, "existing asset"],
+  [/\bno (?:usable |experimental )?structure\b/gi, "no structure"],
+];
+
+/** Constraints stated in the question that the planner does not yet apply. */
+export function statedConstraints(text) {
+  const out = [];
+  for (const [re, kind] of CONSTRAINT_PATTERNS) {
+    for (const m of String(text || "").matchAll(re)) {
+      const phrase = (m[1] || m[0]).trim().replace(/\s+/g, " ");
+      if (phrase && !out.some((o) => o.phrase.toLowerCase() === phrase.toLowerCase())) {
+        out.push({ kind, phrase });
+      }
+    }
+  }
+  return out.slice(0, 6);
 }
 
 /** The protocols on offer, for telling someone what is actually covered. */

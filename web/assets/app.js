@@ -458,6 +458,17 @@ async function drawPlan(q) {
   const parsed = await resolveQuery(q);
   const plan = buildPlan(parsed);
 
+  if (parsed.matched === false) {
+    host.innerHTML = `<div class="nomatch">
+      <b>Assayer does not plan this.</b> It covers a fixed set of medicinal and computational
+      chemistry workflows, and this question did not land on one. Rather than show you a protocol
+      for a different problem, here is what it does cover:
+      <div class="minitools" style="margin-top:12px">${PROTOCOL_LIST().map((p) =>
+        `<a class="minitool" style="--h:200" href="#/workflow?q=${encodeURIComponent(p.label)}">${esc(p.label)}</a>`).join("")}</div>
+    </div>`;
+    return;
+  }
+
   host.innerHTML = `
     <div class="section-head" style="margin-top:10px">
       <h2>${esc(plan.label)}</h2>
@@ -466,13 +477,13 @@ async function drawPlan(q) {
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
-    ${parsed.matched === false ? `<div class="nomatch">
-      <b>Nothing matched that question.</b> Assayer plans a fixed set of workflows, and yours did not
-      land on one, so what follows is the closest guess rather than an answer. Try naming the task
-      directly, or pick one:
-      <div class="minitools" style="margin-top:10px">${PROTOCOL_LIST().map((p) =>
-        `<a class="minitool" style="--h:200" href="#/workflow?q=${encodeURIComponent(p.label)}">${esc(p.label)}</a>`).join("")}</div>
+    ${parsed.constraints?.length ? `<div class="nomatch">
+      <b>Constraints not applied.</b> You stated
+      ${parsed.constraints.map((c) => `<code>${esc(c.phrase)}</code>`).join(", ")}.
+      The plan below is the reference protocol and does not yet take those into account: it is not
+      shortened, reordered or re-scoped for them. Treat the steps they rule out as inapplicable.
     </div>` : ""}
+
     ${plan.decision || plan.stop ? `<div class="frame">
       ${plan.decision ? `<div class="dec"><span class="lab">This decides</span>${esc(plan.decision)}</div>` : ""}
       ${plan.stop ? `<div class="kill"><span class="lab">Stop if</span>${esc(plan.stop)}</div>` : ""}

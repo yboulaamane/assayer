@@ -211,7 +211,11 @@ export default async function handler(req) {
     return json({ error: "bad request body" }, 400);
   }
   if (typeof query !== "string" || !query.trim()) return json({ error: "empty query" }, 400);
-  query = query.slice(0, 300); // the router needs a question, not a document
+  // Long enough for a real request with constraints. Truncation here used to
+  // drop exactly the part that changes the answer.
+  const full = query;
+  query = query.slice(0, 1500);
+  const truncated = full.length > query.length;
 
   let upstream, detail = "", used = "", winner = null;
 
@@ -314,6 +318,7 @@ export default async function handler(req) {
     target: typeof parsed.target === "string" && parsed.target.trim() ? parsed.target.trim() : null,
     organism_taxid: Number.isInteger(parsed.organism_taxid) ? parsed.organism_taxid : null,
     reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 80) : null,
+    truncated: truncated || undefined,
     model: used,
     via: "llm",
   });
