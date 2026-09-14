@@ -1,5 +1,6 @@
 import { icon } from "./icons.js";
-import { resolveQuery, findTarget, findStructures, alphafold, buildPlan, planToMarkdown, PROTOCOL_LIST } from "./workflow.js";
+import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST } from "./workflow.js";
+import { buildBrief, compose, validate } from "./compose.js";
 
 const app = document.getElementById("app");
 let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
@@ -456,7 +457,10 @@ async function drawPlan(q) {
   host.innerHTML = `<p class="count-note" style="margin:18px 0"><span class="spin"></span> Working out which protocol this is…</p>`;
 
   const parsed = await resolveQuery(q);
-  const plan = buildPlan(parsed);
+  const brief = buildBrief(parsed);
+  const plan = compose(brief);
+  const issues = plan.ok ? validate(plan) : [];
+  if (issues.length) console.warn("plan validation:", issues);
 
   if (parsed.matched === false) {
     host.innerHTML = `<div class="nomatch">
@@ -477,11 +481,22 @@ async function drawPlan(q) {
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
-    ${parsed.constraints?.length ? `<div class="nomatch">
-      <b>Constraints not applied.</b> You stated
-      ${parsed.constraints.map((c) => `<code>${esc(c.phrase)}</code>`).join(", ")}.
-      The plan below is the reference protocol and does not yet take those into account: it is not
-      shortened, reordered or re-scoped for them. Treat the steps they rule out as inapplicable.
+    ${plan.rerouted ? `<div class="nomatch">
+      <b>Different route.</b> ${esc(plan.rerouted.because.charAt(0).toUpperCase() + plan.rerouted.because.slice(1))},
+      so this is not structure-based discovery with steps removed. It is the ligand-based route,
+      which asks a different question of your data.
+    </div>` : ""}
+    ${brief.stated.length ? `<div class="applied">
+      <b>From your question.</b>
+      ${brief.excluded.length ? `Excluded <code>${brief.excluded.map(esc).join("</code> <code>")}</code>.` : ""}
+      ${brief.assets.length ? `Treated as already in hand: <code>${brief.assets.map(esc).join("</code> <code>")}</code>.` : ""}
+      ${brief.missing.length ? `Missing: <code>${brief.missing.map(esc).join("</code> <code>")}</code>.` : ""}
+      ${brief.compute.length || brief.time.length ? `<span class="warnish">Not applied:
+        ${[...brief.compute, ...brief.time].map((c) => `<code>${esc(c)}</code>`).join(" ")} —
+        the plan is not costed or scheduled.</span>` : ""}
+      ${plan.dropped.length ? `<details><summary>${plan.dropped.length} step${plan.dropped.length > 1 ? "s" : ""} left out</summary>
+        <ul>${plan.dropped.map((d) => `<li>${esc(d.title || d.id)} <span class="why">${esc(d.reason)}</span></li>`).join("")}</ul>
+      </details>` : ""}
     </div>` : ""}
 
     ${plan.decision || plan.stop ? `<div class="frame">
@@ -494,7 +509,7 @@ async function drawPlan(q) {
       <div class="step">
         <div class="rail"><div class="dot">${i + 1}</div><div class="line"></div></div>
         <div class="body">
-          <h3>${esc(s.title)}</h3>
+          <h3>${esc(s.title)}${s.borrowed ? ` <span class="pill">added for your case</span>` : ""}</h3>
           <p class="why">${esc(s.why)}</p>
           ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}</p>` : ""}
           ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
@@ -561,7 +576,7 @@ async function drawPlan(q) {
   // never offered for a guess.
   if (parsed.matched !== false) offerTailor(plan, parsed, target, structures);
 
-  const md = () => planToMarkdown(plan, target, structures);
+  const md = () => planToMarkdown(plan, target, structures, brief);
   document.getElementById("dl").onclick = () => {
     const b = new Blob([md()], { type: "text/markdown" });
     const a = document.createElement("a");

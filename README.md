@@ -61,9 +61,36 @@ both other sources are patchy about.
 318 of 4,360 rows appear in more than one source. They get merged into one entry
 that remembers where it came from.
 
+## How a plan is built
+
+Protocols are not printed as templates. Each step is a **module** in
+`web/assets/modules.js` with a stable id, the method family it belongs to, and
+the capabilities it needs and produces. A recipe is an ordered list of module
+ids; that order is judgement and is kept.
+
+`web/assets/compose.js` turns a question into a plan:
+
+1. **Brief** — the request is read for excluded methods, assets already in hand,
+   missing assets, off-targets, compute and time limits.
+2. **Route** — and re-route where the constraints demand it. Structure-based
+   discovery with no usable structure is not the same protocol minus a step; it
+   becomes the ligand-based route.
+3. **Compose** — drop modules whose family you excluded, skip modules whose
+   output you already have, borrow a module from another recipe when a step
+   needs something nothing supplies.
+4. **Validate** — module ids resolve, nothing appears twice, unmet requirements
+   are reported rather than hidden.
+
+Every decision is shown: what was left out and why, what was added, where the
+route changed. A planner that silently drops a step is worse than one that
+prints too many.
+
+Constraints it notices but cannot act on, such as compute and time limits, are
+named as not applied rather than quietly ignored.
+
 ## The protocols
 
-16 of them, 104 steps. Each protocol says what decision it supports and when to
+17 of them, 107 modules. Each protocol says what decision it supports and when to
 walk away. Each step says what to do, why, which tools, and the gate it has to
 pass. 28 steps also name the specific way that step usually goes wrong.
 
@@ -81,7 +108,7 @@ Some examples of what that looks like in practice:
 These are opinions, not facts, and I'd rather argue about them than not. If a
 gate is wrong, open an issue.
 
-Covered: hit discovery, lead optimisation, generative design, fragment-based
+Covered: hit discovery, ligand-based discovery, lead optimisation, generative design, fragment-based
 discovery, selectivity, free energy, degraders, ADMET, conformational sampling,
 MD stability, retrosynthesis, target triage, structure selection, antibodies,
 property-model building, resistance and mutation effects.

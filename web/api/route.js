@@ -31,6 +31,7 @@ const INTENTS = [
   ["denovo", "generate new molecules, de novo design, scaffold hopping, PROTACs"],
   ["antibody", "antibodies, nanobodies, biologics, epitopes, developability"],
   ["admet", "ADMET, PK, toxicity, safety, hERG, metabolism for compounds"],
+  ["ligand-discovery", "discovery without a usable structure, or with docking ruled out: modelling from measured compounds"],
   ["qsar", "building or validating a property/QSAR model: training data, splits, descriptors, applicability domain"],
   ["resistance", "resistance or mutation effects: variant impact on binding, escape mutations, designing against a mutant"],
   ["fbdd", "fragment-based discovery: fragment screening, hits, growing, merging, linking, ligand efficiency"],
