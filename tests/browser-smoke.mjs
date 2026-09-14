@@ -60,6 +60,11 @@ try {
     await page.getByRole("button", { name: "Copy protocol" }).click();
     await page.getByRole("button", { name: "Copied", exact: true }).waitFor();
     assert.match(await page.evaluate(() => navigator.clipboard.readText()), /ADMET/i);
+    await page.getByText("Wrong workflow? Choose another", { exact: true }).click();
+    await page.getByRole("link", { name: "Synthesis planning", exact: true }).click();
+    await page.getByRole("heading", { name: "Synthesis planning", exact: true }).waitFor();
+    assert.match(await page.locator(".section-head").first().innerText(), /selected by you/);
+    assert.equal(await page.getByText("Semantic routing was unavailable", { exact: false }).count(), 0);
     assert.equal(await page.getByRole("link", { name: "Suggest a tool or report an issue" }).getAttribute("href"),
       "https://github.com/yboulaamane/assayer/issues/new");
     if (process.env.ASSAYER_SCREENSHOTS) await page.screenshot({ path: `${process.env.ASSAYER_SCREENSHOTS}/workflow-${width}.png`, fullPage: true });

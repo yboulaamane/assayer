@@ -1,5 +1,5 @@
 import { icon } from "./icons.js";
-import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST } from "./workflow.js";
+import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js";
 import { buildBrief, compose, validate } from "./compose.js";
 import { matchesAccess } from "./catalog.js";
 
@@ -368,6 +368,7 @@ function closeDrawer() {
 /* ---------------------------------------------------------------- workflow */
 function renderWorkflow(params) {
   const q = params.get("q") || "";
+  const forcedIntent = params.get("intent") || "";
   app.innerHTML = `
   <div class="wrap">
     <section class="hero" style="padding-bottom:0">
@@ -403,7 +404,7 @@ function renderWorkflow(params) {
   document.querySelectorAll(".examples button").forEach((b) => {
     b.onclick = () => { location.hash = `#/workflow?q=${encodeURIComponent(b.dataset.q)}`; };
   });
-  if (q) drawPlan(q);
+  if (q) drawPlan(q, forcedIntent);
 }
 
 function lookupTool(name) {
@@ -445,13 +446,29 @@ function workflowLoading(stage, detail = "") {
   </div>`;
 }
 
-async function drawPlan(q) {
+function workflowCorrection(q, activeIntent) {
+  return `<details class="route-correction">
+    <summary>Wrong workflow? Choose another</summary>
+    <div class="route-options">${PROTOCOL_LIST().map((p) =>
+      `<a class="chip ${p.id === activeIntent ? "on" : ""}" href="#/workflow?q=${encodeURIComponent(q)}&intent=${encodeURIComponent(p.id)}">${esc(p.label)}</a>`
+    ).join("")}</div>
+  </details>`;
+}
+
+async function drawPlan(q, forcedIntent = "") {
   const revision = ++planRevision;
   const host = document.getElementById("plan");
   host.innerHTML = workflowLoading(0);
 
-  const parsed = await resolveQuery(q);
+  let parsed = await resolveQuery(q);
   if (revision !== planRevision) return;
+  if (forcedIntent && PROTOCOL_LIST().some((p) => p.id === forcedIntent)) {
+    parsed = {
+      ...parsed, intent: forcedIntent, matched: true, via: "manual", reason: null,
+      confidence: null, evidence: null, degraded: false, truncated: false,
+      target: intentUsesProtein(forcedIntent) ? parsed.target : null,
+    };
+  }
   const brief = buildBrief(parsed);
   const plan = compose(brief);
   const issues = plan.ok ? validate(plan) : [];
@@ -460,9 +477,9 @@ async function drawPlan(q) {
     host.innerHTML = `<div class="nomatch">
       <b>Assayer does not plan this.</b> It covers a fixed set of medicinal and computational
       chemistry workflows, and this question did not land on one. Rather than show you a protocol
-      for a different problem, here is what it does cover:
-      <div class="minitools" style="margin-top:12px">${PROTOCOL_LIST().map((p) =>
-        `<a class="minitool" style="--h:200" href="#/workflow?q=${encodeURIComponent(p.label)}">${esc(p.label)}</a>`).join("")}</div>
+      for a different problem, add the result you need (for example: find hits, improve a lead,
+      assess ADMET, choose a structure or plan synthesis).
+      ${workflowCorrection(q, null)}
     </div>`;
     return;
   }
@@ -477,10 +494,12 @@ async function drawPlan(q) {
     <div class="section-head" style="margin-top:10px">
       <h2>${esc(plan.label)}</h2>
       <span>${plan.steps.length} steps${parsed.target ? ` · target: ${esc(parsed.target)}` : ""}${parsed.organism ? ` · ${esc(parsed.organism.label)}` : ""}
-        · <span title="${parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : "Matched on keywords, no model call needed"}">${parsed.via === "llm" ? "routed by model" : "routed by keywords"}${parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
+        · <span title="${parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : parsed.via === "manual" ? "Workflow selected manually" : "Matched on keywords, no model call needed"}">${parsed.via === "llm" ? "routed by model" : parsed.via === "manual" ? "selected by you" : "routed by keywords"}${parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
+    ${parsed.confidence === "medium" ? `<p class="note">The router found a plausible workflow but was not fully certain. Check the selection below before using the plan.</p>` : ""}
+    ${workflowCorrection(q, plan.intent)}
     ${brief.degraded ? `<p class="note">Semantic routing was unavailable. This is a provisional plan based on recognised phrases; check that it captures your full request.</p>` : ""}
     ${brief.truncated ? `<p class="note">The routing model saw only the first 1,500 characters. Constraints were extracted from the full question, but the selected workflow needs review.</p>` : ""}
     ${!plan.viable ? `<div class="nomatch"><b>Provisional plan — inputs or methods are missing.</b>
@@ -679,7 +698,7 @@ function linkTools(el) {
     const re = new RegExp(`(?<![\\w/-])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "g");
     if (!re.test(html)) continue;
     seen.add(n.toLowerCase());
-    html = html.replace(re, `<a class="tool" href="${window.updateTool(t.id)}">${esc(n)}</a>`);
+    html = html.replace(re, `<a class="tool-ref" href="${window.updateTool(t.id)}">${esc(n)}</a>`);
     if (seen.size > 12) break;
   }
   el.innerHTML = html;
