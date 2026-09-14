@@ -1859,6 +1859,232 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "viz",
+    "name": "Cytoscape",
+    "description": "The platform network pharmacology is done on: build a compound-target-pathway network, lay it out, score the hubs, and see what the topology actually says.",
+    "url": "https://cytoscape.org",
+    "code_url": "https://github.com/cytoscape/cytoscape",
+    "paper_url": null,
+    "categories": [
+      "network",
+      "pharmacology",
+      "visualisation"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "cytoscape/cytoscape",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "NetworkAnalyst",
+    "description": "Network and enrichment analysis in the browser, from a gene or protein list to a protein-protein interaction subnetwork with statistics attached.",
+    "url": "https://www.networkanalyst.ca",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "network",
+      "enrichment",
+      "ppi"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "Metascape",
+    "description": "Gene list annotation and enrichment across many ontologies at once, with a protein-protein interaction module. The fastest way from a hit list to a defensible pathway story.",
+    "url": "https://metascape.org",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "enrichment",
+      "annotation",
+      "network"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "GeneMANIA",
+    "description": "Predicts function by placing a gene in a composite network of co-expression, physical interaction and pathway membership, and names the evidence for each edge.",
+    "url": "https://genemania.org",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "network",
+      "function-prediction"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "clusterProfiler",
+    "description": "The R package most enrichment figures in the literature come from: over-representation and GSEA across GO, KEGG and custom sets, with the plots built in.",
+    "url": "https://bioconductor.org/packages/clusterProfiler/",
+    "code_url": "https://github.com/yulab-smu/clusterprofiler",
+    "paper_url": null,
+    "categories": [
+      "enrichment",
+      "gsea",
+      "r"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "yulab-smu/clusterprofiler",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "CTD",
+    "description": "Comparative Toxicogenomics Database: curated chemical-gene, chemical-disease and gene-disease relationships from the literature. The evidence layer under most chemical-centric network studies.",
+    "url": "https://ctdbase.org",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "chemical-gene",
+      "curated",
+      "toxicogenomics"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "BATMAN-TCM",
+    "description": "Predicts targets for the constituents of a herbal formula and runs the enrichment over them, built specifically for the multi-compound multi-target case.",
+    "url": "http://bionet.ncpsb.org.cn/batman-tcm/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "network-pharmacology",
+      "tcm",
+      "target-prediction"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "libraries",
+    "name": "NPASS",
+    "description": "Natural products with measured activities against defined targets, and the species they came from. The quantitative counterpart to structure-only natural product collections.",
+    "url": "https://bidd.group/NPASS/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "natural-products",
+      "bioactivity",
+      "species"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "libraries",
+    "name": "CMAUP",
+    "description": "Collective molecular activities of useful plants: plant species mapped to their constituents, those constituents to targets, and targets to pathways and diseases.",
+    "url": "https://bidd.group/CMAUP/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "plants",
+      "network-pharmacology",
+      "targets"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "libraries",
+    "name": "IMPPAT",
+    "description": "Indian medicinal plants, their phytochemicals and therapeutic uses, with curated structures and drug-likeness already computed.",
+    "url": "https://cb.imsc.res.in/imppat/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "plants",
+      "phytochemicals",
+      "ethnopharmacology"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "libraries",
+    "name": "FooDB",
+    "description": "The chemistry of food: constituents of plant and animal foods with structures, concentrations and provenance. Useful when the starting point is a dietary source rather than a screening deck.",
+    "url": "https://foodb.ca",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "food-chemistry",
+      "phytochemicals"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "libraries",
+    "name": "Phenol-Explorer",
+    "description": "Measured polyphenol contents of foods, including what processing and cooking do to them. Specific where general natural product databases are silent.",
+    "url": "http://phenol-explorer.eu",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "polyphenols",
+      "plants",
+      "measured-content"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "cheminformatics",
     "name": "Open Babel",
     "description": "Chemical file format interconversion, 3D coordinate generation and conformer search across 110+ formats.",
