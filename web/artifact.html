@@ -1,4 +1,4 @@
-<title>Assayer, med chem tools &amp; workflows</title>
+<title>Assayer</title>
 <style>
 /* ------------------------------------------------------------------ tokens */
 :root {
@@ -46,6 +46,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
@@ -229,11 +230,13 @@ nav.main a.on { background: var(--accent-soft); color: var(--accent); }
 /* ---------------------------------------------------------------- workflow */
 .wf-input { display: flex; gap: 10px; margin: 22px 0 10px; }
 .wf-input input {
-  flex: 1; padding: 14px 16px; font: inherit; background: var(--surface); color: var(--ink);
+  flex: 1; min-width: 0; padding: 14px 16px; font: inherit; background: var(--surface); color: var(--ink);
   border: 1px solid var(--line); border-radius: var(--r); outline: none; box-shadow: var(--shadow);
 }
 .wf-input input:focus { border-color: var(--accent); box-shadow: var(--shadow), 0 0 0 3.5px var(--accent-soft); }
-.examples { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 30px; }
+.workflow-examples { margin: 12px 0 26px; }
+.workflow-examples summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); padding: 8px 0; }
+.examples { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
 .examples button {
   border: 1px dashed var(--line-strong); background: none; color: var(--ink-3);
   border-radius: 99px; padding: 5px 11px; font-size: 12px; cursor: pointer;
@@ -323,6 +326,7 @@ nav.main a.on { background: var(--accent-soft); color: var(--accent); }
 .step .pit b { color: var(--warn); font-weight: 600; }
 
 .plan { display: grid; gap: 0; margin-top: 8px; }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .step { display: grid; grid-template-columns: 34px 1fr; gap: 18px; }
 .step .rail { display: flex; flex-direction: column; align-items: center; }
 .step .dot {
@@ -367,17 +371,66 @@ nav.main a.on { background: var(--accent-soft); color: var(--accent); }
   border: 1px solid color-mix(in srgb, var(--warn) 24%, transparent); border-radius: 9px;
   padding: 9px 12px; margin: 12px 0 0;
 }
-.spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px; }
-@keyframes sp { to { transform: rotate(360deg); } }
+.workflow-loading {
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: 24px;
+  margin: 20px 0 26px; padding: 26px; border: 1px solid var(--line); border-radius: 16px;
+  background: radial-gradient(ellipse at 0% 0%, var(--accent-soft), transparent 65%), var(--surface);
+}
+.loading-art { width: 112px; flex: none; color: var(--accent); }
+.loading-art svg { display: block; width: 100%; }
+.loading-orbit { stroke: currentColor; stroke-width: 1; stroke-dasharray: 48 15 4 15; opacity: .35; transform-origin: center; animation: loading-orbit 18s linear infinite; }
+.loading-bonds { stroke: currentColor; stroke-width: 1.5; opacity: .45; }
+.loading-nodes circle { fill: var(--surface); stroke: currentColor; stroke-width: 2; animation: loading-node 2.4s ease-in-out infinite; }
+.loading-nodes circle:nth-child(2n) { animation-delay: -.8s; }
+.loading-nodes circle:nth-child(3n) { animation-delay: -1.6s; }
+.loading-copy { min-width: 0; }
+.loading-eyebrow { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.loading-copy h3 { font: 400 25px/1.2 var(--serif); margin: 8px 0; }
+.loading-copy p { font-size: 13px; color: var(--ink-2); margin: 0; }
+.loading-phases { display: flex; flex-wrap: wrap; gap: 10px 16px; list-style: none; padding: 0; margin: 18px 0 0; }
+.loading-phases li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); }
+.loading-phases li span { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--line-strong); border-radius: 50%; font-size: 10px; }
+.loading-phases .active, .loading-phases .done { color: var(--accent); }
+.loading-phases .active span { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.loading-phases .done span { border-color: var(--accent); }
+.loading-track { position: absolute; bottom: 0; height: 2px; left: 0; right: 0; background: var(--accent-soft); overflow: hidden; }
+.loading-track::after { content: ""; display: block; width: 35%; height: 100%; background: var(--accent); animation: loading-sweep 2.8s ease-in-out infinite; }
+@keyframes loading-orbit { to { transform: rotate(360deg); } }
+@keyframes loading-node { 50% { fill: var(--accent); } }
+@keyframes loading-sweep { from { transform: translateX(-100%); } to { transform: translateX(390%); } }
+@media (prefers-reduced-motion: reduce) {
+  .loading-orbit, .loading-nodes circle, .loading-track::after { animation: none; }
+}
 
 .empty { text-align: center; padding: 70px 20px; color: var(--ink-3); }
 footer { border-top: 1px solid var(--line); margin-top: 70px; padding: 28px 0 46px; font-size: 12.5px; color: var(--ink-3); }
 footer a { color: var(--ink-2); }
+footer p { margin: 0; }
+footer .footer-credit { margin-top: 12px; color: var(--ink-2); }
+footer .footer-feedback { margin-top: 6px; }
 .sentinel { height: 1px; }
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
-  nav.main a { padding: 7px 9px; font-size: 13px; }
+  .top .wrap { flex-wrap: wrap; height: auto; gap: 6px 12px; padding-top: 10px; padding-bottom: 6px; }
+  .top .brand { margin-right: auto; }
+  .top #theme { width: 44px; height: 44px; }
+  nav.main { order: 3; width: 100%; margin-left: 0; }
+  nav.main a { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 7px 9px; font-size: 13px; white-space: nowrap; }
   .hero { padding: 34px 0 20px; }
+  .frame, .tool-grid, .stage-grid { grid-template-columns: minmax(0, 1fr); }
+  .step { gap: 10px; }
+  .btn, .examples button, .chip, .workflow-examples summary { min-height: 44px; }
+  .examples button { border-radius: 14px; }
+  .drawer .close { width: 44px; height: 44px; top: 10px; right: 12px; }
+  .drawer h2 { padding-right: 40px; overflow-wrap: anywhere; }
+  .drawer .dbody { padding: 18px 16px 32px; }
+  .kv { grid-template-columns: 80px minmax(0, 1fr); gap: 8px; }
+  .kv dd, .minitool, .pill { overflow-wrap: anywhere; white-space: normal; }
+  .section-head { flex-wrap: wrap; gap: 4px; }
+  .workflow-loading { align-items: flex-start; gap: 12px; padding: 18px 14px; }
+  .loading-art { width: 54px; }
+  .loading-copy h3 { font-size: 22px; }
+  .loading-phases { flex-direction: column; gap: 8px; }
 }
 
 </style>
@@ -407,24 +460,23 @@ footer a { color: var(--ink-2); }
   </div>
 </header>
 
-<main id="app"><div class="wrap"><div class="empty">Loading the atlas…</div></div></main>
+<main id="app"><div class="wrap"><div class="empty" role="status">Loading the atlas…</div></div></main>
+<noscript><div class="wrap"><p>Enable JavaScript to browse tools and plan workflows.</p></div></noscript>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Tool detail"></aside>
 
 <footer>
   <div class="wrap">
-    Assayer is built on <a href="https://bio.tools" target="_blank" rel="noopener">bio.tools</a>, the ELIXIR
-    registry, whose records are used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>;
-    on public GitHub repository metadata; and on my own curated stack of the tools a discovery project
-    actually runs on. The selection, the staging and the protocols are mine.
-    Structure data is fetched live from
+    <p>Tool catalogue combines <a href="https://bio.tools" target="_blank" rel="noopener">bio.tools</a>
+    (the ELIXIR registry, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>),
+    public GitHub metadata and personal curation. Live structure data comes from
     <a href="https://www.uniprot.org" target="_blank" rel="noopener">UniProt</a>,
     <a href="https://www.rcsb.org" target="_blank" rel="noopener">RCSB PDB</a> and
     <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold DB</a>.
-    Nothing is computed here, the protocols are yours to run.
-    Curated by <a href="mailto:yboulaamane@github.io">Yassir Boulaamane</a>
-    (yboulaamane@github.io).
+    Workflows are guides to run on your own infrastructure.</p>
+    <p class="footer-credit">Curated by <a href="https://yboulaamane.github.io/" target="_blank" rel="noopener">Yassir Boulaamane</a>.</p>
+    <p class="footer-feedback"><a href="https://github.com/yboulaamane/assayer/issues/new" target="_blank" rel="noopener">Suggest a tool or report an issue</a> on GitHub.</p>
   </div>
 </footer>
 

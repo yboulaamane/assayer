@@ -3,8 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Assayer, med chem tools &amp; workflows</title>
-<meta name="description" content="A browsable atlas of 3949 drug-discovery tools across 18 pipeline stages, and a consultant that turns a research question into a step-by-step protocol with live structure selection from UniProt, RCSB PDB and AlphaFold.">
+<title>Assayer — Drug-discovery tools &amp; workflow planning</title>
+<meta name="description" content="Explore tools for medicinal and computational chemistry. Turn a research question into a workflow with tools, decision gates and live protein structure rankings.">
+<link rel="canonical" href="https://assayer.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Assayer">
+<meta property="og:title" content="Assayer — Drug-discovery tools &amp; workflow planning">
+<meta property="og:description" content="Explore tools for medicinal and computational chemistry. Plan your next research workflow, with tools and decision gates for each step.">
+<meta property="og:url" content="https://assayer.vercel.app/">
+<meta property="og:image" content="https://assayer.vercel.app/assets/social-preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Assayer. Drug-discovery tools, and the workflow to put them to work. Explore tools, plan a workflow, run the research.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Assayer — Drug-discovery tools &amp; workflow planning">
+<meta name="twitter:description" content="Explore tools for medicinal and computational chemistry and plan your next research workflow.">
+<meta name="twitter:image" content="https://assayer.vercel.app/assets/social-preview.png">
+<meta name="twitter:image:alt" content="Assayer. Drug-discovery tools, and the workflow to put them to work.">
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://rest.uniprot.org">
 <link rel="preconnect" href="https://search.rcsb.org">
@@ -38,24 +54,23 @@
   </div>
 </header>
 
-<main id="app"><div class="wrap"><div class="empty">Loading the atlas…</div></div></main>
+<main id="app"><div class="wrap"><div class="empty" role="status">Loading the atlas…</div></div></main>
+<noscript><div class="wrap"><p>Enable JavaScript to browse tools and plan workflows.</p></div></noscript>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Tool detail"></aside>
 
 <footer>
   <div class="wrap">
-    Assayer is built on <a href="https://bio.tools" target="_blank" rel="noopener">bio.tools</a>, the ELIXIR
-    registry, whose records are used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>;
-    on public GitHub repository metadata; and on my own curated stack of the tools a discovery project
-    actually runs on. The selection, the staging and the protocols are mine.
-    Structure data is fetched live from
+    <p>Tool catalogue combines <a href="https://bio.tools" target="_blank" rel="noopener">bio.tools</a>
+    (the ELIXIR registry, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC&nbsp;BY&nbsp;4.0</a>),
+    public GitHub metadata and personal curation. Live structure data comes from
     <a href="https://www.uniprot.org" target="_blank" rel="noopener">UniProt</a>,
     <a href="https://www.rcsb.org" target="_blank" rel="noopener">RCSB PDB</a> and
     <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold DB</a>.
-    Nothing is computed here, the protocols are yours to run.
-    Curated by <a href="mailto:yboulaamane@github.io">Yassir Boulaamane</a>
-    (yboulaamane@github.io).
+    Workflows are guides to run on your own infrastructure.</p>
+    <p class="footer-credit">Curated by <a href="https://yboulaamane.github.io/" target="_blank" rel="noopener">Yassir Boulaamane</a>.</p>
+    <p class="footer-feedback"><a href="https://github.com/yboulaamane/assayer/issues/new" target="_blank" rel="noopener">Suggest a tool or report an issue</a> on GitHub.</p>
   </div>
 </footer>
 
