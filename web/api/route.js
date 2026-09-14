@@ -26,6 +26,7 @@ export const config = { runtime: "edge" };
 // An id the client does not know is rejected there too, so drift degrades to a
 // keyword fallback rather than a broken page.
 const INTENTS = [
+  ["network-pharmacology", "network or systems pharmacology: connect plant/natural-product or compound sets to disease targets, protein networks and enriched pathways"],
   ["hit-discovery", "find hits/inhibitors/binders for a target; virtual screening; docking campaign"],
   ["lead-opt", "improve an existing series: potency, selectivity, SAR, free-energy ranking"],
   ["denovo", "generate new molecules, de novo design, scaffold hopping, PROTACs"],
@@ -51,10 +52,13 @@ Protocols:
 ${INTENTS.map(([id, d]) => `- ${id}: ${d}`).join("\n")}
 
 Return exactly:
-{"intent": "<one id above>", "target": "<gene symbol or protein name, or null>", "organism_taxid": <NCBI taxon id or null>, "reason": "<8 words max>"}
+{"intent": "<one id above, or unsupported>", "target": "<gene symbol or protein name, or null>", "organism_taxid": <NCBI taxon id or null>, "reason": "<8 words max>"}
 
 Rules:
+- Return unsupported when none of the protocols addresses the request. Do not force unrelated questions into a protocol.
+- Respect negations and distinguish completed work from the requested next task. Return the primary target; a protein the user wants to spare is an off-target.
 - target is a PROTEIN. For a disease, an endpoint (ADMET, hERG) or an unnamed molecule, use null.
+- For network-pharmacology use target null: plant names and diseases are study context, not a single protein. Route plant-versus-disease network studies here, including Aloysia versus Parkinson's disease.
 - Expand informal names: "3A4" -> "CYP3A4", "Mpro"/"main protease" -> "3C-like proteinase", "PD-L1" -> "CD274".
 - organism_taxid: human 9606, mouse 10090, rat 10116, SARS-CoV-2 2697049, E. coli 83333, yeast 559292. null if unstated.
 - Choose conformational-sampling over md-stability whenever the question is about exploring conformations rather than checking stability.
@@ -312,6 +316,7 @@ export default async function handler(req) {
   }
 
   // Only ever hand back a protocol we actually have.
+  if (parsed.intent === "unsupported") return json({ intent: "unsupported", matched: false, via: "llm" });
   if (!IDS.has(parsed.intent)) return json({ error: "unknown intent", fallback: true }, 502);
 
   return json({

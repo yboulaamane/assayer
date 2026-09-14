@@ -416,7 +416,8 @@ function renderWorkflow(params) {
         <button class="btn primary" id="go">Plan it</button>
       </div>
       <div class="examples">
-        ${["Find inhibitors of EGFR in human",
+        ${["Network pharmacology study of Aloysia plant vs Parkinson's disease",
+           "Find inhibitors of EGFR in human",
            "My fragment screen gave 40 hits, which should I grow?",
            "Design a PROTAC for BRD4 using VHL",
            "Why is my series hitting the wrong kinase?",
@@ -460,7 +461,6 @@ async function drawPlan(q) {
   const brief = buildBrief(parsed);
   const plan = compose(brief);
   const issues = plan.ok ? validate(plan) : [];
-  if (issues.length) console.warn("plan validation:", issues);
 
   if (parsed.matched === false) {
     host.innerHTML = `<div class="nomatch">
@@ -473,6 +473,12 @@ async function drawPlan(q) {
     return;
   }
 
+  if (!plan.ok || issues.length) {
+    host.innerHTML = `<div class="nomatch"><b>This plan needs correction before it can be used.</b>
+      <ul>${[...(plan.errors || []), ...issues].map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>`;
+    return;
+  }
+
   host.innerHTML = `
     <div class="section-head" style="margin-top:10px">
       <h2>${esc(plan.label)}</h2>
@@ -481,6 +487,10 @@ async function drawPlan(q) {
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
+    ${brief.degraded ? `<p class="note">Semantic routing was unavailable. This is a provisional plan based on recognised phrases; check that it captures your full request.</p>` : ""}
+    ${brief.truncated ? `<p class="note">The routing model saw only the first 1,500 characters. Constraints were extracted from the full question, but the selected workflow needs review.</p>` : ""}
+    ${!plan.viable ? `<div class="nomatch"><b>Provisional plan — inputs or methods are missing.</b>
+      ${plan.unmet.length ? "Steps marked below must wait until their prerequisites are available." : "Your exclusions leave no applicable steps. Revise the requested method or provide an alternative route."}</div>` : ""}
     ${plan.rerouted ? `<div class="nomatch">
       <b>Different route.</b> ${esc(plan.rerouted.because.charAt(0).toUpperCase() + plan.rerouted.because.slice(1))},
       so this is not structure-based discovery with steps removed. It is the ligand-based route,
@@ -491,6 +501,7 @@ async function drawPlan(q) {
       ${brief.excluded.length ? `Excluded <code>${brief.excluded.map(esc).join("</code> <code>")}</code>.` : ""}
       ${brief.assets.length ? `Treated as already in hand: <code>${brief.assets.map(esc).join("</code> <code>")}</code>.` : ""}
       ${brief.missing.length ? `Missing: <code>${brief.missing.map(esc).join("</code> <code>")}</code>.` : ""}
+      ${brief.offTargets.length ? `Must spare: ${brief.offTargets.map(esc).join(", ")}.` : ""}
       ${brief.compute.length || brief.time.length ? `<span class="warnish">Not applied:
         ${[...brief.compute, ...brief.time].map((c) => `<code>${esc(c)}</code>`).join(" ")} —
         the plan is not costed or scheduled.</span>` : ""}
@@ -511,6 +522,8 @@ async function drawPlan(q) {
         <div class="body">
           <h3>${esc(s.title)}${s.borrowed ? ` <span class="pill">added for your case</span>` : ""}</h3>
           <p class="why">${esc(s.why)}</p>
+          ${s.context ? `<p class="why">${esc(s.context)}</p>` : ""}
+          ${s.unmet.length ? `<p class="gate"><b>Before this step:</b> Provide or complete ${s.unmet.map((n) => esc(n.replaceAll("_", " "))).join(", ")}. This step and dependent work are conditional.</p>` : ""}
           ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}</p>` : ""}
           ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
           ${s.live === "structures" ? `<div id="struct-slot">${parsed.target ? "" :
@@ -571,9 +584,7 @@ async function drawPlan(q) {
     }
   }
 
-  // The protocol is fixed; this is the part that knows about your target. It
-  // costs a model call, so it is offered rather than spent automatically, and
-  // never offered for a guess.
+  // Optional commentary uses the composed plan, including its prerequisites.
   if (parsed.matched !== false) offerTailor(plan, parsed, target, structures);
 
   const md = () => planToMarkdown(plan, target, structures, brief);
@@ -596,7 +607,7 @@ function offerTailor(plan, parsed, target, structures) {
   if (!slot) return;
   const what = target ? `${target.gene || target.name}` : "this question";
   slot.innerHTML = `<div class="offer">
-    <div><b>Want this read for your case?</b> The protocol above is fixed. A short brief can say
+    <div><b>Want this read for your case?</b> A short brief can say
       what is specific to ${esc(what)}: what the structure implies, which steps matter most here,
       what usually goes wrong for this system.</div>
     <button class="btn primary" id="ask-tailor">Write the brief</button>
@@ -621,7 +632,7 @@ async function tailorPlan(plan, parsed, target, structures) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query: parsed.query, label: plan.label,
-        steps: plan.steps.map((s) => s.title), tools,
+        steps: plan.steps.map((s) => `${s.title}${s.unmet.length ? ` (conditional on ${s.unmet.join(", ")})` : ""}${s.context ? ` — ${s.context}` : ""}`), tools,
         target: target && { name: target.name, gene: target.gene, organism: target.organism,
                             length: target.length, accession: target.accession },
         structures: (structures || []).slice(0, 3).map((s) => ({

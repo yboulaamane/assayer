@@ -158,6 +158,21 @@ T = [
     ("Fragalysis", "structure", "Diamond's browser for fragment screening campaigns: every hit, its density and its pose, in one place, with the merged designs that came from them.", "https://fragalysis.diamond.ac.uk", "xchem/fragalysis", "free-web", ["fragment-screening", "xchem", "hit-browser"]),
     ("SeeSAR", "generative", "Interactive structure-based design: grow, replace and link with estimated affinity and torsion strain updating as you edit. The commercial tool medicinal chemists actually enjoy using.", "https://www.biosolveit.de/products/", None, "commercial", ["interactive-design", "fragment-growing", "strain"]),
     ("HADDOCK3", "docking", "Integrative docking driven by experimental restraints, and the practical open route to protein-protein and ternary complexes such as PROTAC-induced interfaces.", "https://github.com/haddocking/haddock3", "haddocking/haddock3", "open-source", ["protein-protein", "ternary-complex", "restraints"]),
+    # --- network pharmacology ---------------------------------------------
+    ("Cytoscape", "viz", "The platform network pharmacology is done on: build a compound-target-pathway network, lay it out, score the hubs, and see what the topology actually says.", "https://cytoscape.org", "cytoscape/cytoscape", "open-source", ["network", "pharmacology", "visualisation"]),
+    ("NetworkAnalyst", "target-id", "Network and enrichment analysis in the browser, from a gene or protein list to a protein-protein interaction subnetwork with statistics attached.", "https://www.networkanalyst.ca", None, "free-web", ["network", "enrichment", "ppi"]),
+    ("Metascape", "target-id", "Gene list annotation and enrichment across many ontologies at once, with a protein-protein interaction module. The fastest way from a hit list to a defensible pathway story.", "https://metascape.org", None, "free-web", ["enrichment", "annotation", "network"]),
+    ("GeneMANIA", "target-id", "Predicts function by placing a gene in a composite network of co-expression, physical interaction and pathway membership, and names the evidence for each edge.", "https://genemania.org", None, "free-web", ["network", "function-prediction"]),
+    ("clusterProfiler", "target-id", "The R package most enrichment figures in the literature come from: over-representation and GSEA across GO, KEGG and custom sets, with the plots built in.", "https://bioconductor.org/packages/clusterProfiler/", "YuLab-SMU/clusterProfiler", "open-source", ["enrichment", "gsea", "r"]),
+    ("CTD", "target-id", "Comparative Toxicogenomics Database: curated chemical-gene, chemical-disease and gene-disease relationships from the literature. The evidence layer under most chemical-centric network studies.", "https://ctdbase.org", None, "free-web", ["chemical-gene", "curated", "toxicogenomics"]),
+    ("BATMAN-TCM", "target-id", "Predicts targets for the constituents of a herbal formula and runs the enrichment over them, built specifically for the multi-compound multi-target case.", "http://bionet.ncpsb.org.cn/batman-tcm/", None, "free-web", ["network-pharmacology", "tcm", "target-prediction"]),
+
+    # --- natural products and plant chemistry ------------------------------
+    ("NPASS", "libraries", "Natural products with measured activities against defined targets, and the species they came from. The quantitative counterpart to structure-only natural product collections.", "https://bidd.group/NPASS/", None, "free-web", ["natural-products", "bioactivity", "species"]),
+    ("CMAUP", "libraries", "Collective molecular activities of useful plants: plant species mapped to their constituents, those constituents to targets, and targets to pathways and diseases.", "https://bidd.group/CMAUP/", None, "free-web", ["plants", "network-pharmacology", "targets"]),
+    ("IMPPAT", "libraries", "Indian medicinal plants, their phytochemicals and therapeutic uses, with curated structures and drug-likeness already computed.", "https://cb.imsc.res.in/imppat/", None, "free-web", ["plants", "phytochemicals", "ethnopharmacology"]),
+    ("FooDB", "libraries", "The chemistry of food: constituents of plant and animal foods with structures, concentrations and provenance. Useful when the starting point is a dietary source rather than a screening deck.", "https://foodb.ca", None, "free-web", ["food-chemistry", "phytochemicals"]),
+    ("Phenol-Explorer", "libraries", "Measured polyphenol contents of foods, including what processing and cooking do to them. Specific where general natural product databases are silent.", "http://phenol-explorer.eu", None, "free-web", ["polyphenols", "plants", "measured-content"]),
     ("Open Babel", "cheminformatics", "Chemical file format interconversion, 3D coordinate generation and conformer search across 110+ formats.", "https://openbabel.org", "openbabel/openbabel", "open-source", ["file-formats", "conversion"]),
     ("Datamol", "cheminformatics", "Ergonomic RDKit wrapper for standardisation, featurisation and parallel molecular processing.", "https://datamol.io", "datamol-io/datamol", "open-source", ["rdkit", "preprocessing"]),
     ("ChEMBL Structure Pipeline", "cheminformatics", "The exact standardisation, parent-extraction and salt-stripping rules ChEMBL applies; the reference for reproducible curation.", "https://github.com/chembl/ChEMBL_Structure_Pipeline", "chembl/ChEMBL_Structure_Pipeline", "open-source", ["standardisation", "curation"]),
@@ -351,11 +366,12 @@ def check(url):
         )
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
-                return r.status
+                # a redirect is a live site, not a dead link
+                return 200 if 200 <= r.status < 400 else r.status
         except HTTPError as e:
             if method == "HEAD":
                 continue  # plenty of servers mishandle HEAD; retry with GET
-            return e.code
+            return 200 if 300 <= e.code < 400 else e.code
         except (URLError, OSError, ValueError) as e:
             if method == "HEAD":
                 continue

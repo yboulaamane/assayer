@@ -8,7 +8,7 @@
 // Generated once from the hand-written protocols by scripts/gen_modules.mjs and
 // hand-corrected since. This file is the source of truth; do not regenerate it.
 
-export const REGISTRY_VERSION = "1.0.0";
+export const REGISTRY_VERSION = "1.2.0";
 
 /** Method families a request can exclude, and the words people use for them. */
 export const FAMILY_TERMS = {
@@ -25,6 +25,83 @@ export const FAMILY_TERMS = {
 };
 
 export const MODULES = {
+  "network.define_scope": {
+    family: "identity",
+    title: "Define the plant or compound set and disease context",
+    why: "For a plant study, confirm the botanical species, plant part, preparation and constituent evidence. A genus alone does not identify a tested extract. Define the disease, host organism and biological question before collecting targets.",
+    gate: "Record the accepted species and synonyms, preparation, disease identifier and host organism. Keep unconfirmed details open; do not substitute a plant name for a protein target.",
+    requires: [], produces: ["network_study_scope"], tools: [],
+  },
+  "network.curate_constituents": {
+    family: "identity",
+    title: "Build a traceable constituent table",
+    why: "Assemble measured constituents or literature-supported compounds for the specified material. Standardise structures and identifiers, deduplicate, and retain source references, identification confidence and abundance when available. For a supplied compound set, retain its provenance instead.",
+    gate: "Each included compound needs a resolvable structure and evidence for inclusion. Separate confirmed constituents from tentative annotations; leave unsupported compounds out of the primary analysis.",
+    requires: ["network_study_scope"], produces: ["network_constituents"],
+    tools: ["PubChem", "RDKit"],
+  },
+  "network.compound_targets": {
+    family: "target-prediction",
+    title: "Collect measured and predicted compound targets separately",
+    why: "Retrieve measured interactions, then predict targets for eligible structures in the selected host organism. Preserve assay details, prediction scores and method provenance in a compound-target evidence table.",
+    gate: "Map identifiers consistently and label every edge as measured or predicted. Assess applicability and uncertainty; prediction scores are not measured binding affinities or evidence of therapeutic activity.",
+    requires: ["network_constituents"], produces: ["network_compound_targets"],
+    tools: ["ChEMBL", "BindingDB", "SwissTargetPrediction", "UniProt"],
+  },
+  "network.disease_targets": {
+    family: "evidence",
+    title: "Assemble disease-associated genes with evidence provenance",
+    why: "Use the specified disease identifier to collect genetic and other target-disease evidence. Keep evidence types separate, record database versions and retrieval dates, and retain the host organism when mapping genes to proteins.",
+    gate: "Document inclusion criteria and evidence strength. Disease association alone does not establish whether inhibiting or activating a protein will help.",
+    requires: ["network_study_scope"], produces: ["network_disease_targets"],
+    tools: ["Open Targets Platform", "DisGeNET", "UniProt"],
+  },
+  "network.build_network": {
+    family: "network",
+    title: "Construct the compound-target-disease and protein networks",
+    why: "Intersect the mapped target sets and build an auditable graph with typed edges. Add protein associations with explicit evidence channels and confidence settings; distinguish functional associations from direct physical interactions.",
+    gate: "Export node and edge tables with sources and settings. Report an empty overlap honestly. Test sensitivity to thresholds and highly connected proteins before interpreting hubs.",
+    requires: ["network_compound_targets", "network_disease_targets"], produces: ["network_graph"],
+    tools: ["STRING"],
+  },
+  "network.enrichment": {
+    family: "enrichment",
+    title: "Test pathway enrichment against a justified background",
+    why: "Analyse the eligible target set using a background reflecting which genes could enter the study. Record pathway versions, correct for multiple testing and compare results across evidence and threshold choices.",
+    gate: "Report the background, tested terms, effect sizes and adjusted significance. Retain null results; enrichment and centrality generate hypotheses, not causal mechanisms.",
+    requires: ["network_graph"], produces: ["network_pathways"],
+    tools: ["g:Profiler", "Reactome", "STRING"],
+  },
+  "network.prioritise": {
+    family: "triage",
+    title: "Prioritise testable compound-target-pathway hypotheses",
+    why: "Combine constituent confidence, interaction evidence, disease relevance and exposure plausibility. For a CNS disease such as Parkinson's, assess whether brain exposure is needed for the proposed mechanism and what evidence supports it. Keep peripheral hypotheses distinct.",
+    gate: "Deliver a ranked evidence table with uncertainty, missing evidence and sensitivity results. Do not rank solely by hub degree, predicted oral availability or docking score, or infer that the plant treats the disease.",
+    requires: ["network_pathways", "network_constituents"], produces: ["network_hypotheses"],
+    tools: [],
+  },
+  "network.validation_plan": {
+    family: "assay",
+    title: "Design orthogonal validation and export the study package",
+    why: "For shortlisted hypotheses, specify compound identity checks, target engagement or functional assays, disease-relevant readouts, reference controls and toxicity/interference controls. Package constituent and target evidence, network tables, enrichment results and analysis settings for reproduction.",
+    gate: "Define what result would falsify each hypothesis. Docking or MD may be a separate follow-up for suitable targets and structures; neither validates therapeutic efficacy. Report unsupported or inconclusive hypotheses explicitly.",
+    requires: ["network_hypotheses"], produces: ["network_study_package"], tools: [],
+  },
+  "selectivity.define_panel": {
+    family: "identity",
+    title: "Define the primary target and the proteins to spare",
+    why: "Keep each named off-target in the decision. Define the required margin and comparable endpoints before prioritising compounds.",
+    gate: "Record the primary target, each off-target, the desired margin, and the assay context. An unspecified margin remains an open decision.",
+    requires: [], produces: ["off_target_panel"], tools: [],
+  },
+  "selectivity.compare_panel": {
+    family: "assay",
+    title: "Compare the shortlist against the named off-target panel",
+    why: "Assess the same compounds against the primary target and each protein to spare. Use comparable measurements; mark missing off-target evidence as unknown rather than selective.",
+    gate: "Report the margin and uncertainty for every named off-target before claiming selectivity. Acquire missing measurements or leave the conclusion open.",
+    requires: ["candidate_molecules", "off_target_panel"],
+    produces: ["selectivity_assessment"], tools: ["ChEMBL", "BindingDB", "DataWarrior"],
+  },
   "assay.comparability": {
     family: "assay",
     title: "Check the measurements can be pooled at all",
@@ -71,6 +148,7 @@ export const MODULES = {
     why: "Fragment libraries are not interchangeable. Shape diversity, three-dimensionality, solubility at screening concentration and a sane functional-group distribution matter more than size.",
     pitfall: "A library of flat aromatics against a polar pocket. You will get hits, and they will all be the same uninteresting chemotype.",
     requires: [],
+    skipWith: ["hit_list"],
     produces: [],
     tools: ["ZINC22","Enamine REAL Space","RDKit","Datamol"],
   },
@@ -80,7 +158,7 @@ export const MODULES = {
     why: "Primary screening artefacts are the norm, not the exception. A hit seen by one technique is a candidate; a hit seen by two is a hit.",
     gate: "Orthogonal confirmation by SPR, ITC, NMR or crystallography, plus a dose-response, before any design work starts.",
     pitfall: "Designing on a single-technique hit. Most of what you build will be on sand.",
-    requires: [],
+    requires: ["hit_list"],
     produces: ["confirmed_hits"],
     tools: ["PLIP","ProLIF"],
   },
@@ -164,6 +242,7 @@ export const MODULES = {
   },
   "fep.predict_the_selectivity_margin": {
     family: "fep",
+    methods: ["md", "docking"],
     title: "Predict the selectivity margin before making it",
     why: "Relative free energy across a target/off-target pair is one of the better-behaved FEP applications, because the perturbation is identical and the systems are similar.",
     gate: "Validate on compounds whose selectivity is already measured before trusting a prediction.",
@@ -191,7 +270,7 @@ export const MODULES = {
     tools: ["RDKit","mmpdb","Datamol"],
   },
   "docking.anchor_on_a_structure": {
-    family: "docking",
+    family: "structure",
     title: "Anchor on a structure you trust",
     why: "Every perturbation inherits the errors of the reference pose. A co-crystal with your chemotype is worth more here than anywhere else in the pipeline.",
     pitfall: "Building a campaign on a docked pose. You will get precise numbers about the wrong geometry.",
@@ -220,7 +299,8 @@ export const MODULES = {
     tools: ["OpenFE","BioSimSpace"],
   },
   "generative.validate_retrospectively_before_predicting": {
-    family: "generative",
+    family: "fep",
+    methods: ["md"],
     title: "Validate retrospectively before predicting",
     why: "Run the edges you already have data for. This is the step that separates a working campaign from an expensive random number generator.",
     gate: "Reproduce measured ΔΔG within ~1 kcal/mol MUE, and get the ranking right, before anyone acts on a prediction.",
@@ -229,7 +309,7 @@ export const MODULES = {
     tools: ["alchemlyb","OpenFE","FEP+ (Schrödinger)"],
   },
   "md.check_convergence_not_wall": {
-    family: "md",
+    family: "fep",
     title: "Check convergence, not wall-clock time",
     why: "Long is not converged. Overlap between neighbouring lambda windows, hysteresis between forward and reverse, and cycle closure are the diagnostics that matter.",
     gate: "Report phase-space overlap, cycle-closure error and a bootstrapped uncertainty per edge.",
@@ -238,13 +318,13 @@ export const MODULES = {
     tools: ["alchemlyb","PLUMED","MDAnalysis","GROMACS","OpenMM"],
   },
   "general.act_on_differences_bigger": {
-    family: "general",
+    family: "fep",
     title: "Act on differences bigger than your error",
     why: "The output is a number with an uncertainty. Ranking two compounds 0.3 kcal/mol apart when your MUE is 1.0 is theatre.",
     gate: "Only prioritise gaps larger than the validated error. Report the error bar alongside every number you hand a chemist.",
     pitfall: "Presenting FEP output as a ranked list with no uncertainties. Chemists will treat it as truth and lose faith when it fails once.",
-    requires: [],
-    produces: ["ranked_candidates"],
+    requires: ["ranked_candidates"],
+    produces: ["prioritisation"],
     tools: ["alchemlyb","DataWarrior"],
   },
   "identity.choose_the_e3_for": {
@@ -330,7 +410,7 @@ export const MODULES = {
     why: "This is where the accuracy is won. Mixed units, duplicate measurements, undefined stereochemistry and salt forms all quietly become noise the model then learns.",
     gate: "One canonical structure per compound, one value per compound-endpoint pair, and a written rule for how duplicates were resolved.",
     pitfall: "Averaging IC50s from different assay formats into one column because they share a name.",
-    requires: [],
+    requires: ["measured_data"],
     produces: ["curated_dataset"],
     tools: ["ChEMBL Structure Pipeline","RDKit","Datamol","ChEMBL","Papyrus","BindingDB"],
   },
@@ -450,6 +530,7 @@ export const MODULES = {
     why: "Resolution alone does not decide this. You want a holo structure with a drug-like ligand in the site you care about, an ordered binding site, wild-type sequence, and the conformational state your chemotype should bind. The table below ranks every PDB entry for this target on exactly those grounds.",
     live: "structures",
     requires: ["target_identity"],
+    borrowFor: ["lead-opt", "resistance", "fep", "md-stability", "conformational-sampling"],
     produces: ["receptor_structure"],
     tools: ["RCSB PDB","AlphaFold Protein Structure DB","Foldseek"],
   },
@@ -511,7 +592,8 @@ export const MODULES = {
     tools: ["PLIP","ProLIF","RDKit","SCScore","RAscore","DataWarrior"],
   },
   "docking.rescore_or_simulate_the": {
-    family: "docking",
+    family: "md",
+    methods: ["fep"],
     title: "Rescore or simulate the survivors",
     why: "For the short list only, end-point or alchemical free energies and short MD tell you whether a pose is stable, at a cost you cannot afford on the full library.",
     requires: ["triaged_hits"],
@@ -519,7 +601,7 @@ export const MODULES = {
     tools: ["GROMACS","OpenMM","gmx_MMPBSA","OpenFE","MDAnalysis"],
   },
   "synthesis.profile_before_you_buy": {
-    family: "synthesis",
+    family: "admet",
     title: "Profile before you buy",
     why: "A potent compound with a fatal ADMET liability is a wasted synthesis slot. Run the cheap in-silico profile on the shortlist and let it break ties.",
     pitfall: "Treating an ADMET prediction as a gate rather than a tiebreak this early. Good chemistry has been killed by a model trained on compounds nothing like yours.",
@@ -528,7 +610,7 @@ export const MODULES = {
     tools: ["ADMETlab 3.0","SwissADME","pkCSM","ADMET-AI","ProTox 3.0"],
   },
   "docking.anchor_on_a_co": {
-    family: "docking",
+    family: "structure",
     title: "Anchor on a co-crystal of your series",
     why: "Optimising against a docked pose of your own compound compounds its errors. Get a structure with your chemotype, or the closest analogue that exists.",
     live: "structures",
@@ -537,11 +619,11 @@ export const MODULES = {
     tools: ["RCSB PDB","PDBbind+","BindingDB"],
   },
   "generative.map_the_existing_sar": {
-    family: "generative",
+    family: "cheminformatics",
     title: "Map the existing SAR",
     why: "Before generating anything, know which changes have already been tried and what they did. Matched molecular pairs turn a spreadsheet of analogues into rules.",
     pitfall: "Rediscovering the SAR your own project already generated because it lives in a spreadsheet nobody indexed.",
-    requires: [],
+    requires: ["measured_data"],
     produces: ["sar_map"],
     tools: ["ChEMBL","BindingDB","RDKit","DataWarrior"],
   },
@@ -549,12 +631,13 @@ export const MODULES = {
     family: "md",
     title: "Characterise the binding mode",
     why: "Interaction fingerprints plus a short simulation tell you which contacts are actually load-bearing and which subpocket has room, that is where the next analogue comes from.",
-    requires: [],
+    requires: ["receptor_structure"],
     produces: [],
     tools: ["PLIP","ProLIF","GROMACS","MDAnalysis","fpocket"],
   },
   "docking.propose_analogues": {
-    family: "docking",
+    family: "generative",
+    alwaysInclude: true,
     title: "Propose analogues",
     why: "Enumerate around the scaffold with chemistry that is real. Constrained generation keeps the core and varies what you asked it to vary.",
     requires: ["sar_map"],
@@ -563,6 +646,7 @@ export const MODULES = {
   },
   "docking.rank_with_free_energy": {
     family: "fep",
+    methods: ["md"],
     title: "Rank with free energy, not docking score",
     why: "In a congeneric series, relative binding free energy is the method that earns its cost. Run it on a handful of well-chosen edges rather than everything.",
     gate: "Validate on measured analogues first: RBFE should reproduce known ΔΔG within ~1 kcal/mol before you trust a prediction.",
@@ -733,7 +817,7 @@ export const MODULES = {
     tools: ["Open Systems Pharmacology (PK-Sim/MoBi)","Simcyp (Certara)","GastroPlus"],
   },
   "docking.name_the_observable_first": {
-    family: "docking",
+    family: "identity",
     title: "Name the observable first",
     why: "An ensemble for ensemble docking, a cryptic pocket, a binding pathway, and a rate constant are four different questions, and each has a different right method. Choosing the method before naming the observable is the usual way these campaigns waste a month of GPU time.",
     gate: "Write down what result would change your decision. If no answer to the simulation changes what you do next, do not run it.",
@@ -810,7 +894,8 @@ export const MODULES = {
     why: "Missing loops near the site of interest will dominate your results. Fix them or acknowledge them.",
     live: "structures",
     requires: [],
-    produces: [],
+    produces: ["receptor_structure"],
+    skipWith: ["trajectory"],
     tools: ["RCSB PDB","PDBFixer","MODELLER","PROPKA"],
   },
   "md.build_the_system": {
@@ -818,17 +903,20 @@ export const MODULES = {
     title: "Build the system",
     why: "Force field, protonation, ions, box and membrane if relevant. This step determines what your simulation is actually about.",
     requires: ["receptor_structure"],
-    produces: ["simulation_system"],
+    borrowFor: ["conformational-sampling"],
+    skipWith: ["trajectory"],
+    produces: ["simulation_system", "matching_topology"],
     tools: ["CHARMM-GUI","GROMACS","AMBER / AmberTools","OpenFF Toolkit","ACPYPE","Martini"],
   },
   "md.parameterise_the_ligand": {
-    family: "md",
+    family: "parameters",
+    skipWith: ["trajectory"],
     title: "Parameterise the ligand",
     why: "Generic small-molecule parameters are the usual weak link in a protein-ligand simulation.",
     gate: "Sanity-check ligand geometry and charges against a QM optimisation before production.",
     pitfall: "Accepting default parameters for an unusual moiety (phosphates, boronates, metals) and discovering months later that the geometry was never physical.",
     requires: [],
-    produces: ["simulation_system"],
+    produces: ["ligand_parameters"],
     tools: ["OpenFF Toolkit","ACPYPE","xtb","espaloma","ParmEd"],
   },
   "md.equilibrate_then_run_replicates": {
@@ -841,10 +929,10 @@ export const MODULES = {
     tools: ["GROMACS","OpenMM","NAMD","AMBER / AmberTools"],
   },
   "md.analyse_what_you_predefined": {
-    family: "md",
+    family: "analysis",
     title: "Analyse what you predefined",
     why: "RMSD/RMSF, contact occupancy, pocket volume, water networks, decide the observable before you see the trajectory.",
-    requires: ["trajectory"],
+    requires: ["trajectory", "matching_topology"],
     produces: ["convergence_evidence"],
     tools: ["MDAnalysis","MDTraj","PLIP","deeptime","VMD"],
   },
@@ -853,6 +941,7 @@ export const MODULES = {
     title: "Escalate when plain MD cannot reach it",
     why: "If the motion you care about never happens in an unbiased trajectory, the answer is a different sampling method, not a longer run. Ask for a conformational sampling plan instead, accelerated MD, metadynamics, replica exchange and weighted ensemble each suit a different observable.",
     requires: [],
+    skipWith: ["trajectory"],
     produces: [],
     tools: ["GaMD","PLUMED","openmmtools","WESTPA","OpenFE","gmx_MMPBSA","alchemlyb"],
   },
@@ -873,12 +962,12 @@ export const MODULES = {
     tools: ["SCScore","RAscore","SYBA","RDKit"],
   },
   "docking.generate_routes": {
-    family: "docking",
+    family: "synthesis",
     title: "Generate routes",
     why: "Run more than one planner. Template-based, expert-rules and sequence-to-sequence planners fail in different ways, and a disconnection all three propose is worth more than any single confidence score.",
     gate: "Benchmark your planner on known routes before trusting it on a new molecule.",
     requires: ["candidate_molecules"],
-    produces: ["candidate_molecules","synthesis_routes"],
+    produces: ["synthesis_routes"],
     tools: ["AiZynthFinder","ASKCOS","Syntheseus","Retro*","R-SMILES","IBM RXN for Chemistry","PaRoutes","RetroSim"],
   },
   "synthesis.check_the_precedent": {
@@ -909,7 +998,7 @@ export const MODULES = {
     tools: ["ASKCOS","IBM RXN for Chemistry","Synthia","Spaya"],
   },
   "fep.assemble_the_evidence": {
-    family: "fep",
+    family: "identity",
     title: "Assemble the evidence",
     why: "Genetics, expression, perturbation and literature, in one view, with the strength of each line visible.",
     requires: [],
@@ -956,6 +1045,7 @@ export const MODULES = {
     why: "Everything else keys off this.",
     live: "target",
     requires: [],
+    borrowFor: ["hit-discovery", "lead-opt", "resistance", "fep", "md-stability", "conformational-sampling"],
     produces: ["target_identity"],
     tools: ["UniProt","Ensembl"],
   },
@@ -969,7 +1059,7 @@ export const MODULES = {
     tools: ["RCSB PDB","PDBbind+"],
   },
   "docking.fall_back_to_prediction": {
-    family: "docking",
+    family: "structure",
     title: "Fall back to prediction where nothing exists",
     why: "Predicted models are good, and their confidence metrics are not decoration, a low-pLDDT region is a region you should not dock into.",
     gate: "Treat pLDDT < 70 regions as unmodelled; check PAE before trusting a domain arrangement.",
@@ -1000,6 +1090,17 @@ for (const [id, m] of Object.entries(MODULES)) m.id = id;
 
 /** Curated orderings. The sequence is judgement, not something to re-derive. */
 export const RECIPES = {
+  "network-pharmacology": {
+    label: "Network pharmacology",
+    summary: "Connect a traceable plant or compound set to disease-associated targets and pathways, then prioritise hypotheses for validation.",
+    decision: "Which compound-target-pathway hypotheses have enough evidence to test next.",
+    stop: "If constituent identity, target evidence or network robustness cannot support a hypothesis, report the gap or null result. Network overlap does not demonstrate efficacy.",
+    modules: [
+      "network.define_scope", "network.curate_constituents", "network.compound_targets",
+      "network.disease_targets", "network.build_network", "network.enrichment",
+      "network.prioritise", "network.validation_plan",
+    ],
+  },
   "ligand-discovery": {
     label: "Ligand-based discovery",
     summary: "No usable structure, or structure-based methods ruled out. The measured chemistry becomes the model, and the job is to find out whether it can support a ranking at all.",

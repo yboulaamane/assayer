@@ -6,9 +6,11 @@
 // The protocol texts live in the module registry now; this file routes a
 // question to one and resolves what it is about.
 export { RECIPES as PROTOCOLS } from "./modules.js";
-import { RECIPES } from "./modules.js";
+import { RECIPES, FAMILY_TERMS } from "./modules.js";
 
 const INTENTS = [
+  ["network-pharmacology", ["network pharmacology", "network-pharmacology", "systems pharmacology",
+    "compound-target-disease", "compound target disease"]],
   ["fbdd", ["fragment", "fragments", "fbdd", "fragment screen", "fragment hit", "fragment growing",
     "fragment merging", "fragment linking", "xchem", "crystallographic screen", "ligand efficiency",
     "soaking", "fragment library"]],
@@ -113,7 +115,7 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
 
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
-const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage"]);
+const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology"]);
 
 // Common informal names that UniProt search alone handles badly.
 const ALIASES = {
@@ -174,9 +176,8 @@ export function parseQuery(raw) {
   // Score on what is being asked for. "Do not run docking or virtual screening"
   // contains every docking keyword there is, and counting them routes the
   // request to the one thing it explicitly rules out.
-  const low = q.toLowerCase().replace(
-    /\b(?:no|without|avoid|exclude|skip|don'?t (?:use|want)|do not (?:use|run|want)|not run|cannot run|can'?t run|rather not|no need for)\s+[\w\s,/-]{0,48}/g,
-    " ");
+  const low = q.toLowerCase().replace(EXCLUDED_METHODS, " ");
+  const entityText = q.toLowerCase();
 
   // Short acronyms carry more signal than their length suggests: "FEP" names a
   // method exactly, while "analogue" appears in half the questions people ask.
@@ -189,19 +190,25 @@ export function parseQuery(raw) {
     if (s > best) { best = s; intent = id; }
   }
   if (!best) intent = "hit-discovery";
+  // An explicitly named network study can mention screening, hits and docking
+  // as substeps. Those overlapping keywords must not replace the study itself.
+  if (INTENTS.find(([id]) => id === "network-pharmacology")[1].some((w) => low.includes(w))) {
+    intent = "network-pharmacology";
+    best = Math.max(best, 4);
+  }
 
   const score = best;
   // Flattened and sorted by phrase length so "guinea pig" beats "pig".
   let organism = null;
   for (const [w, id, label] of ORGANISM_TERMS) {
-    if (WORDISH(w).test(low)) { organism = { id, label }; break; }
+    if (WORDISH(w).test(entityText)) { organism = { id, label }; break; }
   }
 
   let target = null;
   if (NO_PROTEIN.has(intent)) {
     return { query: q, intent, organism, target: null, score, via: "keywords", matched: true };
   }
-  target = aliasTarget(low, true);
+  target = aliasTarget(entityText, true);
   if (!target) {
     // Gene-ish tokens: 2-9 chars, upper-case/digits, at least one letter, so
     // "3A4" and "G12C" are caught alongside "EGFR".
@@ -252,9 +259,12 @@ export async function resolveQuery(raw) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: raw }),
     });
-    if (!r.ok) return kw;
+    if (!r.ok) return { ...kw, degraded: true };
     const d = await r.json();
-    if (!d || !RECIPES[d.intent]) return kw;
+    if (d?.matched === false || d?.intent === "unsupported") {
+      return { ...kw, matched: false, target: null, via: "llm" };
+    }
+    if (!d || !RECIPES[d.intent]) return { ...kw, degraded: true };
     return {
       query: raw,
       intent: d.intent,
@@ -262,46 +272,57 @@ export async function resolveQuery(raw) {
       // through the same alias table. An explicit null means it judged there to
       // be no protein here, which has to beat the keyword guess rather than
       // fall back to it.
-      target: "target" in d
+      target: d.intent === "network-pharmacology" ? null : "target" in d
         ? (d.target ? aliasTarget(d.target) || d.target : null)
         : kw.target,
       organism: organismByTaxid(d.organism_taxid) || kw.organism,
       score: kw.score,
       via: "llm",
       reason: d.reason || null,
-      matched: kw.matched,
+      matched: true,
+      truncated: Boolean(d.truncated),
       constraints,
     };
   } catch {
-    return kw; // offline, blocked by a preview sandbox, or no function deployed
+    return { ...kw, degraded: true };
   }
 }
 
-// Things people state that change what the plan should be, and that this
-// planner cannot yet act on. Detecting them is not the same as honouring them,
-// so they are surfaced rather than quietly ignored.
+// Match only a list of method names after a negation. Free-text tails swallow
+// positive clauses such as "without docking but use MD".
+const METHOD_TERM = [...new Set(Object.values(FAMILY_TERMS).flat())]
+  .sort((a, b) => b.length - a.length)
+  .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+const METHOD_NAME = `(?:${METHOD_TERM.join("|")})\\b`;
+const EXCLUDED_METHODS = new RegExp(
+  `\\b(?:no need for|no|without|avoid|exclude|skip|don['’]?t (?:use|run|want)|do not (?:use|run|want)|not run|cannot run|can['’]?t run|rather not)\\s+(${METHOD_NAME}(?:\\s*(?:,\\s*(?:(?:and|or)\\s+)?|/|\\b(?:and|or)\\s+)${METHOD_NAME})*)`, "gi");
+const MISSING_ASSETS = /\b(?:no|without|do not have|don['’]?t have)\s+((?:(?:usable|experimental|known|measured|matching)\s+)?(?:structures?|actives?|data|topology|trajector\w*))\b/gi;
+
 const CONSTRAINT_PATTERNS = [
-  [/\b(?:no|without|avoid|exclude|skip|don'?t (?:use|want)|do not (?:use|run|want)|not run|cannot run|can'?t run|rather not|no need for)\s+((?:docking|md\b|molecular dynamics|fep\b|free energy|screening|virtual screening|simulation|synthesis|crystallograph\w*)[\w\s,/-]{0,40})/gi, "excluded method"],
+  [EXCLUDED_METHODS, "excluded method"],
   [/\b(cpu[- ]only|no gpu|without a gpu|single (?:cpu|core)|laptop only)\b/gi, "compute limit"],
-  [/\b(?:in|within|only)\s+(\w+\s+(?:day|days|week|weeks|hour|hours))\b/gi, "time limit"],
+  [/\b((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:days?|weeks?|hours?))\b/gi, "time limit"],
   [/\b(?:spare|selective over|selectivity over|but not|whilst sparing|while sparing)\s+([A-Z][A-Z0-9-]{1,9})\b/g, "off-target"],
-  [/\b(?:i have|we have|already have|existing|my)\s+(?:[\w-]+\s+){0,2}((?:\d+\s+)?(?:measured|assayed|known)?\s*(?:compounds?|analogues?|trajector\w+|structures?|hits?|actives?|variants?|mutations?|series|dataset))\b/gi, "existing asset"],
+  [/\b(?:i have|we have|already have|existing|my)\s+(?:[\w-]+\s+){0,2}?((?:\d+\s+)?(?:(?:measured|assayed|known|matching|crystal|experimental)\s+)?(?:compounds?|analogues?|trajector\w+|topology|structures?|hits?|actives?|variants?|mutations?|series|dataset))\b/gi, "existing asset"],
   [/\b(\d+\s+(?:measured|assayed|known|screened)?\s*(?:compounds?|analogues?|hits?|actives?|variants?|mutations?|structures?))\b/gi, "existing asset"],
-  [/\bno (?:usable |experimental )?structure\b/gi, "no structure"],
+  [/\b(measured SAR|assay data|measured data)\b/gi, "existing asset"],
+  [MISSING_ASSETS, "missing asset"],
 ];
 
-/** Constraints stated in the question that the planner does not yet apply. */
+/** Preserve all stated constraints; presentation limits must not discard facts. */
 export function statedConstraints(text) {
   const out = [];
   for (const [re, kind] of CONSTRAINT_PATTERNS) {
-    for (const m of String(text || "").matchAll(re)) {
+    const source = kind === "existing asset"
+      ? String(text || "").replace(MISSING_ASSETS, ".") : String(text || "");
+    for (const m of source.matchAll(re)) {
       const phrase = (m[1] || m[0]).trim().replace(/\s+/g, " ");
-      if (phrase && !out.some((o) => o.phrase.toLowerCase() === phrase.toLowerCase())) {
+      if (phrase && !out.some((o) => o.kind === kind && o.phrase.toLowerCase() === phrase.toLowerCase())) {
         out.push({ kind, phrase });
       }
     }
   }
-  return out.slice(0, 6);
+  return out;
 }
 
 /** The protocols on offer, for telling someone what is actually covered. */
@@ -497,6 +518,11 @@ export function planToMarkdown(plan, target, structures, brief) {
   if (brief?.excluded?.length) L.push(`**Excluded:** ${brief.excluded.join(", ")}`, "");
   if (brief?.assets?.length) L.push(`**Already in hand:** ${brief.assets.join(", ")}`, "");
   if (brief?.missing?.length) L.push(`**Missing:** ${brief.missing.join(", ")}`, "");
+  if (brief?.offTargets?.length) L.push(`**Must spare:** ${brief.offTargets.join(", ")}`, "");
+  if (brief?.compute?.length || brief?.time?.length) L.push(`**Not costed or scheduled:** ${[...(brief.compute || []), ...(brief.time || [])].join(", ")}`, "");
+  if (brief?.degraded) L.push("**Routing:** Semantic routing was unavailable; review this provisional plan against the full question.", "");
+  if (brief?.truncated) L.push("**Routing:** The model saw only the first 1,500 characters; review the selected workflow.", "");
+  if (!plan.viable) L.push("**Provisional plan:** Missing inputs or excluded methods prevent this plan from being ready to follow. Resolve the conditions below first.", "");
   if (plan.rerouted) L.push(`**Route changed:** ${plan.rerouted.from} → ${plan.rerouted.to} (${plan.rerouted.because})`, "");
   L.push(plan.summary, "");
   if (plan.decision) L.push(`**This decides:** ${plan.decision}`, "");
@@ -516,6 +542,8 @@ export function planToMarkdown(plan, target, structures, brief) {
   L.push("## Protocol", "");
   plan.steps.forEach((s, i) => {
     L.push(`### ${i + 1}. ${s.title}`, "", s.why, "");
+    if (s.context) L.push(s.context, "");
+    if (s.unmet?.length) L.push(`> **Before this step:** Provide or complete ${s.unmet.map((n) => n.replaceAll("_", " ")).join(", ")}. This step and dependent work are conditional.`, "");
     if (s.gate) L.push(`> **Gate:** ${s.gate}`, "");
     if (s.pitfall) L.push(`> **Common failure:** ${s.pitfall}`, "");
     if (s.tools?.length) L.push(`*Tools:* ${s.tools.join(", ")}`, "");

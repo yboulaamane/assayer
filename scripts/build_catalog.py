@@ -190,6 +190,23 @@ KEYWORDS = {
     "viz": ["viewer", "visualis", "visualiz", "rendering", "3d view", "plotting"],
 }
 
+# What a resource *is* beats what it is tagged for. bio.tools labels
+# StreptomeDB "Virtual screening" and LOTUS "Toxicology" because that is what
+# people do with them, and the category vote then files a compound database
+# under docking. These run first.
+EARLY_RULES = [
+    ("libraries", r"database of (?:natural products?|compounds?|molecules?|chemicals?)|"
+                  r"natural products? database|compendium of|collection of documented|"
+                  r"structure-organism pairs|integrative database|"
+                  r"(?:database|collection|compendium|repository) of [\w\s-]{0,30}"
+                  r"(?:products?|compounds?|metabolites?|phytochemicals?)|"
+                  # a resource named *DB / *Atlas / *Bank that describes compounds
+                  r"^\w*(?:db|atlas|bank|base)\b[\s\S]{0,140}"
+                  r"(?:natural products?|phytochemicals?|metabolites?)"),
+    ("target-id", r"target prediction of|drug.gene interaction|chemical-gene|"
+                  r"gene-disease|network pharmacology|symptom mapping"),
+]
+
 # Families that kept landing in "Everything else". Checked before the general
 # keyword scoring because they are specific enough to be decisive.
 LATE_RULES = [
@@ -251,6 +268,11 @@ def slugify(s):
 def classify(row):
     if row["source"] == "curated" and row.get("stage"):
         return CURATED_REMAP.get(row["stage"], row["stage"]), "curated"
+
+    hay_early = f"{norm(row.get('name'))} {norm(row.get('description'))}"
+    for stage, pattern in EARLY_RULES:
+        if re.search(pattern, hay_early, re.I):
+            return stage, "early-rule"
 
     cats = [norm(c) for c in (row.get("categories") or [])]
     votes = Counter(CURATED_REMAP.get(CATEGORY_MAP[c], CATEGORY_MAP[c])

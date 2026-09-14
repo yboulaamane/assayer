@@ -15,9 +15,16 @@ const ASSET_TERMS = [
   [/co-?crystal|crystal structure|experimental structure|\bpdb\b/i, "receptor_structure"],
   [/analogues?|congeneric series|my series/i, "candidate_molecules"],
   [/variants?|mutations?/i, "variant_list"],
-  [/fragment (?:hits|screen)/i, "confirmed_hits"],
+  [/topology/i, "matching_topology"],
   [/known actives?/i, "known_actives"],
 ];
+
+function capabilities(phrase) {
+  const out = ASSET_TERMS.filter(([re]) => re.test(phrase)).map(([, cap]) => cap);
+  if (/\bstructures?\b/i.test(phrase)) out.push("receptor_structure");
+  if (/\b(?:measured )?data\b/i.test(phrase)) out.push("measured_data");
+  return [...new Set(out)];
+}
 
 /** Turn a routed question plus its stated constraints into a structured brief. */
 export function buildBrief(parsed) {
@@ -30,11 +37,15 @@ export function buildBrief(parsed) {
   }
   const assets = new Set();
   for (const c of said.filter((c) => c.kind === "existing asset")) {
-    for (const [re, cap] of ASSET_TERMS) if (re.test(c.phrase)) assets.add(cap);
+    capabilities(c.phrase).forEach((cap) => assets.add(cap));
   }
   // "no usable structure" is the absence of an asset, which changes the route
   // rather than merely trimming it.
   const missing = new Set(said.some((c) => c.kind === "no structure") ? ["receptor_structure"] : []);
+  for (const c of said.filter((c) => c.kind === "missing asset")) {
+    capabilities(c.phrase).forEach((cap) => missing.add(cap));
+  }
+  for (const cap of missing) assets.delete(cap);
 
   return {
     question: parsed.query,
@@ -48,21 +59,20 @@ export function buildBrief(parsed) {
     compute: said.filter((c) => c.kind === "compute limit").map((c) => c.phrase),
     time: said.filter((c) => c.kind === "time limit").map((c) => c.phrase),
     stated: said,
+    degraded: Boolean(parsed.degraded),
+    truncated: Boolean(parsed.truncated),
   };
 }
 
-// Having one thing means having what it was made from. A trajectory implies the
-// system that produced it; confirmed hits imply the screen that found them.
+// Only include implications that do not invent files or evidence. A trajectory
+// does not prove its topology is available; measurements need not contain actives.
 const IMPLIES = {
-  trajectory: ["simulation_system", "prepared_receptor"],
   confirmed_hits: ["hit_list"],
-  conformer_ensemble: ["trajectory", "simulation_system"],
-  calibrated_model: ["trained_model", "baseline_metrics", "evaluation_split"],
-  trained_model: ["evaluation_split", "curated_dataset"],
+  hit_list: ["candidate_molecules"],
+  triaged_hits: ["hit_list"],
   ranked_candidates: ["candidate_molecules"],
   receptor_ensemble: ["receptor_structure"],
   comparable_dataset: ["measured_data"],
-  measured_data: ["known_actives"],
 };
 
 function expand(assets) {
@@ -74,10 +84,12 @@ function expand(assets) {
   return out;
 }
 
-/** Modules that can supply a capability, cheapest family first. */
-function providersOf(capability, excluded) {
-  return Object.values(MODULES).filter(
-    (m) => m.produces.includes(capability) && !excluded.includes(m.family));
+const methods = (m) => [m.family, ...(m.methods || [])];
+const forbidden = (m, brief) => methods(m).some((f) => brief.excluded.includes(f));
+const compatible = (m, intent) => RECIPES[intent]?.modules.includes(m.id) || m.borrowFor?.includes(intent);
+const inputs = (brief) => new Set([...expand(brief.assets)].filter((a) => !brief.missing.includes(a)));
+function outputs(available, m, brief) {
+  for (const cap of expand(m.produces)) if (!brief.missing.includes(cap)) available.add(cap);
 }
 
 /**
@@ -88,6 +100,7 @@ function providersOf(capability, excluded) {
  * that silently omits a step is worse than one that prints too many.
  */
 export function compose(brief) {
+  brief = { excluded: [], assets: [], missing: [], offTargets: [], ...brief };
   let intent = brief.intent, rerouted = null;
 
   // Structure-based discovery without a structure, or with docking ruled out,
@@ -103,81 +116,129 @@ export function compose(brief) {
     intent = "ligand-discovery";
   }
 
+  brief = { ...brief, intent, excluded: brief.excluded || [], assets: brief.assets || [],
+    missing: brief.missing || [], offTargets: brief.offTargets || [] };
   const recipe = RECIPES[intent];
   if (!recipe) return { ok: false, error: `no recipe for ${intent}` };
 
-  const excluded = brief.excluded;
   // What the user brought, not what earlier steps in this plan will produce.
   // Skipping a step because a previous step covers it is how a plan loses the
   // step that was supposed to do the work.
-  const supplied = expand(brief.assets);
-  const steps = [], dropped = [], borrowed = [];
+  const supplied = inputs(brief), available = new Set(supplied);
+  const steps = [], dropped = [], borrowed = [], errors = [];
+  const chosen = [];
+  const drop = (m, reason) => {
+    if (!dropped.some((d) => d.id === m.id)) dropped.push({ id: m.id, title: m.title, reason });
+  };
+  const eligible = (m) => !forbidden(m, brief) &&
+    !m.produces.some((p) => brief.missing.includes(p)) &&
+    !m.skipWith?.some((p) => supplied.has(p));
 
-  for (const id of recipe.modules) {
+  const ids = brief.offTargets.length
+    ? ["selectivity.define_panel", ...recipe.modules, "selectivity.compare_panel"] : recipe.modules;
+  for (const id of ids) {
     const m = MODULES[id];
-    if (!m) { dropped.push({ id, reason: "unknown module id" }); continue; }
+    if (!m) { errors.push(`unknown module: ${id}`); continue; }
 
-    if (excluded.includes(m.family)) {
-      dropped.push({ id, title: m.title, reason: `you excluded ${m.family}` });
+    if (forbidden(m, brief)) {
+      drop(m, `you excluded ${methods(m).filter((f) => brief.excluded.includes(f)).join(", ")}`);
+      continue;
+    }
+    if (m.produces.some((p) => brief.missing.includes(p))) {
+      drop(m, "its required output was stated to be unavailable; resolve that prerequisite first");
+      continue;
+    }
+    if (m.skipWith?.some((p) => supplied.has(p))) {
+      drop(m, "start from the work you already supplied");
       continue;
     }
     // Already have what this produces: skip it, but say so rather than leaving
     // a gap the reader has to notice.
-    if (m.produces.length && m.produces.every((p) => supplied.has(p))) {
-      dropped.push({ id, title: m.title, reason: `you already have ${m.produces.join(", ")}` });
+    if (!m.alwaysInclude && m.produces.length && m.produces.every((p) => supplied.has(p))) {
+      drop(m, `you already have ${m.produces.join(", ")}`);
       continue;
     }
-    steps.push({ ...m, unmet: [] });
+    if (!chosen.includes(id)) chosen.push(id);
   }
 
-  // A step whose inputs nothing supplies is a step that cannot run. Look for a
-  // module elsewhere in the registry that produces what is missing.
-  for (const s of steps) {
-    for (const need of s.requires) {
-      if (supplied.has(need) || brief.missing.includes(need)) continue;
-      const earlier = steps.slice(0, steps.indexOf(s)).some((e) => e.produces.includes(need));
-      if (earlier) continue;
-      const candidate = providersOf(need, excluded)
-        .find((c) => !steps.some((e) => e.id === c.id));
+  // Resolve dependencies recursively before appending a step. Only the current
+  // recipe and explicitly approved cross-recipe providers may supply an input.
+  const visited = new Set(), visiting = new Set();
+  const add = (id, forStep = null, capability = null) => {
+    if (visited.has(id)) return;
+    if (visiting.has(id)) { errors.push(`dependency cycle at ${id}`); return; }
+    const m = MODULES[id];
+    visiting.add(id);
+    const dependencies = [];
+    for (const need of m.requires) {
+      if (available.has(need) || brief.missing.includes(need)) continue;
+      const prior = steps.find((s) => expand(s.produces).has(need));
+      if (prior) { dependencies.push(prior.id); continue; }
+      const candidate = [...chosen.map((k) => MODULES[k]), ...Object.values(MODULES)]
+        .find((c) => c.id !== id && !visited.has(c.id) && eligible(c) &&
+          compatible(c, intent) && c.produces.includes(need));
       if (candidate) {
-        borrowed.push({ id: candidate.id, title: candidate.title, for: s.id, capability: need });
-        steps.splice(steps.indexOf(s), 0, { ...candidate, unmet: [], borrowed: true });
-        supplied.add(need);
-      } else {
-        s.unmet.push(need);
+        add(candidate.id, id, need);
+        dependencies.push(candidate.id);
       }
     }
-    s.produces.forEach((p) => supplied.add(p));
-  }
-
-  // A route can be gutted by its own exclusions. Say so instead of showing the
-  // three steps that happen to survive.
-  const viable = steps.length >= Math.ceil(recipe.modules.length / 3);
+    const s = { ...m, dependencies: [...new Set(dependencies)],
+      unmet: m.requires.filter((need) => !available.has(need)), borrowed: !chosen.includes(id) };
+    if (id === "network.define_scope" && brief.question) {
+      s.context = `Study request: ${brief.question}`;
+    }
+    if (s.borrowed) borrowed.push({ id, title: m.title, for: forStep, capability });
+    if (id === "selectivity.define_panel" || id === "selectivity.compare_panel") {
+      s.context = `Primary target: ${brief.target || "not specified"}. Must spare: ${brief.offTargets.join(", ")}.`;
+    }
+    steps.push(s);
+    // A blocked step's outputs are conditional, not evidence that downstream
+    // work can proceed. Propagate the missing inputs instead of hiding them.
+    if (!s.unmet.length) outputs(available, s, brief);
+    visiting.delete(id);
+    visited.add(id);
+  };
+  for (const id of chosen) add(id);
+  const unmet = steps.flatMap((s) => s.unmet.map((capability) => ({ id: s.id, capability })));
+  const viable = steps.length > 0 && !unmet.length && !errors.length;
 
   return {
-    ok: true, viable, intent, rerouted,
+    ok: !errors.length, errors, viable, id: intent, intent, rerouted, brief,
     label: recipe.label, summary: recipe.summary,
     decision: recipe.decision, stop: recipe.stop,
     steps, dropped, borrowed,
-    unmet: steps.flatMap((s) => s.unmet.map((u) => ({ id: s.id, capability: u }))),
+    unmet,
   };
 }
 
 /** Structural checks a model's choices would have to pass too. */
 export function validate(plan) {
   const issues = [];
+  const brief = { assets: [], missing: [], excluded: [], offTargets: [], ...plan.brief };
+  const available = inputs(brief);
   const seen = new Set();
-  for (const s of plan.steps) {
-    if (!MODULES[s.id]) issues.push(`unknown module: ${s.id}`);
+  for (const s of plan.steps || []) {
+    const m = MODULES[s.id];
+    if (!m) { issues.push(`unknown module: ${s.id}`); continue; }
     if (seen.has(s.id)) issues.push(`module appears twice: ${s.id}`);
-    seen.add(s.id);
-  }
-  const produced = new Set();
-  for (const s of plan.steps) {
-    for (const need of s.requires) {
-      if (!produced.has(need) && !s.unmet.includes(need)) continue;
+    if (forbidden(m, brief)) issues.push(`excluded method in ${s.id}`);
+    const panel = brief.offTargets.length && ["selectivity.define_panel", "selectivity.compare_panel"].includes(s.id);
+    if (plan.intent && !compatible(m, plan.intent) && !panel) issues.push(`incompatible module: ${s.id}`);
+    for (const field of ["requires", "produces", "tools"]) {
+      if (JSON.stringify(s[field]) !== JSON.stringify(m[field])) issues.push(`modified ${field} in ${s.id}`);
     }
-    s.produces.forEach((p) => produced.add(p));
+    for (const dependency of s.dependencies || []) {
+      if (!seen.has(dependency)) issues.push(`dependency must precede ${s.id}: ${dependency}`);
+    }
+    const missing = m.requires.filter((need) => !available.has(need));
+    for (const need of missing) {
+      if (!s.unmet?.includes(need)) issues.push(`missing prerequisite for ${s.id}: ${need}`);
+    }
+    for (const need of s.unmet || []) {
+      if (!missing.includes(need)) issues.push(`incorrect unmet prerequisite for ${s.id}: ${need}`);
+    }
+    if (!missing.length) outputs(available, m, brief);
+    seen.add(s.id);
   }
   return issues;
 }

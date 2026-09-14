@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,944 tools for medicinal and computational chemistry, plus 16
+A catalogue of 3,957 tools for medicinal and computational chemistry, plus 16
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -75,24 +75,38 @@ ids; that order is judgement and is kept.
 2. **Route** — and re-route where the constraints demand it. Structure-based
    discovery with no usable structure is not the same protocol minus a step; it
    becomes the ligand-based route.
-3. **Compose** — drop modules whose family you excluded, skip modules whose
-   output you already have, borrow a module from another recipe when a step
-   needs something nothing supplies.
-4. **Validate** — module ids resolve, nothing appears twice, unmet requirements
-   are reported rather than hidden.
+3. **Compose** — apply exclusions to all methods used by a module, reuse supplied
+   assets, and resolve prerequisites recursively. Borrowing is limited to
+   explicitly compatible recipes. Named off-targets add panel-definition and
+   comparison steps.
+4. **Validate** — check canonical module inputs, outputs and tools, exclusions,
+   compatibility and dependency order. Missing inputs make the affected work
+   conditional; blocked steps cannot supply downstream outputs. Invalid plans
+   are stopped before rendering.
 
 Every decision is shown: what was left out and why, what was added, where the
 route changed. A planner that silently drops a step is worse than one that
 prints too many.
 
 Constraints it notices but cannot act on, such as compute and time limits, are
-named as not applied rather than quietly ignored.
+named as not applied rather than quietly ignored. These limits, off-targets and
+step prerequisites also appear in the Markdown export. When semantic routing
+is unavailable, the page labels the fallback as provisional.
+
+Run the planner regression and rendering checks with Node.js 24 or later:
+
+```bash
+node --test tests/*.test.mjs
+```
+
+The checks use mocked routing responses and DOM stubs; they do not call providers
+or verify the live deployment's layout.
 
 ## The protocols
 
-17 of them, 107 modules. Each protocol says what decision it supports and when to
+18 of them, 117 modules. Each protocol says what decision it supports and when to
 walk away. Each step says what to do, why, which tools, and the gate it has to
-pass. 28 steps also name the specific way that step usually goes wrong.
+pass. 35 steps also name the specific way that step usually goes wrong.
 
 Some examples of what that looks like in practice:
 
@@ -111,7 +125,14 @@ gate is wrong, open an issue.
 Covered: hit discovery, ligand-based discovery, lead optimisation, generative design, fragment-based
 discovery, selectivity, free energy, degraders, ADMET, conformational sampling,
 MD stability, retrosynthesis, target triage, structure selection, antibodies,
-property-model building, resistance and mutation effects.
+property-model building, resistance and mutation effects, network pharmacology.
+
+Plant-versus-disease network studies (for example, “network pharmacology study of
+aloysia plant vs parkinsons”) start with botanical identity and constituent
+provenance, then compound targets, disease evidence, networks, enrichment and a
+validation plan. The plant and disease are not sent to a single-protein lookup.
+The workflow preserves unknown species and preparation details as decisions to
+resolve, and treats network results as hypotheses rather than evidence of efficacy.
 
 When a question matches none of them, the page says so and lists what it does
 cover, rather than presenting the closest guess as an answer.
