@@ -247,6 +247,23 @@ nav.main a.on { background: var(--accent-soft); color: var(--accent); }
   font-size: 13.5px; line-height: 1.6; color: var(--ink-2);
 }
 .nomatch b { color: var(--warn); }
+.applied {
+  margin: 0 0 24px; padding: 13px 16px; border-radius: var(--r);
+  border: 1px solid var(--line); background: var(--surface-2);
+  font-size: 13px; line-height: 1.65; color: var(--ink-2);
+}
+.applied b { color: var(--ink); }
+.applied code {
+  font: 11.5px var(--mono); padding: 1px 5px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+}
+.applied .warnish { color: var(--warn); display: block; margin-top: 6px; }
+.applied details { margin-top: 8px; }
+.applied summary { cursor: pointer; color: var(--ink-3); font-size: 12.5px; }
+.applied ul { margin: 8px 0 0; padding-left: 18px; }
+.applied li { margin-bottom: 3px; font-size: 12.5px; }
+.applied .why { color: var(--ink-3); }
+
 .nomatch code {
   font: 12px var(--mono); padding: 1px 5px; border-radius: 4px;
   background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--ink);
