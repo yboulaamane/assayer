@@ -1,0 +1,83 @@
+name: Link check
+
+# Tier 1: report rot, change nothing.
+#
+# Runs the URL checker over the curated catalogue and asks GitHub whether each
+# repository still exists and is still maintained. It never edits a file, so
+# the worst it can do is be wrong in an issue.
+#
+# Only first-party actions are used. A scheduled job with write access is a
+# supply-chain surface, and for a catalogue people take scientific advice from
+# that is not worth the convenience of a third-party action.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"        # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: link-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check every curated URL and repository
+        id: check
+        env:
+          # Raises the API rate limit from 60/hour to 5,000. Injected by
+          # Actions; nothing to configure.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          python3 scripts/check_links.py --markdown --json findings.json > report.md
+          echo "problems=$?" >> "$GITHUB_OUTPUT"
+          cat report.md
+
+      - name: Open or update the rot issue
+        if: steps.check.outputs.problems != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TITLE="Catalogue link rot"
+          # One issue, updated, rather than a new one every week. A weekly
+          # notification that repeats itself is a weekly notification people mute.
+          NUMBER=$(gh issue list --state open --label rot --limit 1 --json number --jq '.[0].number // empty')
+          {
+            echo "_Checked $(date -u '+%Y-%m-%d %H:%M UTC') by \`.github/workflows/link-check.yml\`._"
+            echo
+            cat report.md
+          } > body.md
+          if [ -n "$NUMBER" ]; then
+            gh issue comment "$NUMBER" --body-file body.md
+            echo "commented on #$NUMBER"
+          else
+            gh label create rot --description "Dead links and abandoned repositories" --color D4C5F9 2>/dev/null || true
+            gh issue create --title "$TITLE" --label rot --body-file body.md
+          fi
+
+      - name: Say so when nothing is broken
+        if: steps.check.outputs.problems == '0'
+        run: echo "Every curated URL resolves and no repository has vanished."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: link-findings
+          path: |
+            findings.json
+            report.md
+          retention-days: 30

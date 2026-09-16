@@ -2000,7 +2000,7 @@
     "stage": "target-id",
     "name": "STITCH",
     "description": "Known and predicted chemical-protein interactions across species, useful for a first pass at what else a chemotype might touch.",
-    "url": "http://stitch.embl.de",
+    "url": "http://stitch-db.org",
     "code_url": null,
     "paper_url": null,
     "categories": [
