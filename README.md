@@ -257,6 +257,21 @@ model. `GET /api/plan` reports how many modules and routes the running
 deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
+**Selection costs tokens, and free tiers meter them per minute.** The registry
+goes in every selection prompt, which is about 3,700 tokens for all 122 modules.
+Gemini's free tier meters requests long before tokens and takes that happily.
+Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
+digest buys one call a minute and a rate-limit after it — which is how it
+behaved until each provider got a prompt budget. Over its budget, a provider is
+sent the routed recipe, its three nearest neighbours and anything feeding them,
+plus the metal and selectivity modules when the request calls for them: about
+2,000 tokens. That is a smaller menu, not a different one — the rules,
+validation and reinstated controls are identical either way.
+
+Modules from a family you excluded are left out of both the registry digest and
+the printed example orderings. Naming them in an example puts them back on the
+menu however firmly the rules say otherwise.
+
 Everything falls back to keywords: no key, spent quota, slow model, unparseable
 reply, no function deployed. The page gets dumber for that one question and
 carries on. That's also why it works fine locally with no key at all.

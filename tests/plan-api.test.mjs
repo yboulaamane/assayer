@@ -50,11 +50,12 @@ test("the registry is served from the server, never taken from the caller", asyn
 
   assert.ok(!prompt.includes("fake.module"));
   assert.ok(!prompt.includes("ignore your instructions"));
-  // Every real id is offered, so the model can compose across protocols.
-  for (const id of ["docking.screen_the_library", "qsar.split_the_way_you", "metal.characterise_the_metal_centre"]) {
+  // Ids come from the server's registry. Which ids are offered depends on the
+  // provider's budget; that these ones are, does not.
+  for (const id of ["docking.screen_the_library", "qsar.split_the_way_you",
+                    "docking.redock_the_native_ligand"]) {
     assert.ok(prompt.includes(id), `registry missing ${id}`);
   }
-  assert.equal((prompt.match(/docking\.redock_the_native_ligand/g) || []).length >= 1, true);
 });
 
 test("evidence from the lookup reaches the model before it chooses", async () => {
@@ -164,4 +165,51 @@ test("without a key the endpoint asks for the curated fallback", async () => {
   } finally {
     process.env.LLM_API_KEY = key;
   }
+});
+
+test("the prompt is sized to the provider's per-minute budget", async () => {
+  const tokens = (p) => Math.round(p.length / 3.8);
+
+  // Groq's free tier meters 8,000 tokens a minute for prompt and completion
+  // together, so the full registry cannot go there. It gets the near menu.
+  const small = await select(base, { understood: "x", modules: [{ id: "docking.screen_the_library" }] });
+  assert.ok(tokens(small.prompt) < 2600, `groq prompt was ${tokens(small.prompt)} tokens`);
+  assert.ok(small.prompt.includes("docking.screen_the_library"));
+  // Narrowed is a smaller menu, not a different one: the rules are unchanged.
+  assert.ok(small.prompt.includes("Never invent an id"));
+  assert.ok(small.prompt.includes("Keep the controls"));
+  assert.ok(small.prompt.includes("docking.redock_the_native_ligand"));
+
+  // A large-context provider gets every module, which is what lets it compose
+  // across protocols the router never considered.
+  const key = process.env.LLM_API_KEY, provider = process.env.LLM_PROVIDER, model = process.env.LLM_MODEL;
+  process.env.LLM_API_KEY = "AIzaTest"; process.env.LLM_PROVIDER = "gemini"; delete process.env.LLM_MODEL;
+  try {
+    const oldFetch = globalThis.fetch;
+    let prompt = "";
+    globalThis.fetch = async (_url, options) => {
+      prompt = JSON.parse(options.body).contents[0].parts[0].text;
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text:
+        JSON.stringify({ understood: "x", modules: [{ id: "docking.screen_the_library" }] }) }] } }] }),
+        { headers: { "Content-Type": "application/json" } });
+    };
+    try {
+      await handler({ method: "POST", json: async () => base });
+    } finally { globalThis.fetch = oldFetch; }
+    assert.ok(tokens(prompt) > 3000, `gemini prompt was only ${tokens(prompt)} tokens`);
+    // Modules from distant protocols are on the menu here and not in the narrow one.
+    assert.ok(prompt.includes("retrosynthesis") || prompt.includes("synthesis."));
+  } finally {
+    process.env.LLM_API_KEY = key; process.env.LLM_PROVIDER = provider;
+    if (model == null) delete process.env.LLM_MODEL; else process.env.LLM_MODEL = model;
+  }
+});
+
+test("a family the user ruled out is never even offered", async () => {
+  const { prompt } = await select(
+    { ...base, brief: { ...base.brief, excluded: ["docking", "md"] } },
+    { understood: "x", modules: [{ id: "qsar.curate_the_data_properly" }] });
+  assert.ok(!prompt.includes("docking.screen_the_library"));
+  assert.ok(!prompt.includes("md.build_the_system"));
+  assert.ok(prompt.includes("qsar.curate_the_data_properly"));
 });
