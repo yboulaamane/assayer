@@ -348,6 +348,36 @@ Stdlib Python 3 only, nothing to install. Raw API responses are cached under
 `data/.cache/`; delete a file to force a refresh. `web/catalog.json` is
 generated, so don't edit it by hand.
 
+## Cache busting
+
+Assets keep fixed names — `/assets/app.js`, never `/assets/app.8f3a2c.js` — so a
+browser holding an old copy has no way to know the file changed. Revalidation
+headers are meant to cover that and in practice did not: a stale bundle reached
+a user, the page looked broken, and nothing said why.
+
+So every asset URL now carries a hash of its contents, stamped by
+`scripts/version_assets.py` and re-run automatically by `build_artifact.py`:
+
+```html
+<script type="module" src="assets/app.js?v=34c00c0bce"></script>
+```
+
+Hashes propagate in dependency order. A one-line change to `modules.js` changes
+the hash `workflow.js` imports it by, which changes `workflow.js`, which changes
+the hash in `app.js`, which changes the URL in the page. Editing any leaf busts
+the whole chain, which is the property that makes this work.
+
+The headers then say what is now true: the HTML must always be revalidated,
+because it carries the stamps, and the assets are `immutable` for a year,
+because a hashed URL can never mean two different things.
+
+Two consequences worth knowing. Node treats `./modules.js` and
+`./modules.js?v=abc` as different modules, so a test that needs the same
+instance the app holds has to import through the same specifier — `tests/planner.test.mjs`
+reads it out of the source rather than hard-coding a hash. And a test enforces
+that no import or page reference is left unstamped, because an unstamped URL is
+one that cannot change when its contents do.
+
 ## Automation
 
 Two scheduled workflows, neither of which can change the site on its own.

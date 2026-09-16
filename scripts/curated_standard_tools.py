@@ -402,7 +402,7 @@ T = [
 BOT_PROTECTED = {
     "go.drugbank.com", "www.drugbank.com", "www.genecards.org",
     "mcule.com", "chem-space.com", "www.synthiaonline.com", "probeminer.icr.ac.uk",
-    "europepmc.org", "worldwide.espacenet.com",
+    "europepmc.org", "worldwide.espacenet.com", "virtual-flow.org",
 }
 
 FIELDS = ["name", "stage", "stage_label", "description", "url", "repo", "access", "tags", "url_status"]

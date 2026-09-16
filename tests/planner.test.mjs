@@ -151,13 +151,23 @@ test("borrowing recursively resolves the borrowed module's inputs", () => {
   assert.deepEqual(validate(result), []);
 });
 
-test("cycles in provider dependencies stop composition instead of looping", () => {
-  const m = MODULES["identity.resolve_the_target_to"], before = m.requires;
+test("cycles in provider dependencies stop composition instead of looping", async () => {
+  // Asset URLs carry a content hash, and Node treats "./modules.js" and
+  // "./modules.js?v=abc" as different modules. Reach the instance compose.js
+  // actually holds, by reading the specifier out of its source, so this keeps
+  // working whatever the hash is.
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync(new URL("../web/assets/compose.js", import.meta.url), "utf8");
+  const specifier = source.match(/from "(\.\/modules\.js[^"]*)"/)[1];
+  const live = await import(new URL(specifier, new URL("../web/assets/compose.js", import.meta.url)).href);
+
+  // Make a module require what a later step in the same recipe produces.
+  const m = live.MODULES["structure.pick_and_prepare_the"], before = m.requires;
   try {
-    m.requires = ["receptor_structure"];
+    m.requires = ["simulation_system"];
     const result = compose({ intent: "conformational-sampling" });
     assert.equal(result.ok, false);
-    assert.ok(result.errors.some((s) => s.includes("cycle")));
+    assert.ok(result.errors.some((s) => s.includes("cycle")), `errors: ${result.errors}`);
   } finally { m.requires = before; }
 });
 
