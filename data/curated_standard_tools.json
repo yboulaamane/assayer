@@ -134,7 +134,7 @@
     "tags": [
       "ppi"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "OmniPath",
@@ -1067,7 +1067,7 @@
       "admet",
       "open-data"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "PROTAC-DB",
@@ -1514,14 +1514,14 @@
     "stage": "target-id",
     "stage_label": "Target identification & validation",
     "description": "Known and predicted chemical-protein interactions across species, useful for a first pass at what else a chemotype might touch.",
-    "url": "http://stitch.embl.de",
+    "url": "http://stitch-db.org",
     "repo": null,
     "access": "free-web",
     "tags": [
       "off-target",
       "chemical-protein"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "Chemprop",
@@ -1759,7 +1759,7 @@
       "food-chemistry",
       "phytochemicals"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "Phenol-Explorer",
@@ -1788,7 +1788,7 @@
       "file-formats",
       "conversion"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "Datamol",
@@ -2026,7 +2026,7 @@
       "drugs",
       "database"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "BindingDB",
@@ -2232,7 +2232,7 @@
       "virtual-screening",
       "hpc"
     ],
-    "url_status": 200
+    "url_status": 403
   },
   {
     "name": "EasyDock",
@@ -2924,7 +2924,7 @@
       "dft",
       "python"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "ORCA",
@@ -3857,7 +3857,7 @@
       "literature",
       "api"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "PubMed / NCBI E-utilities",

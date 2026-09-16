@@ -348,6 +348,40 @@ Stdlib Python 3 only, nothing to install. Raw API responses are cached under
 `data/.cache/`; delete a file to force a refresh. `web/catalog.json` is
 generated, so don't edit it by hand.
 
+## Automation
+
+Two scheduled workflows, neither of which can change the site on its own.
+
+**`.github/workflows/link-check.yml`** — weekly. Runs `scripts/check_links.py`
+over every curated URL and asks GitHub whether each repository still exists and
+is still maintained. It edits nothing; findings go into a single issue that gets
+updated rather than a new issue every Monday. Failures are checked twice, because
+one slow response is not evidence a resource is gone, and a `404` is reported
+differently from "unreachable from the runner", which can just mean geo-blocking
+or a certificate the client rejects.
+
+**`.github/workflows/refresh-catalogue.yml`** — monthly. Re-scrapes bio.tools and
+the GitHub layers, rebuilds, runs the tests, the evaluation set and the citation
+check, then opens a **pull request**. Never pushes to main: the classification
+rules have misfired before in ways nothing caught until someone looked, and a
+catalogue people take scientific advice from should not absorb that
+automatically. The curated entries are not touched — those are the judgement.
+
+`web/catalog.json` is two megabytes on one line, so its git diff is one insertion
+and one deletion. `scripts/catalog_diff.py` turns a rebuild into something
+reviewable — what was added, what was removed, what changed stage, what changed
+licence — and that summary is the body of the pull request. A stage disappearing
+is treated as a bug rather than a data change and says so in the PR.
+
+Both use first-party actions only. A scheduled job with write access is a
+supply-chain surface, and that is not worth the convenience of a third-party
+action here. `GITHUB_TOKEN` is injected by Actions, so there is nothing to
+configure; it also raises the scrapers' rate limit, which is most of their
+runtime.
+
+Note that GitHub disables scheduled workflows on a repository with no activity
+for 60 days. It emails first, but it is a quiet way for this to stop.
+
 ## Known limits
 
 - **Stage assignment is keyword-driven.** The 293 curated tools carry their

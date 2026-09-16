@@ -1,0 +1,129 @@
+name: Refresh catalogue
+
+# Tier 2: rebuild the scraped layers and propose the result as a pull request.
+#
+# Never pushes to main. The classification rules have misfired before in ways
+# nothing caught until someone looked — a stage slug that did not exist, a
+# pattern that silently never matched — and a catalogue people take scientific
+# advice from should not absorb that automatically.
+#
+# web/catalog.json is two megabytes on one line, so its git diff is one
+# insertion and one deletion. scripts/catalog_diff.py turns the change into
+# something reviewable, and that summary is the body of the pull request.
+#
+# The curated layer is deliberately not touched. Those entries are the
+# judgement; only the scraped layers are refreshed here.
+
+on:
+  schedule:
+    - cron: "0 4 1 * *"        # 04:00 UTC on the first of the month
+  workflow_dispatch:
+    inputs:
+      layers:
+        description: "Which scraped layers to refresh"
+        type: choice
+        default: all
+        options: [all, biotools, github, none]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: refresh-catalogue
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Keep the current catalogue to diff against
+        run: cp web/catalog.json /tmp/catalogue-before.json
+
+      - name: Refresh bio.tools
+        if: contains(fromJSON('["all","biotools"]'), inputs.layers || 'all')
+        run: python3 scripts/scrape_biotools.py
+
+      - name: Refresh the GitHub layers
+        if: contains(fromJSON('["all","github"]'), inputs.layers || 'all')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/scrape_github_topics.py
+          python3 scripts/scrape_github_stars.py
+
+      - name: Re-check the curated URLs, without rewriting the entries
+        run: python3 scripts/curated_standard_tools.py
+
+      - name: Rebuild
+        run: |
+          python3 scripts/enrich_packages.py
+          python3 scripts/build_index.py
+          python3 scripts/build_catalog.py
+          python3 scripts/build_artifact.py
+
+      - name: Summarise what changed
+        id: diff
+        run: |
+          set +e
+          python3 scripts/catalog_diff.py /tmp/catalogue-before.json web/catalog.json --markdown > summary.md
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat summary.md
+
+      # A rebuild that breaks the tests is a classification change, not a data
+      # change. Fail loudly rather than proposing it.
+      - name: Test
+        run: node --test tests/*.test.mjs
+
+      - name: Score the evaluation set
+        run: node evals/run.mjs
+
+      - name: Verify the citations still resolve
+        run: node scripts/check_refs.mjs
+
+      - name: Is there anything to propose?
+        id: changed
+        run: |
+          if git diff --quiet -- data web/catalog.json web/artifact.html; then
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing changed."
+          else
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open the pull request
+        if: steps.changed.outputs.any == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="refresh/catalogue-$(date -u '+%Y-%m-%d')"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add data web/catalog.json web/artifact.html
+          git commit -m "Refresh the scraped catalogue layers"
+          git push --force-with-lease origin "$BRANCH"
+          {
+            echo "Automated refresh of the scraped layers. The curated entries were not touched."
+            echo
+            cat summary.md
+            echo
+            if [ "${{ steps.diff.outputs.status }}" != "0" ]; then
+              echo "> **A stage disappeared in this rebuild.** That is a classification bug."
+              echo "> Do not merge until it is explained."
+            fi
+          } > pr-body.md
+          gh pr create --title "Refresh catalogue ($(date -u '+%B %Y'))" \
+                       --body-file pr-body.md --label catalogue --head "$BRANCH" --base main
