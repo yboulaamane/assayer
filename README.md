@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,967 tools for medicinal and computational chemistry, plus 19
+A catalogue of 3,973 tools for medicinal and computational chemistry, plus 26
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -49,16 +49,16 @@ because the first command you need is rarely the one in the README's quick start
 |---|--:|---|
 | [bio.tools](https://bio.tools), 12 drug-discovery EDAM topics | 3,092 | CC BY 4.0 |
 | GitHub repos with 30+ stars across 40 topics | 867 | public metadata |
-| Written for this project | 286 | ours |
+| Written for this project | 293 | ours |
 | My own starred repos, filtered | 130 | ours |
 
 bio.tools gives breadth. I filtered it to the topics a chemist would care about
 rather than taking the whole registry, which is mostly sequence analysis. The
 GitHub layer answers a question registries can't: is anyone still maintaining
-this. The 286 curated entries cover the things a project actually runs on, which
+this. The 293 curated entries cover the things a project actually runs on, which
 both other sources are patchy about.
 
-336 of 4,375 rows appear in more than one source. They get merged into one entry
+336 of 4,382 rows appear in more than one source. They get merged into one entry
 that remembers where it came from.
 
 ## How a plan is built
@@ -92,7 +92,7 @@ prints too many.
 complete, always valid, and what you get with no key configured. On top of it,
 `web/api/plan.js` hands a model the whole registry and asks which modules *this*
 request needs, in what order, and why each one. That is the difference between
-choosing one of nineteen pre-written documents and composing from 129 parts.
+choosing one of 26 pre-written documents and composing from 166 parts.
 
 The model returns ids and nothing else. It never writes a step, a gate, a
 threshold or a tool name — those come from the registry, which lives on the
@@ -272,7 +272,7 @@ deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
 **Selection costs tokens, and free tiers meter them per minute.** The registry
-goes in every selection prompt, which is about 3,900 tokens for all 129 modules.
+goes in every selection prompt, which is about 5,100 tokens for all 166 modules.
 Gemini's free tier meters requests long before tokens and takes that happily.
 Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
 digest buys one call a minute and a rate-limit after it — which is how it
@@ -316,7 +316,7 @@ generated, so don't edit it by hand.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The 286 curated tools carry their
+- **Stage assignment is keyword-driven.** The 293 curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).

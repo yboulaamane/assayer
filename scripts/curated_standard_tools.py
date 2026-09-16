@@ -84,6 +84,8 @@ T = [
     ("CheckMyMetal", "structure", "Validates metal sites in deposited or refined structures against expected coordination number, geometry and donor distances. Mis-assigned metals are common; check before you build a docking model on one.", "https://cmm.minorlab.org", None, "free-web", ["metals", "validation", "crystallography"]),
     ("AlphaFill", "structure", "Transplants ligands, cofactors and metal ions into AlphaFold models by sequence and structure similarity. AlphaFold predicts the fold, not the metal, so a metalloprotein model without this step has an empty site.", "https://alphafill.eu", None, "free-web", ["metals", "cofactors", "model-repair"]),
 
+    ("ColabFold", "structure", "AlphaFold2 and friends with MMseqs2 doing the MSA, which turns an overnight job into minutes; the usual way people actually run structure prediction.", "https://github.com/sokrypton/ColabFold", "sokrypton/ColabFold", "open-source", ["structure-prediction", "msa"]),
+
     # ---------------- binding site detection ----------------
     ("fpocket", "binding-site", "Voronoi-based pocket detection and druggability scoring, with mdpocket for pocket dynamics over MD trajectories.", "https://github.com/Discngine/fpocket", "Discngine/fpocket", "open-source", ["pocket-detection", "druggability"]),
     ("P2Rank", "binding-site", "Machine-learning ligand-binding site prediction from structure; fast, template-free, used inside several docking pipelines.", "https://github.com/rdk/p2rank", "rdk/p2rank", "open-source", ["pocket-detection"]),
@@ -291,6 +293,9 @@ T = [
     ("Garleek", "qm", "Bridges Gaussian's ONIOM to molecular mechanics backends such as Tinker and OpenMM, so a QM/MM job can put a metal centre in the QM layer and the rest of the protein in MM.", "https://garleek.readthedocs.io", "insilichem/garleek", "open-source", ["metals", "qm-mm", "oniom"]),
     ("ESIgen", "qm", "Turns raw quantum chemistry output into a formatted supporting information document: geometries, energies, frequencies and images, from a template.", "https://github.com/insilichem/esigen", "insilichem/esigen", "open-source", ["reporting", "supporting-information"]),
 
+    ("pysisyphus", "qm", "Optimises stationary points on reaction paths: chain-of-states methods, transition state searches and intrinsic reaction coordinates, driving whichever QM engine you have.", "https://github.com/eljost/pysisyphus", "eljost/pysisyphus", "open-source", ["reaction-path", "transition-state"]),
+    ("Multiwfn", "qm", "Wavefunction analysis: bond orders, charges, orbital composition, electron density topology and non-covalent interaction plots from the output of most QM programs.", "http://sobereva.com/multiwfn/", None, "academic", ["wavefunction-analysis", "bonding"]),
+
     # ---------------- generative design ----------------
     ("MOSES", "generative", "Benchmarking platform for molecular generative models with standard splits and distribution metrics.", "https://github.com/molecularsets/moses", "molecularsets/moses", "open-source", ["benchmark", "generative"]),
     ("GuacaMol", "generative", "Goal-directed and distribution-learning benchmarks for de novo design, still the common comparison point.", "https://github.com/BenevolentAI/guacamol", "BenevolentAI/guacamol", "open-source", ["benchmark", "generative"]),
@@ -345,6 +350,9 @@ T = [
     ("IgBLAST", "biologics", "NCBI's immunoglobulin/TCR V(D)J assignment tool for repertoire sequencing.", "https://ncbi.github.io/igblast/", None, "open-source", ["antibody", "repertoire"]),
     ("FoldX", "biologics", "Empirical force field for fast stability and binding ddG on point mutations; free academic licence.", "https://foldxsuite.crg.eu", None, "academic", ["stability", "mutation"]),
 
+    ("ESM", "biologics", "Evolutionary-scale protein language models, used for embeddings, variant effect scores and as the front end of structure prediction without an MSA.", "https://github.com/facebookresearch/esm", "facebookresearch/esm", "open-source", ["protein-language-model", "variant-effect"]),
+    ("ThermoMPNN", "biologics", "Graph network predicting the change in folding stability for every point mutation in a structure, fast enough to scan a whole protein.", "https://github.com/Kuhlman-Lab/ThermoMPNN", "Kuhlman-Lab/ThermoMPNN", "open-source", ["stability", "ddg", "protein-engineering"]),
+
     # ---------------- benchmarks & reference datasets ----------------
     ("Therapeutics Data Commons", "benchmarks", "66+ AI-ready therapeutic datasets with fixed splits and leaderboards, spanning ADMET to biologics.", "https://tdcommons.ai", "mims-harvard/TDC", "open-source", ["benchmark", "datasets"]),
     ("MoleculeNet", "benchmarks", "The original standard property-prediction benchmark suite (ESOL, FreeSolv, BACE, Tox21, …).", "https://moleculenet.org", None, "open-source", ["benchmark"]),
@@ -362,6 +370,9 @@ T = [
     ("SIDER", "clinical", "Side-effect resource linking marketed drugs to label-extracted adverse reactions and frequencies.", "http://sideeffects.embl.de", None, "free-web", ["adverse-events"]),
     ("Europe PMC", "clinical", "Full-text life-science literature with annotations and a solid API for text mining.", "https://europepmc.org", None, "free-web", ["literature", "api"]),
     ("PubMed / NCBI E-utilities", "clinical", "Biomedical citation index and the E-utilities API behind most literature pipelines.", "https://pubmed.ncbi.nlm.nih.gov", None, "free-web", ["literature", "api"]),
+
+    ("Google Patents", "clinical", "Full-text patent search across the major offices with chemical structure indexing; the practical first look at whether a scaffold is already claimed.", "https://patents.google.com", None, "free-web", ["patents", "freedom-to-operate"]),
+    ("Espacenet", "clinical", "The European Patent Office's search over 140 million patent documents, with family and legal-status data that the free aggregators do not carry.", "https://worldwide.espacenet.com", None, "free-web", ["patents", "freedom-to-operate"]),
 
     # ---------------- workflow & ML infrastructure ----------------
     ("Nextflow", "infra", "Dataflow workflow engine with containerised, resumable execution across HPC and cloud; nf-core supplies vetted pipelines.", "https://www.nextflow.io", "nextflow-io/nextflow", "open-source", ["workflow", "reproducibility"]),
@@ -391,7 +402,7 @@ T = [
 BOT_PROTECTED = {
     "go.drugbank.com", "www.drugbank.com", "www.genecards.org",
     "mcule.com", "chem-space.com", "www.synthiaonline.com", "probeminer.icr.ac.uk",
-    "europepmc.org",
+    "europepmc.org", "worldwide.espacenet.com",
 }
 
 FIELDS = ["name", "stage", "stage_label", "description", "url", "repo", "access", "tags", "url_status"]

@@ -482,7 +482,6 @@ test("optimising a geometry is quantum chemistry, not lead optimisation", () => 
     "geometry optimisation of a ruthenium complex",
     "DFT single point energies for my ligand set",
     "what spin state is the iron centre in",
-    "find the transition state for this step",
   ]) {
     const { parsed } = plan(query);
     assert.equal(parsed.intent, "qm-geometry", `routed ${query} to ${parsed.intent}`);
@@ -553,7 +552,7 @@ test("one noun cannot score twice by containing itself", () => {
   // "inhibitors" contains "inhibitor"; both were in the list and both cleared
   // the length bonus, so a single word was worth four points and locked in the
   // shortcut on its own.
-  const { evidence, score } = parseQuery("find me the competitive landscape for KRAS inhibitors");
+  const { evidence, score } = parseQuery("who first discovered EGFR inhibitors");
   assert.deepEqual(evidence, ["inhibitors"]);
   assert.ok(score <= 2, `one noun scored ${score}`);
 
@@ -573,10 +572,13 @@ test("matching a subject is not evidence of a requested workflow", () => {
     "identify hits for this target",
   ]) assert.equal(parseQuery(query).operational, true, `${query} asks for the thing`);
 
-  // Merely mentioned: the noun sits in a phrase attached to something else.
+  // Merely mentioned: the noun sits in a phrase attached to something else, and
+  // no protocol covers what is being asked. These carry the vocabulary of a
+  // workflow without requesting one.
   for (const query of [
-    "find me the competitive landscape for KRAS inhibitors",
-    "what is the patent position on these inhibitors",
+    "who first discovered EGFR inhibitors",
+    "how much do EGFR inhibitors cost per gram",
+    "translate this paper about kinase inhibitors",
     "how many antibodies reached phase 3 last year",
   ]) assert.equal(parseQuery(query).operational, false, `${query} only mentions it`);
 });
@@ -595,11 +597,11 @@ test("the shortcut defers to the model when the evidence is only a subject", asy
     try { return await resolveQuery(query); } finally { globalThis.fetch = old; }
   };
 
-  // Vocabulary of a screening campaign, and not one. The model must be asked,
-  // and its refusal must stand.
-  const landscape = await call("find me the competitive landscape for KRAS inhibitors");
+  // Vocabulary of a screening campaign, and not a request for one. The model
+  // must be asked, and its refusal must stand.
+  const aside = await call("who first discovered EGFR inhibitors");
   assert.equal(asked.length, 1);
-  assert.equal(landscape.matched, false);
+  assert.equal(aside.matched, false);
 
   // The genuine version of the same vocabulary never reaches the model.
   const real = await call("Find inhibitors of EGFR in human");
@@ -627,4 +629,105 @@ test("only constraints that change the plan are worth a model call", async () =>
   // An exclusion does change the route, so it must be asked about.
   await call("Find inhibitors of EGFR in human without docking");
   assert.equal(calls, 1);
+});
+
+// --------------------------------------------------- the added protocols
+
+test("each added protocol claims its own questions", () => {
+  const cases = [
+    ["qm-mechanism", ["work out the mechanism of this reaction", "find the transition state for this step",
+                      "what is the activation barrier for this step"]],
+    ["qm-properties", ["predict the pKa of my compound", "which tautomer dominates at pH 7",
+                       "predict the NMR spectrum of this molecule"]],
+    ["protein-engineering", ["engineer this enzyme to be more thermostable",
+                             "improve the solubility of my protein construct",
+                             "plan a directed evolution campaign"]],
+    ["peptide-design", ["design a cyclic peptide binder for this surface",
+                        "make a stapled peptide against this helix"]],
+    ["landscape", ["what is already in the clinic for this target",
+                   "find me the competitive landscape for KRAS inhibitors",
+                   "is my scaffold covered by an existing patent"]],
+    ["library-design", ["build a focused screening library", "standardise and deduplicate these SMILES",
+                        "cluster my library by scaffold"]],
+    ["benchmarking", ["how do I benchmark my scoring function", "compare methods on a reference set"]],
+  ];
+  for (const [intent, queries] of cases) {
+    for (const q of queries) assert.equal(parseQuery(q).intent, intent, `"${q}" routed elsewhere`);
+  }
+});
+
+test("the added protocols do not steal the questions that already worked", () => {
+  for (const [q, intent] of [
+    ["Find inhibitors of EGFR in human", "hit-discovery"],
+    ["improve potency of my analogues using measured SAR", "lead-opt"],
+    ["i wanna optimize geometry of palladium bound ligand", "qm-geometry"],
+    ["design a nanobody against this epitope", "antibody"],
+    ["my fragment screen gave 40 hits which should I grow", "fbdd"],
+    ["Plan a synthesis route for this molecule", "retrosynthesis"],
+    ["Conformational sampling of CYP3A4", "conformational-sampling"],
+    ["Design a PROTAC for BRD4 using VHL", "degrader"],
+    ["Network pharmacology study of Aloysia vs Parkinsons", "network-pharmacology"],
+    ["I have missense variants, analyse mutants vs WT", "resistance"],
+  ]) assert.equal(parseQuery(q).intent, intent, `"${q}" was stolen`);
+});
+
+test("every protocol composes into a plan that validates", () => {
+  for (const id of Object.keys(RECIPES)) {
+    const result = compose({ intent: id });
+    assert.equal(result.ok, true, `${id} did not compose`);
+    assert.ok(result.steps.length >= 4, `${id} produced only ${result.steps.length} steps`);
+    assert.deepEqual(validate(result), [], `${id} failed validation`);
+    // Dependencies resolve within the plan, so no step depends on a later one.
+    const seen = new Set();
+    for (const s of result.steps) {
+      for (const d of s.dependencies || []) assert.ok(seen.has(d), `${id}: ${s.id} depends on later ${d}`);
+      seen.add(s.id);
+    }
+  }
+});
+
+test("the added protocols carry gates and name real work", () => {
+  const added = ["qm-mechanism", "qm-properties", "protein-engineering", "peptide-design",
+                 "landscape", "library-design", "benchmarking"];
+  for (const id of added) {
+    const recipe = RECIPES[id];
+    assert.ok(recipe, `${id} is missing`);
+    const gated = recipe.modules.filter((m) => MODULES[m].gate).length;
+    assert.ok(gated >= Math.ceil(recipe.modules.length / 2),
+              `${id} has only ${gated}/${recipe.modules.length} gated steps`);
+    // Only the modules written for these protocols; a borrowed one is the
+    // responsibility of the protocol it was written for.
+    const own = recipe.modules.filter((m) => m.startsWith(id.split("-")[0]) ||
+      m.startsWith("protein.") || m.startsWith("peptide.") || m.startsWith("library.") ||
+      m.startsWith("landscape.") || m.startsWith("bench."));
+    assert.ok(own.length, `${id} has no modules of its own`);
+    for (const m of own) {
+      assert.ok(MODULES[m].why.length > 80, `${m} needs a real reason, not a label`);
+    }
+  }
+});
+
+test("a protein engineering plan separates stability from function", () => {
+  const { result } = plan("engineer this enzyme to be more thermostable");
+  assert.equal(result.intent, "protein-engineering");
+  assert.deepEqual(validate(result), []);
+  const ids = result.steps.map((s) => s.id);
+  // Positions come before predictions, and the function check comes after the
+  // designs it is meant to test.
+  assert.ok(ids.indexOf("protein.locate_where_change_is_tolerated")
+            < ids.indexOf("protein.predict_the_change_in_stability"));
+  assert.ok(ids.indexOf("protein.design_the_variants")
+            < ids.indexOf("protein.check_you_have_not_broken_function"));
+  assert.match(MODULES["protein.check_you_have_not_broken_function"].pitfall, /turnover|function/i);
+});
+
+test("a landscape plan states the limits of its own search", () => {
+  const { brief, result } = plan("find me the competitive landscape for KRAS inhibitors");
+  assert.equal(result.intent, "landscape");
+  assert.deepEqual(validate(result), []);
+  assert.ok(result.steps.some((s) => s.id === "landscape.check_the_patent_position"));
+  // A patent scoping exercise must not present itself as legal advice.
+  assert.match(MODULES["landscape.check_the_patent_position"].gate, /legal advice|scoping/i);
+  const md = planToMarkdown(result, null, [], brief);
+  assert.ok(md.includes("Competitive & IP landscape"));
 });
