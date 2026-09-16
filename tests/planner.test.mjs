@@ -475,3 +475,156 @@ test("an empty or unusable selection leaves the curated plan standing", () => {
   assert.equal(fallback.ok, true);
   assert.deepEqual(validate(fallback), []);
 });
+
+test("optimising a geometry is quantum chemistry, not lead optimisation", () => {
+  for (const query of [
+    "i wanna optimize geometry of palladium bound ligand",
+    "geometry optimisation of a ruthenium complex",
+    "DFT single point energies for my ligand set",
+    "what spin state is the iron centre in",
+    "find the transition state for this step",
+  ]) {
+    const { parsed } = plan(query);
+    assert.equal(parsed.intent, "qm-geometry", `routed ${query} to ${parsed.intent}`);
+    // A metal complex is a molecule, not a protein; no UniProt lookup applies.
+    assert.equal(parsed.target, null);
+  }
+
+  // The "optimi" stem must not drag potency work into quantum chemistry, nor
+  // the reverse.
+  for (const [query, intent] of [
+    ["optimise my EGFR lead series for potency", "lead-opt"],
+    ["improve potency of my analogues using measured SAR", "lead-opt"],
+    ["conformational sampling of CYP3A4", "conformational-sampling"],
+  ]) assert.equal(plan(query).parsed.intent, intent, `${query} should be ${intent}`);
+});
+
+test("the quantum chemistry protocol settles the electronic state before it optimises", () => {
+  const { brief, result } = plan("i wanna optimize geometry of palladium bound ligand");
+  assert.equal(result.intent, "qm-geometry");
+  assert.equal(result.ok, true);
+  assert.equal(result.viable, true);
+  assert.deepEqual(validate(result), []);
+
+  const order = result.steps.map((s) => s.id);
+  const at = (id) => order.indexOf(id);
+  // Charge and spin decide the geometry, so they are settled first; the method
+  // and starting structure both depend on them.
+  assert.equal(at("qm.fix_the_electronic_state"), 0);
+  assert.ok(at("qm.choose_a_method_that_can_describe_the_metal") < at("qm.optimise_then_prove_it_is_a_minimum"));
+  assert.ok(at("qm.build_a_defensible_starting_geometry") < at("qm.optimise_then_prove_it_is_a_minimum"));
+  // An optimisation is not a result until the frequencies say it is a minimum.
+  assert.match(MODULES["qm.optimise_then_prove_it_is_a_minimum"].gate, /imaginary frequen/i);
+
+  // The metal is detected, but protein-site modules need a receptor and there
+  // is none: this is a complex, not a metalloenzyme.
+  assert.ok(brief.metal.length);
+  assert.ok(!result.steps.some((s) => s.family === "metal"));
+
+  const md = planToMarkdown(result, null, [], brief);
+  assert.ok(md.includes("Fix the charge and spin state"));
+  assert.ok(md.includes("effective core potential"));
+});
+
+test("every recipe still resolves to real modules and real tools", async () => {
+  const { readFileSync } = await import("node:fs");
+  const catalogue = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const norm = (s) => s.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const names = new Set();
+  for (const t of catalogue.tools) {
+    for (const k of [t.name, ...(t.aliases || [])]) { names.add(norm(k)); names.add(norm(k).replace(/\s+/g, "")); }
+  }
+  for (const [id, recipe] of Object.entries(RECIPES)) {
+    assert.ok(recipe.label && recipe.summary && recipe.decision && recipe.stop, `${id} is missing framing`);
+    assert.ok(recipe.modules.length, `${id} has no modules`);
+    for (const m of recipe.modules) assert.ok(MODULES[m], `${id} names a missing module: ${m}`);
+  }
+  for (const [id, m] of Object.entries(MODULES)) {
+    for (const tool of m.tools) {
+      assert.ok(names.has(norm(tool)) || names.has(norm(tool).replace(/\s+/g, "")),
+                `${id} names a tool the catalogue does not hold: ${tool}`);
+    }
+  }
+});
+
+// ------------------------------------------------- keyword confidence
+
+test("one noun cannot score twice by containing itself", () => {
+  // "inhibitors" contains "inhibitor"; both were in the list and both cleared
+  // the length bonus, so a single word was worth four points and locked in the
+  // shortcut on its own.
+  const { evidence, score } = parseQuery("find me the competitive landscape for KRAS inhibitors");
+  assert.deepEqual(evidence, ["inhibitors"]);
+  assert.ok(score <= 2, `one noun scored ${score}`);
+
+  // The longer phrase consumes the text, so the shorter one inside it is not
+  // counted again either.
+  const vs = parseQuery("run a virtual screening campaign");
+  assert.ok(vs.evidence.includes("virtual screening"));
+  assert.ok(!vs.evidence.includes("screening"));
+});
+
+test("matching a subject is not evidence of a requested workflow", () => {
+  // Asked for, so the keyword route is trustworthy on its own.
+  for (const query of [
+    "Find inhibitors of EGFR in human",
+    "find new inhibitors of EGFR in human",
+    "Design a PROTAC for BRD4 using VHL",
+    "identify hits for this target",
+  ]) assert.equal(parseQuery(query).operational, true, `${query} asks for the thing`);
+
+  // Merely mentioned: the noun sits in a phrase attached to something else.
+  for (const query of [
+    "find me the competitive landscape for KRAS inhibitors",
+    "what is the patent position on these inhibitors",
+    "how many antibodies reached phase 3 last year",
+  ]) assert.equal(parseQuery(query).operational, false, `${query} only mentions it`);
+});
+
+test("the shortcut defers to the model when the evidence is only a subject", async () => {
+  const asked = [];
+  const stub = async (query) => {
+    asked.push(query);
+    return { intent: "unsupported", matched: false, confidence: "low", evidence: null,
+             target: null, organism_taxid: null, reason: "no protocol covers this" };
+  };
+  const call = async (query) => {
+    const old = globalThis.fetch;
+    globalThis.fetch = async (_u, o) => new Response(JSON.stringify(await stub(JSON.parse(o.body).query)),
+      { headers: { "Content-Type": "application/json" } });
+    try { return await resolveQuery(query); } finally { globalThis.fetch = old; }
+  };
+
+  // Vocabulary of a screening campaign, and not one. The model must be asked,
+  // and its refusal must stand.
+  const landscape = await call("find me the competitive landscape for KRAS inhibitors");
+  assert.equal(asked.length, 1);
+  assert.equal(landscape.matched, false);
+
+  // The genuine version of the same vocabulary never reaches the model.
+  const real = await call("Find inhibitors of EGFR in human");
+  assert.equal(asked.length, 1, "a clear request should not cost a model call");
+  assert.equal(real.via, "keywords");
+  assert.equal(real.intent, "hit-discovery");
+});
+
+test("only constraints that change the plan are worth a model call", async () => {
+  let calls = 0;
+  const call = async (query) => {
+    const old = globalThis.fetch;
+    globalThis.fetch = async () => { calls++; return new Response(JSON.stringify(
+      { intent: "hit-discovery", matched: true, confidence: "high", evidence: "x",
+        target: null, organism_taxid: null }), { headers: { "Content-Type": "application/json" } }); };
+    try { return await resolveQuery(query); } finally { globalThis.fetch = old; }
+  };
+
+  // A compute or time limit is reported as not applied; a metal note annotates
+  // the plan. Neither changes which modules apply, so neither is worth a call.
+  await call("Conformational sampling of CYP3A4 on CPU only within two days");
+  await call("Optimise the geometry of a palladium bound ligand");
+  assert.equal(calls, 0, "non-route-changing constraints should not spend quota");
+
+  // An exclusion does change the route, so it must be asked about.
+  await call("Find inhibitors of EGFR in human without docking");
+  assert.equal(calls, 1);
+});
