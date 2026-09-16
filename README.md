@@ -144,6 +144,17 @@ Run the planner regression and rendering checks with Node.js 24 or later:
 node --test tests/*.test.mjs
 ```
 
+`evals/` is the evaluation set: 53 reviewed fixtures that say what a correct
+plan must *do* — which protocol, which constraints it must extract, which steps
+it cannot omit, what must precede what — rather than which exact steps it must
+contain, so it survives registry changes. `node evals/run.mjs` scores it and
+`tests/evals.test.mjs` fails if the score drops below `evals/baseline.json`.
+
+The score is currently 245/245 expectations, and **0 of 53 cases are
+domain-reviewed**: the expectations are mine, not verified science. A case
+becomes evidence when someone who does this work has agreed that a plan failing
+it would be wrong. `evals/README.md` explains how to review one.
+
 `tests/coverage-sweep.test.mjs` is combinatorial rather than example-based: every
 metal in the periodic table across every task that mentions one, several
 phrasings for each of the 27 protocols, and a set of phrases that must never

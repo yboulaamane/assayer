@@ -1,0 +1,939 @@
+{
+  "version": "1.0.0",
+  "note": "Reviewed fixtures for the planner. Each case states what a correct plan must do, not which exact steps it must contain, so the set survives registry changes. `reviewed` records whether a domain reviewer has confirmed the expectation; unreviewed cases are the author's judgement and are scored but flagged.",
+  "fields": {
+    "route": "the protocol the composed plan must land on",
+    "rerouted_from": "the route it must have started from, when a constraint changes it",
+    "extract": "constraints the brief must capture from the question",
+    "must_include": "modules whose absence would make the plan wrong",
+    "must_exclude": "modules that would be wrong for this case",
+    "must_exclude_families": "method families no step may belong to",
+    "order": "pairs [a, b] where a must come before b for scientific reasons",
+    "target": "the protein the question is about, or null when there is none",
+    "unsupported": "true when no protocol should be offered",
+    "viable": "false when the plan must be conditional on something the user has not supplied",
+    "metal": "true when the question involves a metal centre",
+    "must_cover": "groups of alternatives; the plan must contain at least one from each, for expectations about the science rather than a particular module id"
+  },
+  "cases": [
+    {
+      "id": "review-egfr-constrained",
+      "question": "Find inhibitors of EGFR in human; 500 measured compounds, no usable structure, CPU only, two days, no docking or MD",
+      "why": "The worked example from the planning review: every constraint must survive and change the route.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "ligand-discovery",
+        "rerouted_from": "hit-discovery",
+        "target": "EGFR",
+        "extract": {
+          "excluded": [
+            "docking",
+            "md"
+          ],
+          "missing": [
+            "receptor_structure"
+          ],
+          "assets": [
+            "measured_data"
+          ]
+        },
+        "must_exclude_families": [
+          "docking",
+          "md"
+        ],
+        "must_include": [
+          "assay.comparability",
+          "triage.prioritisation_table"
+        ],
+        "order": [
+          [
+            "qsar.split_the_way_you",
+            "qsar.establish_the_baseline_first"
+          ]
+        ],
+        "must_cover": [
+          [
+            "qsar.check_the_applicability_domain",
+            "qsar.give_every_prediction_an"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "review-existing-trajectory",
+      "question": "Analyse my existing EGFR trajectory; do not run docking or virtual screening",
+      "why": "Work already done is an input, not something to repeat; the excluded family must not appear.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "md-stability",
+        "extract": {
+          "excluded": [
+            "docking"
+          ],
+          "assets": [
+            "trajectory"
+          ]
+        },
+        "must_exclude_families": [
+          "docking"
+        ]
+      }
+    },
+    {
+      "id": "review-selectivity-pair",
+      "question": "Find selective EGFR inhibitors that spare ERBB2",
+      "why": "Both proteins must survive, in their distinct roles, and the panel work must appear.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "target": "EGFR",
+        "extract": {
+          "offTargets": [
+            "ERBB2"
+          ]
+        },
+        "must_include": [
+          "selectivity.define_panel",
+          "selectivity.compare_panel"
+        ],
+        "order": [
+          [
+            "selectivity.define_panel",
+            "selectivity.compare_panel"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "review-fragment-screen-done",
+      "question": "My fragment screen gave 40 hits, which should I grow?",
+      "why": "The screen is complete; the plan must start from the hits and verify them, not re-select a library.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "fbdd",
+        "extract": {
+          "assets": [
+            "hit_list"
+          ]
+        },
+        "must_include": [
+          "generative.decide_grow_merge_or"
+        ],
+        "must_exclude": [
+          "identity.choose_the_library_for"
+        ]
+      }
+    },
+    {
+      "id": "review-no-fep",
+      "question": "I do not want FEP. Improve potency of my EGFR analogues using measured SAR",
+      "why": "The excluded method must go and the target must stay EGFR, not be misread from the prose.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "lead-opt",
+        "target": "EGFR",
+        "extract": {
+          "excluded": [
+            "fep"
+          ]
+        },
+        "must_exclude_families": [
+          "fep"
+        ],
+        "must_exclude": [
+          "docking.rank_with_free_energy"
+        ]
+      }
+    },
+    {
+      "id": "review-aurora-b",
+      "question": "Find inhibitors of Aurora B in human",
+      "why": "The specific alias must beat the broader one; AURKA is the wrong kinase.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "target": "AURKB"
+      }
+    },
+    {
+      "id": "review-guinea-pig",
+      "question": "Find inhibitors of EGFR in guinea pig",
+      "why": "Longest organism phrase wins; 'pig' inside 'guinea pig' is the wrong species.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "target": "EGFR",
+        "organism": "Cavia porcellus"
+      }
+    },
+    {
+      "id": "review-weather",
+      "question": "What is the weather tomorrow?",
+      "why": "Out of scope must produce no recommended workflow at all.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "review-improve-not-mpro",
+      "question": "Improve the potency of my series",
+      "why": "'Improve' contains 'mpro'; boundary-aware aliasing must not invent a coronavirus protease.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "lead-opt",
+        "target": null
+      }
+    },
+    {
+      "id": "hit-discovery-canonical",
+      "question": "Find inhibitors of EGFR in human",
+      "why": "The default structure-based campaign, with its two controls present.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "hit-discovery",
+        "target": "EGFR",
+        "organism": "Homo sapiens",
+        "must_include": [
+          "docking.redock_the_native_ligand",
+          "docking.run_the_enrichment_control"
+        ],
+        "order": [
+          [
+            "docking.prepare_the_receptor_and",
+            "docking.redock_the_native_ligand"
+          ],
+          [
+            "docking.redock_the_native_ligand",
+            "docking.screen_the_library"
+          ],
+          [
+            "docking.run_the_enrichment_control",
+            "docking.screen_the_library"
+          ]
+        ],
+        "viable": false
+      }
+    },
+    {
+      "id": "qsar-canonical",
+      "question": "I have 500 measured compounds for CDK2; build an activity model",
+      "why": "A model is not a model without a deployment-matched split and an applicability domain.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "qsar",
+        "extract": {
+          "assets": [
+            "measured_data"
+          ]
+        },
+        "must_include": [
+          "qsar.split_the_way_you",
+          "qsar.establish_the_baseline_first"
+        ],
+        "order": [
+          [
+            "qsar.split_the_way_you",
+            "qsar.only_then_reach_for"
+          ]
+        ],
+        "must_cover": [
+          [
+            "qsar.check_the_applicability_domain",
+            "qsar.give_every_prediction_an"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "fep-canonical",
+      "question": "Rank these EGFR analogues with FEP",
+      "why": "Free energy predictions need a retrospective check and a convergence check before they are believed.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "fep",
+        "target": "EGFR",
+        "must_include": [
+          "generative.validate_retrospectively_before_predicting",
+          "md.check_convergence_not_wall"
+        ]
+      }
+    },
+    {
+      "id": "md-canonical",
+      "question": "Run MD on my EGFR complex and tell me if it is stable",
+      "why": "A stability claim requires replicates and a predefined observable, not one trajectory.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "md-stability",
+        "must_include": [
+          "md.equilibrate_then_run_replicates",
+          "md.analyse_what_you_predefined"
+        ]
+      }
+    },
+    {
+      "id": "conformational-sampling-canonical",
+      "question": "Conformational sampling of CYP3A4 to find cryptic pockets",
+      "why": "The observable is named first and convergence is proved before an ensemble is used.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "conformational-sampling",
+        "target": "CYP3A4",
+        "must_include": [
+          "md.prove_it_converged"
+        ],
+        "order": [
+          [
+            "docking.name_the_observable_first",
+            "md.choose_the_sampling_method"
+          ],
+          [
+            "md.prove_it_converged",
+            "md.extract_the_ensemble"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "selectivity-canonical",
+      "question": "Why is my series hitting the wrong kinase?",
+      "why": "Selectivity is decided by comparing pockets, not by the primary target alone.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "selectivity",
+        "must_include": [
+          "pocket.compare_the_pockets_not"
+        ]
+      }
+    },
+    {
+      "id": "degrader-canonical",
+      "question": "Design a PROTAC for BRD4 using VHL",
+      "why": "A degrader needs the ternary complex and a mechanism proof, not just two binders.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "degrader",
+        "must_include": [
+          "generative.model_the_ternary_complex",
+          "general.prove_the_mechanism_is"
+        ]
+      }
+    },
+    {
+      "id": "resistance-canonical",
+      "question": "I have missense variants and 39 mutations, what to do to analyse mutants vs WT",
+      "why": "The reported failure: WT must not be read as Wilms tumour protein.",
+      "source": "user report 2026-09-14",
+      "reviewed": false,
+      "expect": {
+        "route": "resistance",
+        "target": null,
+        "must_include": [
+          "assay.measure_against_both"
+        ]
+      }
+    },
+    {
+      "id": "network-pharmacology-canonical",
+      "question": "Network pharmacology study of Aloysia citrodora against Parkinson's disease",
+      "why": "A plant name is study context, never a protein target.",
+      "source": "user report 2026-09-13",
+      "reviewed": false,
+      "expect": {
+        "route": "network-pharmacology",
+        "target": null,
+        "must_include": [
+          "network.curate_constituents",
+          "network.validation_plan"
+        ]
+      }
+    },
+    {
+      "id": "retrosynthesis-canonical",
+      "question": "Plan a synthesis route for this molecule",
+      "why": "Routes are only useful if the building blocks are real and a chemist has looked.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "retrosynthesis",
+        "target": null,
+        "must_include": [
+          "synthesis.check_building_blocks_are",
+          "synthesis.have_a_chemist_review"
+        ]
+      }
+    },
+    {
+      "id": "admet-canonical",
+      "question": "ADMET and hERG risk for my compound set",
+      "why": "Predicted liabilities mean nothing outside the applicability domain.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "admet",
+        "target": null,
+        "must_cover": [
+          [
+            "qsar.check_the_applicability_domain",
+            "qsar.give_every_prediction_an"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "antibody-canonical",
+      "question": "Design a nanobody against this epitope",
+      "why": "Developability is designed in early, not discovered after affinity maturation.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "antibody",
+        "must_include": [
+          "admet.screen_for_developability_early"
+        ]
+      }
+    },
+    {
+      "id": "denovo-canonical",
+      "question": "Generate new scaffolds for KRAS G12C",
+      "why": "Generated molecules get the same validation as any other compound source.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "denovo",
+        "must_include": [
+          "generative.check_the_molecules_are",
+          "docking.validate_exactly_like_a"
+        ]
+      }
+    },
+    {
+      "id": "target-triage-canonical",
+      "question": "Which target should I pick for Alzheimer's disease?",
+      "why": "Tractability and safety are part of target choice, not later surprises.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "target-triage",
+        "target": null,
+        "must_include": [
+          "structure.assess_tractability",
+          "admet.check_safety_signal_early"
+        ]
+      }
+    },
+    {
+      "id": "structure-canonical",
+      "question": "Which PDB entry should I use for EGFR?",
+      "why": "Structure choice is ranked on evidence, with a prediction fallback stated.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "structure",
+        "target": "EGFR",
+        "must_include": [
+          "structure.rank_the_experimental_structures",
+          "docking.fall_back_to_prediction"
+        ]
+      }
+    },
+    {
+      "id": "fbdd-canonical",
+      "question": "Fragment based design against this pocket",
+      "why": "Fragment hits are confirmed orthogonally and ligand efficiency is held as a constraint.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "fbdd",
+        "must_include": [
+          "assay.confirm_every_hit_by",
+          "generative.hold_ligand_efficiency_as"
+        ]
+      }
+    },
+    {
+      "id": "lead-opt-canonical",
+      "question": "Improve potency in my EGFR lead series using measured SAR",
+      "why": "Optimisation watches properties and synthesisability alongside potency.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "lead-opt",
+        "target": "EGFR",
+        "extract": {
+          "assets": [
+            "measured_data"
+          ]
+        },
+        "must_include": [
+          "general.keep_the_properties_in",
+          "synthesis.check_you_can_make"
+        ]
+      }
+    },
+    {
+      "id": "qm-geometry-palladium",
+      "question": "i wanna optimize geometry of palladium bound ligand",
+      "why": "The reported failure: a geometry optimisation is quantum chemistry, not lead optimisation.",
+      "source": "user report 2026-09-16",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-geometry",
+        "target": null,
+        "metal": true,
+        "must_include": [
+          "qm.fix_the_electronic_state",
+          "qm.optimise_then_prove_it_is_a_minimum"
+        ],
+        "order": [
+          [
+            "qm.fix_the_electronic_state",
+            "qm.optimise_then_prove_it_is_a_minimum"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "parameterisation-gold",
+      "question": "i wanna parametrize a gold containing ligand it's Au 3+",
+      "why": "The reported failure: gold was absent from the metal list and no protocol covered parameterisation.",
+      "source": "user report 2026-09-16",
+      "reviewed": false,
+      "expect": {
+        "route": "parameterisation",
+        "target": null,
+        "metal": true,
+        "must_include": [
+          "param.choose_the_metal_model",
+          "param.validate_against_the_quantum_reference",
+          "param.prove_it_survives_unrestrained_dynamics"
+        ],
+        "order": [
+          [
+            "qm.fix_the_electronic_state",
+            "param.derive_the_charges"
+          ],
+          [
+            "param.choose_the_metal_model",
+            "param.derive_the_bonded_terms"
+          ],
+          [
+            "param.validate_against_the_quantum_reference",
+            "param.prove_it_survives_unrestrained_dynamics"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qm-mechanism-canonical",
+      "question": "Work out the mechanism of this palladium catalysed step and the barrier",
+      "why": "A barrier is meaningless without a confirmed transition state and the competing pathway.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-mechanism",
+        "metal": true,
+        "must_include": [
+          "qm.confirm_the_transition_state",
+          "qm.compare_competing_pathways"
+        ],
+        "order": [
+          [
+            "qm.locate_the_transition_state",
+            "qm.confirm_the_transition_state"
+          ],
+          [
+            "qm.confirm_the_transition_state",
+            "qm.compute_the_barrier_properly"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qm-properties-pka",
+      "question": "Predict the pKa of my compound",
+      "why": "Absolute computed pKa is unreliable; the plan must calibrate against measured values.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-properties",
+        "target": null,
+        "must_include": [
+          "qm.decide_which_species_exists",
+          "qm.calibrate_against_measured_values"
+        ]
+      }
+    },
+    {
+      "id": "metalloenzyme-selectivity",
+      "question": "Dock hydroxamates into HDAC6 and spare HDAC1",
+      "why": "A zinc metalloenzyme with an off-target: metal setup, panel work and the chelator liability.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "hit-discovery",
+        "target": "HDAC6",
+        "metal": true,
+        "extract": {
+          "offTargets": [
+            "HDAC1"
+          ]
+        },
+        "must_include": [
+          "metal.characterise_the_metal_centre",
+          "metal.prepare_the_coordination_sphere",
+          "metal.check_the_binding_group",
+          "selectivity.define_panel"
+        ],
+        "order": [
+          [
+            "metal.characterise_the_metal_centre",
+            "docking.prepare_the_receptor_and"
+          ],
+          [
+            "selectivity.define_panel",
+            "selectivity.compare_panel"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "metal-md-zinc-finger",
+      "question": "Simulate the stability of a zinc finger protein",
+      "why": "A metal site needs parameters before simulation, but a zinc finger has no chelating warhead to hold liable.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "md-stability",
+        "metal": true,
+        "must_include": [
+          "metal.parameterise_the_centre"
+        ],
+        "must_exclude": [
+          "metal.check_the_binding_group"
+        ],
+        "order": [
+          [
+            "metal.parameterise_the_centre",
+            "md.build_the_system"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "metal-structure-only",
+      "question": "What is the best structure for a copper-binding protein?",
+      "why": "Judging a structure includes validating the metal in it, but nothing here is being docked or simulated.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "structure",
+        "metal": true,
+        "must_include": [
+          "metal.characterise_the_metal_centre"
+        ],
+        "must_exclude": [
+          "metal.prepare_the_coordination_sphere",
+          "metal.score_the_coordination"
+        ]
+      }
+    },
+    {
+      "id": "protein-engineering-thermostability",
+      "question": "Engineer this thermophilic esterase to survive 70C without losing turnover",
+      "why": "Stability is routinely bought with activity; the plan must test for that rather than assume it.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "protein-engineering",
+        "must_include": [
+          "protein.locate_where_change_is_tolerated",
+          "protein.check_you_have_not_broken_function"
+        ],
+        "order": [
+          [
+            "protein.locate_where_change_is_tolerated",
+            "protein.predict_the_change_in_stability"
+          ],
+          [
+            "protein.design_the_variants",
+            "protein.check_you_have_not_broken_function"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "peptide-design-canonical",
+      "question": "Design a cyclic peptide binder for this protein surface",
+      "why": "Peptides fail on liabilities more often than on affinity, so those come before optimisation.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "peptide-design",
+        "must_include": [
+          "peptide.model_the_bound_conformation",
+          "peptide.fix_the_liabilities_early"
+        ]
+      }
+    },
+    {
+      "id": "landscape-canonical",
+      "question": "Find me the competitive landscape for KRAS inhibitors",
+      "why": "The reported failure: screening vocabulary, and not a screening campaign.",
+      "source": "user report 2026-09-16",
+      "reviewed": false,
+      "expect": {
+        "route": "landscape",
+        "target": "KRAS",
+        "must_include": [
+          "landscape.check_the_patent_position",
+          "landscape.find_the_gap_and_say_what_you_missed"
+        ]
+      }
+    },
+    {
+      "id": "library-design-canonical",
+      "question": "Build a focused screening library for this target",
+      "why": "Every count downstream is wrong until the structures are standardised and deduplicated.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "library-design",
+        "must_include": [
+          "library.standardise_and_deduplicate",
+          "library.check_you_got_what_you_asked_for"
+        ],
+        "order": [
+          [
+            "library.standardise_and_deduplicate",
+            "library.select_for_the_purpose_you_stated"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "benchmarking-canonical",
+      "question": "How do I benchmark my scoring function?",
+      "why": "A benchmark without a trivial baseline on the same split is not interpretable.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "benchmarking",
+        "target": null,
+        "must_include": [
+          "bench.compare_against_a_trivial_baseline",
+          "bench.split_or_partition_honestly"
+        ],
+        "order": [
+          [
+            "bench.state_the_claim",
+            "bench.choose_a_set_that_can_falsify_it"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "constraint-no-docking-or-md",
+      "question": "Find hits for CDK2 without docking or MD",
+      "why": "Two excluded families, both absolute.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "ligand-discovery",
+        "rerouted_from": "hit-discovery",
+        "extract": {
+          "excluded": [
+            "docking",
+            "md"
+          ]
+        },
+        "must_exclude_families": [
+          "docking",
+          "md"
+        ]
+      }
+    },
+    {
+      "id": "constraint-no-structure-article",
+      "question": "Find inhibitors of EGFR without a structure",
+      "why": "The absence must be read whether or not an adjective sits in front of the noun.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "ligand-discovery",
+        "rerouted_from": "hit-discovery",
+        "extract": {
+          "missing": [
+            "receptor_structure"
+          ]
+        }
+      }
+    },
+    {
+      "id": "constraint-no-parameterisation",
+      "question": "Simulate a zinc finger protein without force field parameterisation",
+      "why": "A negation must cover every method word it runs across, not stop at the first.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "md-stability",
+        "metal": true,
+        "extract": {
+          "excluded": [
+            "parameters"
+          ]
+        },
+        "must_exclude": [
+          "metal.parameterise_the_centre"
+        ]
+      }
+    },
+    {
+      "id": "constraint-positive-clause-survives",
+      "question": "Find inhibitors of EGFR without docking but use MD",
+      "why": "A negation must not swallow the positive clause that follows it.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "extract": {
+          "excluded": [
+            "docking"
+          ]
+        },
+        "must_exclude_families": [
+          "docking"
+        ]
+      }
+    },
+    {
+      "id": "constraint-compute-and-time",
+      "question": "Screen for CDK2 inhibitors, CPU only, within two days",
+      "why": "Limits the planner cannot act on must be reported as not applied, not silently dropped.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "route": "hit-discovery",
+        "target": "CDK2",
+        "extract": {
+          "compute": 1,
+          "time": 1
+        }
+      }
+    },
+    {
+      "id": "refuse-history",
+      "question": "Who first discovered EGFR inhibitors?",
+      "why": "Vocabulary of a workflow without a request for one.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "refuse-price",
+      "question": "How much do EGFR inhibitors cost per gram?",
+      "why": "Procurement, not a computational workflow.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "refuse-journal",
+      "question": "Which journal should I submit my docking paper to?",
+      "why": "Contains a method word and asks nothing the registry covers.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "refuse-vague-target",
+      "question": "Help me with EGFR drug discovery",
+      "why": "A target and a field, with no requested outcome, must not be filled in with hit discovery.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "refuse-vague-disease",
+      "question": "Design a drug discovery workflow for Alzheimer's",
+      "why": "Neither generative design nor hit discovery; the goal is unspecified.",
+      "source": "docs/workflow-planning-review.md",
+      "reviewed": false,
+      "expect": {
+        "unsupported": true
+      }
+    },
+    {
+      "id": "trap-gold-standard",
+      "question": "What is the gold standard for docking validation?",
+      "why": "This field says 'gold standard' constantly and never means gold.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "metal": false
+      }
+    },
+    {
+      "id": "trap-lead-compound",
+      "question": "Lead optimisation of my compound series",
+      "why": "Lead is an element name and a stage of a project; here it is the stage.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "lead-opt",
+        "metal": false
+      }
+    },
+    {
+      "id": "trap-calcium-channel",
+      "question": "Find calcium channel blockers for hypertension",
+      "why": "A calcium channel is a target, not a coordination chemistry problem.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "metal": false
+      }
+    },
+    {
+      "id": "trap-scaffold-fold",
+      "question": "Generate new scaffolds for KRAS",
+      "why": "'fold' lives inside 'scaffold'; a keyword must match only where a word starts.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "route": "denovo"
+      }
+    },
+    {
+      "id": "trap-co-crystal",
+      "question": "Anchor on the co-crystal structure of CDK2",
+      "why": "'Co' is cobalt and also the first half of 'co-crystal'.",
+      "source": "assayer",
+      "reviewed": false,
+      "expect": {
+        "metal": false
+      }
+    }
+  ]
+}
