@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,949 tools for medicinal and computational chemistry, plus 16
+A catalogue of 3,967 tools for medicinal and computational chemistry, plus 18
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -49,16 +49,16 @@ because the first command you need is rarely the one in the README's quick start
 |---|--:|---|
 | [bio.tools](https://bio.tools), 12 drug-discovery EDAM topics | 3,092 | CC BY 4.0 |
 | GitHub repos with 30+ stars across 40 topics | 867 | public metadata |
-| Written for this project | 243 | ours |
+| Written for this project | 286 | ours |
 | My own starred repos, filtered | 130 | ours |
 
 bio.tools gives breadth. I filtered it to the topics a chemist would care about
 rather than taking the whole registry, which is mostly sequence analysis. The
 GitHub layer answers a question registries can't: is anyone still maintaining
-this. The 253 curated entries cover the things a project actually runs on, which
+this. The 286 curated entries cover the things a project actually runs on, which
 both other sources are patchy about.
 
-318 of 4,360 rows appear in more than one source. They get merged into one entry
+336 of 4,375 rows appear in more than one source. They get merged into one entry
 that remembers where it came from.
 
 ## How a plan is built
@@ -87,6 +87,21 @@ ids; that order is judgement and is kept.
 Every decision is shown: what was left out and why, what was added, where the
 route changed. A planner that silently drops a step is worse than one that
 prints too many.
+
+**Metal centres** are handled the same way. A metalloenzyme is not a separate
+kind of project; it is the same project with a coordination problem in the
+middle of it. So there is no metal protocol. When the question mentions a metal,
+a metalloenzyme family or coordination chemistry, five modules are injected into
+whichever protocol was routed, each where it actually bites: characterising and
+validating the site before the structure is used, setting the protonation of
+the donor residues, scoring coordination as something directional rather than
+as an undirected point charge, deriving force field parameters before anything
+is simulated, and treating the metal-binding group as a selectivity liability
+rather than a potency handle. They obey the same exclusions as every other
+module, and each one states what triggered it, so a wrong guess is visible and
+correctable. Detection is deliberately narrow: bare two-letter element symbols
+collide with ordinary words, so they count only with an oxidation state or
+charge, and "calcium channel blocker" is not a coordination question.
 
 Constraints it notices but cannot act on, such as compute and time limits, are
 named as not applied rather than quietly ignored. These limits, off-targets and
@@ -233,7 +248,7 @@ generated, so don't edit it by hand.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The 243 curated tools carry their
+- **Stage assignment is keyword-driven.** The 286 curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).

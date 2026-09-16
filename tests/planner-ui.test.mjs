@@ -92,3 +92,33 @@ test("tools named in a generated brief render as clean inline links", () => {
   assert.match(el.innerHTML, /class="tool-ref"/);
   assert.doesNotMatch(el.innerHTML, /class="tool"/);
 });
+
+test("a metal plan renders its metal steps and says what triggered them", async () => {
+  const query = "Dock hydroxamates into HDAC6 and spare HDAC1";
+  const p = page(query);
+  await p.context.drawPlan(query);
+  const html = p.get("plan").innerHTML;
+
+  assert.ok(html.includes("Characterise the metal centre before anything else"));
+  assert.ok(html.includes("Set up the coordination sphere explicitly"));
+  assert.ok(html.includes("Score coordination as coordination"));
+  assert.ok(html.includes("Treat the metal-binding group as a liability"));
+  // The trigger is stated on the page, so a wrong guess can be argued with.
+  assert.ok(html.includes("HDAC6"));
+  assert.ok(html.includes("these steps do not apply"));
+  // Metal-aware tools are offered, not just named in prose.
+  assert.ok(html.includes("CheckMyMetal"));
+  assert.ok(html.includes("AutoDock4Zn"));
+
+  await p.get("cp").onclick({ target: {} });
+  assert.ok(p.copied[0].includes("Characterise the metal centre"));
+  assert.ok(p.copied[0].includes("these steps do not apply"));
+});
+
+test("a plan with no metal in it renders no metal steps", async () => {
+  const query = "Find inhibitors of EGFR in human";
+  const p = page(query);
+  await p.context.drawPlan(query);
+  const html = p.get("plan").innerHTML;
+  assert.ok(!/metal centre|coordination sphere|metal-binding group/i.test(html));
+});
