@@ -753,3 +753,70 @@ test("the model picks which modules, not where the injected ones go", () => {
   assert.ok(ids.indexOf("metal.characterise_the_metal_centre")
             < ids.indexOf("docking.prepare_the_receptor_and"));
 });
+
+test("the metal detector covers the metals that actually appear in drugs", () => {
+  const metals = (q) => statedConstraints(q).filter((c) => c.kind === "metal site").map((c) => c.phrase);
+  // Gold is a marketed drug metal and was missing outright, along with silver
+  // and the imaging and radiotherapeutic metals.
+  for (const query of [
+    "i wanna parametrize a gold containing ligand it's Au 3+",
+    "a gold(III) anticancer complex", "an Au(III) complex", "a silver complex",
+    "a titanium based drug", "In(III) chelate for imaging", "a lutetium therapeutic",
+    "a bismuth containing antacid", "a zinc complex", "a palladium catalyst",
+  ]) assert.ok(metals(query).length, `no metal found in: ${query}`);
+
+  // Two-letter symbols still count only with an oxidation state or charge, so
+  // ordinary English does not become coordination chemistry.
+  for (const query of [
+    "find inhibitors of EGFR in human", "in human cells", "co-crystal structure of CDK2",
+    "calcium channel blocker for hypertension", "la la land of drug design",
+    // This field writes "the gold standard" constantly, and never means gold.
+    "the gold standard for docking", "a silver bullet for this target",
+  ]) assert.deepEqual(metals(query), [], `false metal in: ${query}`);
+});
+
+test("a negation covers every method word it runs across", () => {
+  const excluded = (q) => statedConstraints(q).filter((c) => c.kind === "excluded method").map((c) => c.phrase);
+  // "force field parameterisation" is two terms of one family side by side.
+  // Stopping after the first left the second to route the excluded request.
+  assert.deepEqual(excluded("simulate a zinc finger without force field parameterisation"),
+                   ["force field parameterisation"]);
+  assert.equal(parseQuery("simulate a zinc finger protein without force field parameterisation").intent,
+               "md-stability");
+  // It still must not run on into a positive clause.
+  assert.deepEqual(excluded("find inhibitors of EGFR without docking but use MD"), ["docking"]);
+  assert.deepEqual(excluded("find inhibitors of EGFR without docking or MD"), ["docking or MD"]);
+});
+
+test("deriving parameters is its own protocol, and settles the model before the maths", () => {
+  const { brief, result } = plan("i wanna parametrize a gold containing ligand it's Au 3+");
+  assert.equal(result.intent, "parameterisation");
+  assert.equal(result.ok, true);
+  assert.equal(result.viable, true);
+  assert.deepEqual(validate(result), []);
+  assert.ok(brief.metal.length, "the gold should be detected");
+
+  const ids = result.steps.map((s) => s.id);
+  const at = (id) => ids.indexOf(id);
+  // Charge and spin, and how the metal is represented, decide everything after.
+  assert.ok(at("qm.fix_the_electronic_state") < at("qm.optimise_then_prove_it_is_a_minimum"));
+  assert.ok(at("param.choose_the_metal_model") < at("param.derive_the_bonded_terms"));
+  // Parameters are derived from a quantum reference, so that comes first.
+  assert.ok(at("qm.optimise_then_prove_it_is_a_minimum") < at("param.derive_the_charges"));
+  // And the set is only finished once it reproduces that reference and holds up.
+  assert.ok(at("param.validate_against_the_quantum_reference") < at("param.prove_it_survives_unrestrained_dynamics"));
+  assert.match(MODULES["param.prove_it_survives_unrestrained_dynamics"].gate, /coordination number|dissociat/i);
+
+  const md = planToMarkdown(result, null, [], brief);
+  assert.ok(md.includes("Force field parameterisation"));
+  assert.ok(md.includes("Hessian"));
+});
+
+test("ruling out force field work empties the parameterisation route honestly", () => {
+  const { result } = plan("parametrise this zinc complex without force field parameterisation");
+  assert.deepEqual(validate(result), []);
+  // The parameters family is gone; what survives is the quantum work that
+  // stands on its own, and every removal is recorded.
+  assert.ok(!result.steps.some((s) => s.family === "parameters"));
+  assert.ok(result.dropped.some((d) => /you excluded/.test(d.reason)));
+});

@@ -46,6 +46,7 @@ export const INTENTS = [
   ["target-triage", "which target to pick for a disease; target identification and validation"],
   ["structure", "get or model the structure of a protein; pick the best PDB entry"],
   ["qm-geometry", "optimise or minimise the geometry of a molecule or metal complex; DFT or semi-empirical calculation; conformer or spin-state energies; frequencies and orbitals"],
+  ["parameterisation", "derive force field parameters for something that has none: a metal centre, a non-standard residue, a modified cofactor or a ligand; charges, bonded terms, topology files"],
   ["qm-mechanism", "reaction mechanism, transition states, activation barriers, reaction paths, catalytic cycles, regio- or stereoselectivity explained by computed energies"],
   ["qm-properties", "computed molecular properties: pKa, tautomer or protonation state, and predicted NMR, IR or UV spectra compared with measurement"],
   ["protein-engineering", "engineer a protein or enzyme itself: thermostability, solubility, expression, activity; point mutations for stability; directed evolution library design"],
@@ -78,6 +79,7 @@ Rules:
 - Choose conformational-sampling over md-stability whenever the question is about exploring conformations rather than checking stability.
 - qm-geometry is for optimising a structure or computing its energy with quantum chemistry, including metal complexes and organometallics. "Optimise the geometry" is qm-geometry; "optimise a lead" or "optimise potency" is lead-opt. A ligand bound to a metal is a chemical structure, not a protein target.
 - Among the quantum chemistry routes: a structure or its energy is qm-geometry; a barrier, transition state or mechanism is qm-mechanism; pKa, tautomers or a predicted spectrum is qm-properties.
+- parameterisation is for producing force field parameters so something can be simulated, which is a different request from running the simulation (md-stability) or optimising the structure (qm-geometry).
 - protein-engineering changes the protein itself (stability, solubility, expression, activity). resistance is about how a mutation affects drug binding. antibody is for antibodies and nanobodies; peptide-design is for peptides and macrocycles as the binder.
 - landscape is for what already exists (published compounds, trials, patents) rather than for making something new. A question about the competitive or patent position is landscape even when it names inhibitors.
 - library-design is for assembling or curating the compound set itself. benchmarking is for testing a method against a reference set rather than applying it.

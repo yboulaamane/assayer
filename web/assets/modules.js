@@ -1551,6 +1551,74 @@ export const MODULES = {
     requires: ["baseline_comparison"], produces: ["benchmark_report"],
     tools: ["scikit-learn", "Polaris", "Therapeutics Data Commons", "MLflow"],
   },
+
+  // ------------------------------------------------------- parameterisation
+  // Deriving force field parameters is its own piece of work with its own way
+  // of failing quietly: a parameter set that runs is not a parameter set that
+  // is right, and nothing in a trajectory announces that the charges were
+  // fitted on the wrong conformer.
+  "param.decide_what_needs_parameters": {
+    family: "parameters",
+    title: "Say exactly what has no parameters, and for which force field",
+    why: "A metal centre, a non-standard residue, a modified nucleotide and an ordinary small molecule are four different jobs. Name which one you have, and name the force field family you must match, because parameters are not portable: charges fitted for one water model and one vdW set do not belong in another.",
+    gate: "The chemical fragment written down with its total charge, and the target force field named with its version. Check first whether a published set already exists for this fragment.",
+    pitfall: "Deriving parameters that already exist. Common cofactors, haem states and nucleotides have published, validated sets, and yours will be worse than theirs.",
+    requires: [], produces: ["parameter_scope"],
+    tools: ["AMBER / AmberTools", "GROMACS", "OpenMM", "ParmEd"],
+  },
+  "param.choose_the_metal_model": {
+    family: "parameters",
+    title: "Choose how the metal will be represented",
+    why: "There are three honest options and they answer different questions. A bonded model fixes the coordination you give it and describes a stable site well. A non-bonded model lets ligands exchange but loses the geometry. A cationic dummy model keeps the geometry directional while still allowing exchange. Choose against the chemistry you need to see.",
+    gate: "The model chosen with a reason that refers to the mechanism. If ligand exchange or a change in coordination number matters, a bonded model cannot show it and must not be used.",
+    pitfall: "Defaulting to a bonded model because the tooling makes it easiest, then asking the trajectory a question about ligand exchange that the model has already answered for you.",
+    requires: ["parameter_scope", "electronic_state"], produces: ["parameter_model"],
+    tools: ["MCPB.py", "easyPARM", "AMBER / AmberTools", "ParmEd"],
+  },
+  "param.derive_the_charges": {
+    family: "parameters",
+    title: "Derive the charges the way the force field expects",
+    why: "Charges must be fitted with the same scheme the force field was built with, or they are inconsistent with every other term. Fit the electrostatic potential from the quantum calculation, restrain the buried atoms, and constrain the total to the correct integer.",
+    gate: "Total charge an exact integer, equivalent atoms constrained to equal values, and the fit made over several conformers rather than one.",
+    pitfall: "Fitting on a single gas-phase conformer with an intramolecular hydrogen bond. Buried atoms are poorly determined by the potential at the surface, and the charges you get describe that one geometry rather than the molecule.",
+    requires: ["optimised_geometry", "parameter_model"], produces: ["derived_charges"],
+    tools: ["AMBER / AmberTools", "Multiwfn", "ORCA", "Psi4", "easyPARM"],
+  },
+  "param.derive_the_bonded_terms": {
+    family: "parameters",
+    title: "Derive the bonded terms from the quantum Hessian",
+    why: "Bonds, angles and torsions around a metal have no library values to look up, so take them from the second derivatives of the quantum energy at the optimised geometry. That is what the Hessian-projection methods do, and it is the only defensible source for a centre nothing has parameterised before.",
+    gate: "Every missing term produced, with none silently left at a program default. Check the output for terms that were filled in rather than derived.",
+    pitfall: "Accepting generic fallback parameters for the metal-donor bonds. They are usually present, rarely flagged, and produce a site that looks parameterised and is not.",
+    requires: ["optimised_geometry", "parameter_model"], produces: ["force_field_parameters"],
+    tools: ["MCPB.py", "easyPARM", "ParmEd", "ACPYPE", "Espaloma"],
+  },
+  "param.validate_against_the_quantum_reference": {
+    family: "parameters",
+    title: "Check the parameters reproduce the calculation they came from",
+    why: "The parameters were fitted to a quantum reference, so the first test is whether they reproduce it. Minimise the fragment with the new force field and compare geometry and vibrational frequencies against the quantum result they were derived from.",
+    gate: "Bond lengths and angles at the centre within a few hundredths of an Angstrom and a few degrees of the quantum geometry, and the low-frequency modes in the right order. A parameter set that cannot reproduce its own reference will not describe anything else.",
+    pitfall: "Declaring success because the minimisation converged. Convergence says the terms are self-consistent, not that they match the chemistry.",
+    requires: ["force_field_parameters", "derived_charges"], produces: ["validated_parameters"],
+    tools: ["ParmEd", "OpenMM", "GROMACS", "AMBER / AmberTools"],
+  },
+  "param.prove_it_survives_unrestrained_dynamics": {
+    family: "parameters",
+    title: "Prove it survives unrestrained dynamics",
+    why: "Parameters that look right at a minimum can still fall apart at temperature. Solvate the fragment in the system you actually intend to simulate and run it unrestrained for long enough to see whether the geometry holds.",
+    gate: "Coordination number and donor distances stable over the run, with no ligand dissociating and no atoms drifting through each other. If the site opens up, the parameters are wrong rather than the chemistry interesting.",
+    pitfall: "Testing only the isolated fragment in vacuum. Most parameter failures appear when water competes for the coordination sphere.",
+    requires: ["validated_parameters"], produces: ["simulation_ready_parameters"],
+    tools: ["OpenMM", "GROMACS", "AMBER / AmberTools", "MDAnalysis"],
+  },
+  "param.publish_the_parameter_set": {
+    family: "parameters",
+    title: "Write the parameter set down so it can be reused and checked",
+    why: "A parameter set is only worth deriving once. Record the quantum level it came from, the charge model, the metal model, the force field it belongs to and the validation you ran, alongside the files themselves.",
+    gate: "Files, provenance and validation results kept together. A parameter file with no record of how it was made cannot be reused safely by anyone, including you in a year.",
+    requires: ["simulation_ready_parameters"], produces: ["parameter_release"],
+    tools: ["ParmEd", "ACPYPE", "AMBER / AmberTools", "MLflow"],
+  },
 };
 
 // The key is the id; keep them from drifting apart by deriving one from the other.
@@ -1916,6 +1984,25 @@ export const RECIPES = {
       "bench.split_or_partition_honestly",
       "bench.compare_against_a_trivial_baseline",
       "bench.report_with_uncertainty",
+    ],
+  },
+  "parameterisation": {
+    label: "Force field parameterisation",
+    summary: "Settle the electronic state and the metal model, derive charges and bonded terms from a quantum reference, then prove the result reproduces that reference and survives unrestrained dynamics.",
+    decision: "Whether this fragment can be simulated at all, and whether the parameters describe the chemistry or merely run without crashing.",
+    stop: "If the coordination sphere opens up in unrestrained solvated dynamics, the parameters are wrong. Nothing computed from a trajectory that lost its metal is worth reporting.",
+    modules: [
+      "param.decide_what_needs_parameters",
+      "qm.fix_the_electronic_state",
+      "param.choose_the_metal_model",
+      "qm.build_a_defensible_starting_geometry",
+      "qm.choose_a_method_that_can_describe_the_metal",
+      "qm.optimise_then_prove_it_is_a_minimum",
+      "param.derive_the_charges",
+      "param.derive_the_bonded_terms",
+      "param.validate_against_the_quantum_reference",
+      "param.prove_it_survives_unrestrained_dynamics",
+      "param.publish_the_parameter_set",
     ],
   },
   "structure": {

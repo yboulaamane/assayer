@@ -1,6 +1,6 @@
 // Module selection: let the model choose the steps, not just the protocol.
 //
-// The routing endpoint picks one of twenty-six protocols, which is under five
+// The routing endpoint picks one of twenty-seven protocols, which is under five
 // bits of freedom — every word of the resulting plan was written in advance.
 // This endpoint hands the model the whole registry and asks which modules this
 // particular request needs, in what order, and why each one.

@@ -19,6 +19,11 @@ const INTENTS = [
     "coordination geometry", "quantum chemistry", "qm calculation", "ab initio",
     "energy minimis", "energy minimiz", "optimise the structure", "optimize the structure",
     "relaxed scan", "conformer energy", "nbo", "homo", "lumo"]],
+  ["parameterisation", ["parametri", "parameteris", "parameterit", "parameterize", "parameterise",
+    "force field parameter", "force-field parameter", "ff parameters", "missing parameters",
+    "no parameters for", "resp charge", "esp charge", "partial charges", "atomic charges",
+    "bonded model", "cationic dummy", "frcmod", "mcpb", "gaff", "antechamber", "topology for",
+    "parameters for my", "parameters for a", "parametrise", "parametrize"]],
   ["qm-mechanism", ["reaction mechanism", "mechanism of", "transition state", "reaction path",
     "reaction coordinate", "intrinsic reaction coordinate", "activation barrier", "activation energy",
     "free energy barrier", "energy barrier", "rate determining", "rate-determining", "catalytic cycle",
@@ -31,14 +36,17 @@ const INTENTS = [
     "freedom to operate", "prior art", "intellectual property", "ip position", "white space",
     "patent position", "patent on", "patent covering", "patent landscape",
     "whitespace", "already in the clinic", "clinical pipeline", "in the clinic for",
-    "who else is working", "commercial landscape", "competitive position", "landscape for"]],
+    "who else is working", "commercial landscape", "competitive position", "landscape for",
+    "in the clinic", "reached the clinic", "marketed drugs for"]],
   ["library-design", ["screening library", "compound library", "library design", "design a library",
     "build a library", "diverse library", "focused library", "diversity selection", "cherry-pick",
     "standardise the structures", "standardize the structures", "deduplicate", "curate the library",
-    "cluster my library", "scaffold analysis", "enumerate the library", "property filter"]],
+    "cluster my library", "scaffold analysis", "enumerate the library", "property filter",
+    "diverse subset", "diverse set of compounds", "representative subset", "pick a subset"]],
   ["benchmarking", ["benchmark", "benchmarks", "benchmarking", "reference set", "decoy set",
     "validate my method", "validate the method", "method comparison", "compare methods",
-    "retrospective validation", "how good is my", "evaluate the method", "sanity check the method"]],
+    "retrospective validation", "how good is my", "evaluate the method", "sanity check the method",
+    "compare these methods", "which method is better", "head to head comparison"]],
   ["protein-engineering", ["thermostab", "thermal stability", "protein engineering",
     "enzyme engineering", "directed evolution", "engineer this enzyme", "engineer the enzyme",
     "engineer this protein", "stabilise the protein", "stabilize the protein", "more thermostable",
@@ -60,21 +68,28 @@ const INTENTS = [
     "alchemical", "thermodynamic integration", "predict affinity change", "ddg"]],
   ["qsar", ["qsar", "qspr", "property model", "property prediction", "predict solubility",
     "predict logp", "predict activity", "predict potency", "machine learning model", "ml model",
-    "train a model", "train a classifier", "regression model", "build a model", "model building",
+    "train a model", "train a classifier", "train an activity model", "activity model",
+    "regression model", "build a model", "model building",
     "featuris", "featuriz", "descriptor", "chemprop", "random forest", "scaffold split",
     "applicability domain", "predictive model"]],
   ["resistance", ["resistance", "resistant", "mutation", "mutant", "variant effect", "escape",
     "point mutation", "loses activity in the", "gatekeeper mutation", "\u0394\u0394g of mutation",
     "stability of a mutation", "missense", "variants", "polymorphism", "snp",
     "mutants vs", "versus wild", "vs wild", "wild-type", "wildtype", "allele"]],
+  ["ligand-discovery", ["ligand based virtual screening", "ligand-based virtual screening",
+    "ligand based screening", "pharmacophore", "pharmacophore screening", "shape screening",
+    "similarity search", "similarity search for actives", "2d similarity", "3d similarity",
+    "no structure available", "structure-free"]],
   ["hit-discovery", ["inhibitor", "inhibitors", "hit", "hits", "screen", "screening", "virtual screening",
     "vs campaign", "find compounds", "find molecules", "dock", "docking", "binders", "actives",
     "hit finding", "hit identification", "antagonist", "agonist", "block"]],
   // "fep", "free energy" and "selectivity" now have protocols of their own and
   // are deliberately not claimed here.
   ["lead-opt", ["optimi", "lead series", "analog", "analogue", "sar", "potency",
-    "improve binding", "affinity improvement", "matched pair", "next compound"]],
+    "improve binding", "affinity improvement", "matched pair", "next compound",
+    "make next", "what to make next", "make next in this series"]],
   ["denovo", ["de novo", "generate molecules", "generative", "design molecules", "design compounds",
+    "generate scaffolds", "generate new scaffolds", "new scaffolds", "propose new chemotypes",
     "new chemotype", "scaffold hopping", "protac", "degrader"]],
   ["antibody", ["antibody", "antibodies", "nanobody", "vhh", "biologic", "epitope", "bispecific",
     "cdr", "immunogen", "vaccine"]],
@@ -92,9 +107,11 @@ const INTENTS = [
   // "route" on its own is not a synthesis word. It matched "plan a route to the
   // train station", and at a low threshold that is enough to lock in a protocol.
   ["retrosynthesis", ["synthesi", "retrosynthe", "synthetic route", "synthesis route",
-    "make this molecule", "synthesise", "synthesize", "building block"]],
+    "make this molecule", "make this compound", "how do i make", "synthesise", "synthesize",
+    "building block"]],
   ["target-triage", ["which target", "find a target", "target for", "target identification",
-    "validate the target", "druggable", "disease", "novel target", "target selection"]],
+    "validate the target", "validate this target", "druggable", "disease", "novel target",
+    "target selection"]],
   ["structure", ["structure of", "best structure", "model of", "fold", "crystal structure",
     "alphafold", "pdb", "conformation of"]],
 ];
@@ -155,7 +172,8 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
 const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology",
-  "qm-geometry", "qm-mechanism", "qm-properties", "library-design", "benchmarking"]);
+  "qm-geometry", "qm-mechanism", "qm-properties", "library-design", "benchmarking",
+  "parameterisation"]);
 export const intentUsesProtein = (intent) => !NO_PROTEIN.has(intent);
 
 // Common informal names that UniProt search alone handles badly.
@@ -265,8 +283,8 @@ function actsOn(text, nouns) {
 function matchedTerms(text, words) {
   const spans = [], hits = [];
   for (const w of [...words].sort((a, b) => b.length - a.length)) {
-    for (let i = text.indexOf(w); i >= 0; i = text.indexOf(w, i + 1)) {
-      const end = i + w.length;
+    for (const m of text.matchAll(wordStart(w))) {
+      const i = m.index, end = i + w.length;
       if (spans.some(([from, to]) => i >= from && end <= to)) continue;
       spans.push([i, end]);
       hits.push(w);
@@ -274,6 +292,19 @@ function matchedTerms(text, words) {
     }
   }
   return hits;
+}
+
+// A keyword has to begin where a word begins. Matching raw substrings meant any
+// term hiding inside a longer word fired: "fold" inside "scaffold" routed
+// "generate new scaffolds" to structure prediction. Only the start is anchored,
+// because several terms are deliberate stems — "optimi", "synthesi", "parametri"
+// — that must still match their own inflections.
+const STARTS = new Map();
+function wordStart(w) {
+  if (!STARTS.has(w)) {
+    STARTS.set(w, new RegExp(`(?<![\\w-])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"));
+  }
+  return STARTS.get(w);
 }
 
 export function parseQuery(raw) {
@@ -425,9 +456,14 @@ const METHOD_TERM = [...new Set(Object.values(FAMILY_TERMS).flat())]
   .sort((a, b) => b.length - a.length)
   .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 const METHOD_NAME = `(?:${METHOD_TERM.join("|")})\\b`;
+// Plain whitespace joins method names too: "force field parameterisation" is
+// two terms from the same family sitting next to each other, and stopping after
+// the first left the second to route the very question it was excluding. Each
+// continuation still has to be a method name, so this cannot run on into a
+// positive clause like "without docking but use MD".
 const EXCLUDED_METHODS = new RegExp(
-  `\\b(?:no need for|no|without|avoid|exclude|skip|don['’]?t (?:use|run|want)|do not (?:use|run|want)|not run|cannot run|can['’]?t run|rather not)\\s+(${METHOD_NAME}(?:\\s*(?:,\\s*(?:(?:and|or)\\s+)?|/|\\b(?:and|or)\\s+)${METHOD_NAME})*)`, "gi");
-const MISSING_ASSETS = /\b(?:no|without|do not have|don['’]?t have)\s+((?:(?:usable|experimental|known|measured|matching)\s+)?(?:structures?|actives?|data|topology|trajector\w*))\b/gi;
+  `\\b(?:no need for|no|without|avoid|exclude|skip|don['’]?t (?:use|run|want)|do not (?:use|run|want)|not run|cannot run|can['’]?t run|rather not)\\s+(${METHOD_NAME}(?:\\s*(?:,\\s*(?:(?:and|or)\\s+)?|/|\\b(?:and|or)\\s+|\\s+)${METHOD_NAME})*)`, "gi");
+const MISSING_ASSETS = /\b(?:no|without|do not have|don['’]?t have|lack|lacking)\s+((?:(?:a|an|the|any|my|our)\s+)?(?:(?:usable|experimental|known|measured|matching|good|suitable|reliable|decent|crystal|holo|apo|solved)\s+)*(?:structures?|actives?|data|topology|trajector\w*))\b/gi;
 
 // A metal centre changes the preparation, the scoring and the parameters, in
 // whatever protocol the question routed to. Detection has to be specific:
@@ -435,7 +471,46 @@ const MISSING_ASSETS = /\b(?:no|without|do not have|don['’]?t have)\s+((?:(?:u
 // bare two-letter symbols collide with ordinary words ("Co" in "co-crystal").
 // Calcium is deliberately absent, "calcium channel blocker" is not a
 // coordination-chemistry question.
-const METAL_ELEMENT = "zinc|iron|copper|magnesium|manganese|nickel|cobalt|molybdenum|tungsten|vanadium|ruthenium|rhodium|palladium|platinum|iridium|osmium|rhenium|cadmium|mercury|gallium|gadolinium";
+// Every metal and metalloid, rather than the ones that came to mind. This is a
+// closed set: the periodic table does not grow, so "what if I try another
+// metal" has one answer for all of them. Non-metals, halogens and noble gases
+// are left out; hydrogen and carbon are not coordination centres.
+const METAL_ELEMENT = [
+  // alkali and alkaline earth
+  "lithium", "sodium", "potassium", "rubidium", "caesium", "cesium", "francium",
+  "beryllium", "magnesium", "calcium", "strontium", "barium", "radium",
+  // transition metals
+  "scandium", "titanium", "vanadium", "chromium", "manganese", "iron", "cobalt", "nickel",
+  "copper", "zinc", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium",
+  "rhodium", "palladium", "silver", "cadmium", "hafnium", "tantalum", "tungsten", "wolfram",
+  "rhenium", "osmium", "iridium", "platinum", "gold", "mercury",
+  // post-transition and metalloids
+  "aluminium", "aluminum", "gallium", "indium", "thallium", "tin", "lead", "bismuth", "polonium",
+  "boron", "silicon", "germanium", "arsenic", "antimony", "tellurium",
+  // lanthanides and the actinides anyone uses
+  "lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium",
+  "gadolinium", "terbium", "dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium",
+  "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium",
+].join("|");
+
+// Element symbols, matched only with an oxidation state or a charge. Without
+// that requirement "In", "As", "At", "No" and "Am" are ordinary English.
+const METAL_SYMBOL = [
+  "Li", "Na", "K", "Rb", "Cs", "Be", "Mg", "Ca", "Sr", "Ba", "Ra",
+  "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+  "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
+  "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg",
+  "Al", "Ga", "In", "Tl", "Sn", "Pb", "Bi", "Po",
+  "B", "Si", "Ge", "As", "Sb", "Te",
+  "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu",
+  "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm",
+].join("|");
+
+// Element names that are also ordinary English in this field. A metal reading
+// needs more than the bare word when it is followed by one of these.
+const METAL_IDIOM = "standard|bullet|medal|rush|mine|age|star|optimi|compound|series|candidate|" +
+  "molecule|structure|like|author|time|out|weight|channel|blocker|nitride|nitrate";
+
 const METAL_ENZYME = "carbonic anhydrase|histone deacetylase|hdac-?\\d*s?|matrix metalloproteinase|mmp-?\\d*s?|lpxc|urease|arginase|glyoxalase|insulin-degrading enzyme";
 const METAL_SITE = new RegExp([
   // an explicit statement that there is a metal
@@ -447,9 +522,19 @@ const METAL_SITE = new RegExp([
   String.raw`\bchelat\w+\b`,
   String.raw`\b(?:heme|haem|porphyrin|iron[- ]sulfur|iron[- ]sulphur|fe-?s cluster)\b`,
   // element names, and symbols only when carrying a charge or oxidation state
-  String.raw`\b(?:${METAL_ELEMENT})[- ]?(?:ion|binding|bound|dependent|site|centre|center|finger|complex)\w*\b`,
-  String.raw`\b(?:${METAL_ELEMENT})\b(?=[^.]{0,60}\b(?:protein|enzyme|site|ion|dock|coordinat|complex|cofactor)\w*)`,
-  String.raw`\b(?:Zn|Fe|Cu|Mg|Mn|Ni|Co|Mo|Ru|Pt|Pd|Cd|Hg|V|W)\s*(?:\d?\+|\((?:i{1,3}|iv|v|vi)\))`,
+  String.raw`\b(?:catalytic|structural|bound|coordinated|coordinating|bridging|chelated|active[- ]site)\s+(?:${METAL_ELEMENT})\b`,
+  // An element name counts when a chemistry word follows it. Bare names are
+  // deliberately not enough: "the gold standard" and "a silver bullet" are not
+  // coordination chemistry, and this field says both constantly.
+  String.raw`\b(?:${METAL_ELEMENT})[- ]?(?:ion|binding|bound|dependent|containing|based|site|` +
+    String.raw`centre|center|finger|complex|chelat\w*|catalys\w*|therapeut\w*|radiopharm\w*|` +
+    String.raw`tracer|isotope|label\w*|salt|oxide|nanoparticle|drug)\w*\b`,
+  // A bare element name near a chemistry word, minus the idioms. "The gold
+  // standard for docking" is a sentence this field writes constantly and it is
+  // not about gold.
+  String.raw`\b(?:${METAL_ELEMENT})\b(?!\s+(?:${METAL_IDIOM}))` +
+    String.raw`(?=[^.]{0,40}\b(?:protein|enzyme|site|ion|dock|coordinat|complex|cofactor)\w*)`,
+  String.raw`\b(?:${METAL_SYMBOL})\s*(?:\d?\+|\((?:i{1,3}|iv|v|vi|vii|viii)\))`,
   // enzyme families whose metal dependence is the point
   String.raw`\b(?:${METAL_ENZYME})\b`,
 ].join("|"), "gi");
