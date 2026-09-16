@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveQuery, parseQuery, aliasTarget, statedConstraints, planToMarkdown } from "../web/assets/workflow.js";
-import { buildBrief, compose, validate } from "../web/assets/compose.js";
+import { buildBrief, compose, composeFromSelection, validate } from "../web/assets/compose.js";
 import { MODULES, RECIPES, FAMILY_TERMS } from "../web/assets/modules.js";
 
 // Exercise the deterministic fallback without using quotas or depending on a provider.
@@ -347,4 +347,131 @@ test("a structure-only question checks the metal without setting up for work it 
   assert.deepEqual(metal, ["metal.characterise_the_metal_centre"]);
   assert.ok(ids(result).indexOf("metal.characterise_the_metal_centre")
     > ids(result).indexOf("structure.rank_the_experimental_structures"));
+});
+
+// ---------------------------------------------------------------- selection
+
+const pick = (query, modules, extra = {}) => {
+  const { brief } = plan(query);
+  return { brief, result: composeFromSelection(brief, { modules, ...extra }) };
+};
+
+test("a selected plan is assembled from the registry and passes the same validator", () => {
+  const { result } = pick("rank my EGFR analogues with FEP and keep an eye on ADMET", [
+    { id: "docking.anchor_on_a_co", why: "start from the bound pose" },
+    { id: "fep.check_the_series_is", why: "the series must be connectable" },
+    { id: "fep.design_the_perturbation_map", why: "plan the edges" },
+    { id: "docking.rank_with_free_energy", why: "the actual ranking" },
+    { id: "general.keep_the_properties_in", why: "watch properties while optimising" },
+  ]);
+  assert.equal(result.ok, true);
+  assert.equal(result.selected, true);
+  assert.deepEqual(validate(result), []);
+  // Drawing across protocols is the point; the curated route could not do this.
+  const families = new Set(result.steps.map((s) => s.family));
+  assert.ok(families.size > 1);
+  // Per-step reasoning for this case survives onto the step.
+  assert.ok(result.steps.some((s) => s.context === "start from the bound pose"));
+});
+
+test("a selection cannot invent a module, a tool or a gate", () => {
+  // Mostly-invented ids are a confused response, not a selection to repair.
+  const bogus = pick("find inhibitors of EGFR", [
+    { id: "docking.do_the_magic" }, { id: "made.up" }, { id: "docking.screen_the_library" },
+  ]);
+  assert.equal(bogus.result.ok, false);
+
+  // A single bad id is dropped and reported, and the rest still assembles.
+  const mostly = pick("find inhibitors of EGFR in human", [
+    { id: "structure.confirm_the_target_and" },
+    { id: "structure.choose_the_receptor_structure" },
+    { id: "docking.prepare_the_receptor_and" },
+    { id: "not.a_module" },
+  ]);
+  assert.equal(mostly.result.ok, true);
+  assert.deepEqual(mostly.result.rejected, ["not.a_module"]);
+  // Every step's text, gates and tools come from the registry, never the model.
+  for (const step of mostly.result.steps) {
+    const canonical = MODULES[step.id];
+    assert.equal(step.why, canonical.why);
+    assert.equal(step.gate, canonical.gate);
+    assert.deepEqual(step.tools, canonical.tools);
+  }
+});
+
+test("the model cannot drop a control the rest of the plan depends on", () => {
+  // A screen with no redock and no enrichment control is unfalsifiable.
+  const screen = pick("find inhibitors of EGFR in human", [
+    { id: "structure.confirm_the_target_and" },
+    { id: "structure.choose_the_receptor_structure" },
+    { id: "docking.prepare_the_receptor_and" },
+    { id: "docking.screen_the_library" },
+  ]);
+  const ids = screen.result.steps.map((s) => s.id);
+  assert.ok(ids.includes("docking.redock_the_native_ligand"));
+  assert.ok(ids.includes("docking.run_the_enrichment_control"));
+  assert.ok(ids.indexOf("docking.redock_the_native_ligand") < ids.indexOf("docking.screen_the_library"));
+  assert.equal(screen.result.reinstated.length, 2);
+  for (const step of screen.result.steps.filter((s) => !s.chosen && s.context)) {
+    assert.match(step.context, /Kept in because/);
+  }
+
+  // A model without a deployment-matched split or an applicability domain.
+  const model = pick("build an activity model from my 500 measured compounds", [
+    { id: "qsar.curate_the_data_properly" }, { id: "qsar.only_then_reach_for" },
+  ]);
+  const mids = model.result.steps.map((s) => s.id);
+  assert.ok(mids.includes("qsar.split_the_way_you"));
+  assert.ok(mids.includes("qsar.check_the_applicability_domain"));
+
+  // An MD run with nothing proving it converged.
+  const md = pick("run MD on my EGFR complex", [
+    { id: "md.build_the_system" }, { id: "md.equilibrate_then_run_replicates" },
+  ]);
+  const dids = md.result.steps.map((s) => s.id);
+  assert.ok(dids.some((id) => ["md.prove_it_converged", "md.check_convergence_not_wall"].includes(id)));
+});
+
+test("stated constraints outrank the selection", () => {
+  // Excluded methods are dropped even when the model picked them.
+  const { result } = pick("find inhibitors of EGFR in human without docking or MD", [
+    { id: "docking.screen_the_library" }, { id: "md.build_the_system" },
+    { id: "ligand.similarity_baseline" }, { id: "qsar.curate_the_data_properly" },
+  ]);
+  assert.deepEqual(validate(result), []);
+  assert.ok(!result.steps.some((s) => ["docking", "md"].includes(s.family)));
+  assert.ok(result.dropped.some((d) => /you excluded/.test(d.reason)));
+
+  // A control is not reinstated into a family the user ruled out.
+  assert.ok(!result.steps.some((s) => s.id === "docking.redock_the_native_ligand"));
+});
+
+test("selection reasoning survives into the Markdown export", () => {
+  const { brief, result } = pick("find inhibitors of EGFR in human", [
+    { id: "structure.confirm_the_target_and", why: "pin the accession first" },
+    { id: "docking.prepare_the_receptor_and" },
+    { id: "docking.screen_the_library" },
+  ], {
+    understood: "Find new EGFR binders by screening against a validated docking setup.",
+    assumptions: ["Human EGFR, kinase domain"],
+    questions: ["Do you have known actives for the enrichment control?"],
+  });
+  const md = planToMarkdown(result, null, [], brief);
+  assert.ok(md.includes("Steps chosen for this case"));
+  assert.ok(md.includes("Find new EGFR binders"));
+  assert.ok(md.includes("Human EGFR, kinase domain"));
+  assert.ok(md.includes("known actives for the enrichment control"));
+  assert.ok(md.includes("Put back as required controls"));
+  assert.ok(md.includes("pin the accession first"));
+});
+
+test("an empty or unusable selection leaves the curated plan standing", () => {
+  const { brief } = plan("find inhibitors of EGFR in human");
+  for (const selection of [{}, { modules: [] }, { modules: ["nope"] }, null]) {
+    assert.equal(composeFromSelection(brief, selection).ok, false);
+  }
+  // And the curated fallback is always a complete, valid plan.
+  const fallback = compose(brief);
+  assert.equal(fallback.ok, true);
+  assert.deepEqual(validate(fallback), []);
 });
