@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "recorded": "2026-09-16",
+  "note": "Scores the deterministic path only. The guard is no-regression, not perfection: a case may be added that currently fails, which lowers the baseline honestly rather than hiding the gap.",
+  "cases": 53,
+  "clean": 53,
+  "checks": 245,
+  "passed": 245,
+  "failing": []
+}
