@@ -59,3 +59,41 @@ test("the set covers every protocol the planner offers", () => {
   assert.deepEqual(uncovered, [],
                    "a protocol with no case in the evaluation set is a protocol nothing measures");
 });
+
+// Citations, checked structurally here and against Crossref by
+// scripts/check_refs.mjs. A reference that does not resolve is worse than none.
+
+test("every citation is well formed and reachable from a module", async () => {
+  const { REFERENCES } = await import("../web/assets/modules.js");
+  const used = new Set();
+  const bad = [];
+  for (const [id, m] of Object.entries(MODULES)) {
+    for (const r of m.refs || []) {
+      if (!REFERENCES[r]) bad.push(`${id} cites unknown reference ${r}`);
+      else used.add(r);
+      if (!m.gate) bad.push(`${id} carries a reference but has no gate to attach it to`);
+    }
+  }
+  for (const [id, ref] of Object.entries(REFERENCES)) {
+    if (!/^10\.\d{4,9}\/\S+$/.test(ref.doi)) bad.push(`${id}: ${ref.doi} is not a DOI`);
+    if (!/\(\d{4}\)/.test(ref.cite)) bad.push(`${id}: citation has no year`);
+    if (!used.has(id)) bad.push(`${id} is cited by nothing`);
+  }
+  assert.deepEqual(bad, []);
+});
+
+test("a gate that states a number either cites a source or says it has none", async () => {
+  const { REFERENCES } = await import("../web/assets/modules.js");
+  // Numbers presented as criteria are assertions about the field. Each one is
+  // either sourced, or says in the gate text that it is a working default.
+  const states = /\b\d+(\.\d+)?\s*(Å|kcal|kJ|%)|\bat least \d|\bbelow ~?\d|\bwithin ~?\d|\bBEDROC|\bEF1%|\bpLDDT|\bR-free/;
+  const unsourced = [];
+  for (const [id, m] of Object.entries(MODULES)) {
+    if (!m.gate || !states.test(m.gate)) continue;
+    const cited = (m.refs || []).some((r) => REFERENCES[r]);
+    const admits = /working default|not a published|judgement about|rather than a published/.test(m.gate);
+    if (!cited && !admits) unsourced.push(`${id}: ${m.gate.slice(0, 70)}`);
+  }
+  assert.deepEqual(unsourced, [],
+    "a numeric gate must carry a source, or say in its own text that it is a convention");
+});

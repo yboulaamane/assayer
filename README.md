@@ -144,6 +144,20 @@ Run the planner regression and rendering checks with Node.js 24 or later:
 node --test tests/*.test.mjs
 ```
 
+**Thresholds carry their source.** A gate that states a number is an assertion
+about the field, and ten of them do. Each is either cited to the work it comes
+from — the 2 Å redocking criterion, BEDROC's α=20, the ~1 kcal/mol RBFE
+expectation, pLDDT's confidence bands, replicates, R-free — or says in its own
+text that it is a working default rather than a published threshold. The
+citations render under the gate and travel into the Markdown export, so a plan
+someone acts on carries the reference with it.
+
+`node scripts/check_refs.mjs` re-verifies every DOI against Crossref and
+compares the author, year, volume and pages. It checks that a reference is real
+and correctly transcribed; it cannot check that the work supports the threshold
+it is attached to, which needs a reader. A test enforces the rule that a numeric
+gate either cites something or admits it has no source.
+
 `evals/` is the evaluation set: 53 reviewed fixtures that say what a correct
 plan must *do* — which protocol, which constraints it must extract, which steps
 it cannot omit, what must precede what — rather than which exact steps it must

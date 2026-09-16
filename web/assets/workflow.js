@@ -6,6 +6,7 @@
 // The protocol texts live in the module registry now; this file routes a
 // question to one and resolves what it is about.
 export { RECIPES as PROTOCOLS } from "./modules.js";
+import { REFERENCES } from "./modules.js";
 import { RECIPES, FAMILY_TERMS } from "./modules.js";
 
 const INTENTS = [
@@ -805,7 +806,13 @@ export function planToMarkdown(plan, target, structures, brief) {
     L.push(`### ${i + 1}. ${s.title}`, "", s.why, "");
     if (s.context) L.push(s.context, "");
     if (s.unmet?.length) L.push(`> **Before this step:** Provide or complete ${s.unmet.map((n) => n.replaceAll("_", " ")).join(", ")}. This step and dependent work are conditional.`, "");
-    if (s.gate) L.push(`> **Gate:** ${s.gate}`, "");
+    if (s.gate) {
+      const cited = (s.refs || []).map((r) => REFERENCES[r]).filter(Boolean);
+      L.push(`> **Gate:** ${s.gate}`, "");
+      // A threshold travels with its source, or the exported file makes the
+      // same unsourced assertion the page was trying to stop making.
+      if (cited.length) L.push(`> *Source:* ${cited.map((c) => `${c.cite}, doi:${c.doi}`).join("; ")}`, "");
+    }
     if (s.pitfall) L.push(`> **Common failure:** ${s.pitfall}`, "");
     if (s.tools?.length) L.push(`*Tools:* ${s.tools.join(", ")}`, "");
   });

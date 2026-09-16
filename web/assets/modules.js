@@ -11,6 +11,71 @@
 export const REGISTRY_VERSION = "1.2.0";
 
 /** Method families a request can exclude, and the words people use for them. */
+/**
+ * Sources for the thresholds this registry states.
+ *
+ * A gate that names a number is an assertion about the field, and an assertion
+ * with no source is just a confident sentence. Every entry here was checked
+ * against Crossref; `npm run check-refs` (scripts/check_refs.mjs) re-verifies
+ * each DOI resolves to the work named, so this stays honest as it grows.
+ *
+ * Where a number has no published source it is NOT cited here. Those thresholds
+ * say so in the gate text itself, because a working default presented as an
+ * established criterion is the thing this map exists to prevent.
+ */
+export const REFERENCES = {
+  jones1997: {
+    cite: "Jones et al. (1997) J Mol Biol 267:727–748",
+    doi: "10.1006/jmbi.1996.0897",
+    note: "GOLD; the redocking RMSD criterion as used in practice.",
+  },
+  cole2005: {
+    cite: "Cole et al. (2005) Proteins 60:325–332",
+    doi: "10.1002/prot.20497",
+    note: "Why comparing docking programs on an RMSD cut-off is harder than it looks.",
+  },
+  truchon2007: {
+    cite: "Truchon & Bayly (2007) J Chem Inf Model 47:488–508",
+    doi: "10.1021/ci600426e",
+    note: "BEDROC and the early-recognition problem; the source of α = 20.",
+  },
+  mysinger2012: {
+    cite: "Mysinger et al. (2012) J Med Chem 55:6582–6594",
+    doi: "10.1021/jm300687e",
+    note: "DUD-E; property-matched decoys and why unmatched ones flatter a method.",
+  },
+  wang2015: {
+    cite: "Wang et al. (2015) J Am Chem Soc 137:2695–2703",
+    doi: "10.1021/ja512751q",
+    note: "Large prospective RBFE study; the ~1 kcal/mol accuracy expectation.",
+  },
+  jumper2021: {
+    cite: "Jumper et al. (2021) Nature 596:583–589",
+    doi: "10.1038/s41586-021-03819-2",
+    note: "AlphaFold; pLDDT as a per-residue confidence measure, and PAE.",
+  },
+  varadi2021: {
+    cite: "Varadi et al. (2021) Nucleic Acids Res 50:D439–D444",
+    doi: "10.1093/nar/gkab1061",
+    note: "AlphaFold DB; the confidence bands that make 70 the usual cut.",
+  },
+  knapp2018: {
+    cite: "Knapp et al. (2018) J Chem Theory Comput 14:6127–6138",
+    doi: "10.1021/acs.jctc.8b00391",
+    note: "Why a single trajectory supports false positives, and replicas fix it.",
+  },
+  brunger1992: {
+    cite: "Brünger (1992) Nature 355:472–475",
+    doi: "10.1038/355472a0",
+    note: "R-free; the cross-validated measure a structure is judged on.",
+  },
+  zheng2014: {
+    cite: "Zheng et al. (2014) Nat Protoc 9:156–170",
+    doi: "10.1038/nprot.2013.172",
+    note: "CheckMyMetal; validating metal sites against observed coordination.",
+  },
+};
+
 export const FAMILY_TERMS = {
   docking: ["docking", "dock", "virtual screening", "screening"],
   fep: ["fep", "free energy", "alchemical", "rbfe", "abfe", "perturbation"],
@@ -304,6 +369,7 @@ export const MODULES = {
     title: "Validate retrospectively before predicting",
     why: "Run the edges you already have data for. This is the step that separates a working campaign from an expensive random number generator.",
     gate: "Reproduce measured ΔΔG within ~1 kcal/mol MUE, and get the ranking right, before anyone acts on a prediction.",
+    refs: ["wang2015"],
     requires: [],
     produces: ["ranked_candidates"],
     tools: ["alchemlyb","OpenFE","FEP+ (Schrödinger)"],
@@ -549,6 +615,7 @@ export const MODULES = {
     title: "Redock the native ligand",
     why: "The single cheapest sanity check in the field. Take the crystallographic ligand out, dock it back into its own receptor, and measure heavy-atom RMSD to the deposited pose. If your setup cannot recover a pose it was handed, nothing downstream means anything.",
     gate: "Pass: top-ranked pose within 2.0 Å RMSD of the crystal pose. Fail: revisit box, protonation and ligand setup before going further.",
+    refs: ["jones1997", "cole2005"],
     pitfall: "A redock that only succeeds with the crystallographic ligand's own starting conformer. Randomise the input geometry or you are testing nothing.",
     requires: ["prepared_receptor","native_ligand"],
     produces: ["validated_setup"],
@@ -558,7 +625,8 @@ export const MODULES = {
     family: "docking",
     title: "Cross-dock if the target moves",
     why: "One receptor is one conformational snapshot. If the target has several states (kinase DFG-in/out, an induced-fit subpocket, a flexible lid), dock each known ligand into every receptor and keep the receptors that recover the most poses. This is how you pick an ensemble instead of guessing.",
-    gate: "Keep receptors that redock ≥60% of the known ligand set within 2 Å.",
+    gate: "Keep receptors that redock ≥60% of the known ligand set within 2 Å. The 2 Å is the usual redocking criterion; the 60% is a working default rather than a published threshold, so set it against how many receptors you can afford to carry.",
+    refs: ["jones1997"],
     requires: ["validated_setup"],
     produces: ["receptor_ensemble"],
     tools: ["AutoDock Vina","smina","Uni-Dock","ODDT"],
@@ -568,6 +636,7 @@ export const MODULES = {
     title: "Run the enrichment control",
     why: "Before screening millions of compounds, prove the setup can tell actives from look-alikes. Assemble known actives plus property-matched decoys, dock both, and measure how far up the ranking the actives land.",
     gate: "Report EF1%, BEDROC (α=20) and ROC-AUC. EF1% below ~5 means your ranking is close to noise, fix the setup rather than screening on it.",
+    refs: ["truchon2007", "mysinger2012"],
     pitfall: "Decoys that differ from the actives in molecular weight or logP. The model learns the property, reports beautiful enrichment, and tells you nothing about binding.",
     requires: ["validated_setup","known_actives"],
     produces: ["enrichment_metrics"],
@@ -653,6 +722,7 @@ export const MODULES = {
     title: "Rank with free energy, not docking score",
     why: "In a congeneric series, relative binding free energy is the method that earns its cost. Run it on a handful of well-chosen edges rather than everything.",
     gate: "Validate on measured analogues first: RBFE should reproduce known ΔΔG within ~1 kcal/mol before you trust a prediction.",
+    refs: ["wang2015"],
     pitfall: "Running FEP across a scaffold hop. The method assumes a shared binding mode; breaking that assumption produces confident nonsense.",
     requires: ["receptor_structure","candidate_molecules"],
     produces: ["ranked_candidates"],
@@ -898,7 +968,8 @@ export const MODULES = {
     family: "docking",
     title: "Use the ensemble",
     why: "Now it earns its cost: dock into the representative states rather than one crystal snapshot, and keep the receptors that recover known poses.",
-    gate: "Cross-dock known ligands across the ensemble; keep the states that redock them within 2 Å.",
+    gate: "Cross-dock known ligands across the ensemble; keep the states that redock them within 2 Å. How many states to keep is a judgement about cost, not a published number.",
+    refs: ["jones1997"],
     requires: ["conformer_ensemble"],
     produces: [],
     tools: ["AutoDock Vina","smina","gnina","Uni-Dock","ODDT"],
@@ -941,6 +1012,7 @@ export const MODULES = {
     title: "Equilibrate, then run replicates",
     why: "One trajectory is an anecdote. Multiple independent replicates are the minimum for any claim about stability.",
     gate: "At least 3 independent replicates; report per-replicate results, not just the pooled average.",
+    refs: ["knapp2018"],
     requires: ["simulation_system"],
     produces: ["trajectory"],
     tools: ["GROMACS","OpenMM","NAMD","AMBER / AmberTools"],
@@ -1083,6 +1155,7 @@ export const MODULES = {
     why: "Resolution alone is a poor ranking. What matters is whether the site you care about is ordered and complete, whether the sequence is wild type over that region, whether a drug-like ligand is bound, and whether the construct includes the domain at all. A 1.6 Angstrom structure with a disordered loop across the pocket is worse than a 2.3 Angstrom one without.",
     live: "structures",
     gate: "Binding-site residues resolved with no missing heavy atoms, R-free consistent with the resolution, and the construct covering the domain you intend to use.",
+    refs: ["brunger1992"],
     pitfall: "Ranking on resolution and deposition date. Both are easy to sort on and neither tells you whether the pocket is modelled.",
     requires: ["target_identity"], produces: ["receptor_structure"],
     tools: ["RCSB PDB", "PDBe-KB", "PDBbind+", "Mol*"],
@@ -1092,6 +1165,7 @@ export const MODULES = {
     title: "Fall back to prediction where nothing exists",
     why: "Predicted models are good enough to work from and their confidence metrics are not decoration. A low-pLDDT stretch is a region the model is telling you it could not place, and the predicted aligned error tells you whether two confidently-folded domains are confidently arranged relative to each other. A prediction also arrives apo, with no ligand and no metal.",
     gate: "Treat pLDDT below 70 as unmodelled rather than flexible, check the PAE map before trusting any inter-domain arrangement, and transplant cofactors and metals before using the model for anything that needs them.",
+    refs: ["jumper2021", "varadi2021"],
     pitfall: "Docking into a predicted side-chain arrangement as though it were observed. Side chains in an apo prediction are a plausible guess, not a measured conformation, and the pocket they form may not exist.",
     requires: ["target_identity"], produces: ["receptor_structure"],
     tools: ["AlphaFold Protein Structure DB", "ColabFold", "AlphaFold 3", "Boltz", "Chai-1", "AlphaFill"],
@@ -1124,6 +1198,7 @@ export const MODULES = {
     title: "Characterise the metal centre before anything else",
     why: "Establish which metal is actually there, its oxidation state, coordination number and geometry, which residues donate, and whether it is catalytic or structural. That determines the ligand charge you dock, the protonation you assign and whether a chelating group is even the right idea.",
     gate: "Donor distances and coordination geometry must fall inside the ranges observed for that metal and donor set. Validate the deposited site rather than assuming it.",
+    refs: ["zheng2014"],
     pitfall: "Trusting the metal in the coordinate file. Nickel from an affinity tag gets modelled as the physiological zinc, magnesium is fitted where sodium belongs, and partially occupied sites are deposited at full occupancy. A predicted model is worse: AlphaFold returns the fold with an empty site.",
     requires: ["receptor_structure"],
     produces: ["metal_site_definition"],

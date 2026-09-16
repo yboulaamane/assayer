@@ -1,6 +1,7 @@
 import { icon } from "./icons.js";
 import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js";
 import { buildBrief, compose, composeFromSelection, validate } from "./compose.js";
+import { REFERENCES } from "./modules.js";
 import { matchesAccess } from "./catalog.js";
 
 const app = document.getElementById("app");
@@ -665,7 +666,10 @@ async function drawPlan(q, forcedIntent = "") {
           <p class="why">${esc(s.why)}</p>
           ${s.context ? `<p class="why">${esc(s.context)}</p>` : ""}
           ${s.unmet.length ? `<p class="gate"><b>Before this step:</b> Provide or complete ${s.unmet.map((n) => esc(n.replaceAll("_", " "))).join(", ")}. This step and dependent work are conditional.</p>` : ""}
-          ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}</p>` : ""}
+          ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}${s.refs?.length ? `
+            <span class="refs">${s.refs.map((r) => REFERENCES[r]
+              ? `<a href="https://doi.org/${esc(REFERENCES[r].doi)}" target="_blank" rel="noopener" title="${esc(REFERENCES[r].note || "")}">${esc(REFERENCES[r].cite)}</a>`
+              : "").filter(Boolean).join(" · ")}</span>` : ""}</p>` : ""}
           ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
           ${s.live === "structures" ? `<div id="struct-slot">${
             target ? renderStructures(structures, ev.total, ev.af, target)
