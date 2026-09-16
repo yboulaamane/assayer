@@ -88,6 +88,36 @@ Every decision is shown: what was left out and why, what was added, where the
 route changed. A planner that silently drops a step is worse than one that
 prints too many.
 
+**Two ways a plan gets built.** The curated route above is the floor: always
+complete, always valid, and what you get with no key configured. On top of it,
+`web/api/plan.js` hands a model the whole registry and asks which modules *this*
+request needs, in what order, and why each one. That is the difference between
+choosing one of eighteen pre-written documents and composing from 122 parts.
+
+The model returns ids and nothing else. It never writes a step, a gate, a
+threshold or a tool name — those come from the registry, which lives on the
+server and is never supplied by the caller. Then `composeFromSelection()` puts
+the selection through exactly the same machinery as the curated path: unknown
+ids are discarded, excluded methods dropped, prerequisites resolved, and the
+result has to pass `validate()` before the page will show it. If any of that
+fails, the curated plan stands. A confused model produces a worse selection,
+never an invented protocol.
+
+One thing the model is not allowed to do is drop a control. Asked for "the
+smallest sufficient set" it will happily remove the check that makes the rest
+falsifiable, because the plan then looks leaner and reads fine. A screen keeps
+its redock and enrichment controls, a model keeps its split and applicability
+domain, a simulation keeps its convergence check. Those are reinstated whenever
+the work that needs them is present, and the page says so.
+
+The lookup now runs **before** the selection rather than after it, so the model
+knows whether the target has four hundred experimental structures or none.
+An empty structure list is passed as "none found", never as proof none exists.
+
+Because the selection is per-case, the page shows what the model understood,
+what it assumed, and up to two questions whose answers would change which
+modules apply. All of it travels into the Markdown export.
+
 **Metal centres** are handled the same way. A metalloenzyme is not a separate
 kind of project; it is the same project with a coordination problem in the
 middle of it. So there is no metal protocol. When the question mentions a metal,
@@ -213,10 +243,19 @@ Two free tiers is usually enough. The per-case brief costs roughly twenty times
 what routing does, so it is offered behind a button rather than written for
 every plan, and never written for a question that matched nothing.
 
-The model only picks a protocol and pulls out the target and organism. It never
-writes steps and never names tools, so a confused model gives you a wrong route
-rather than an invented tool. An intent that isn't a real protocol id is thrown
-away.
+There are two model endpoints, and both degrade to the curated path alone:
+
+| Endpoint | What the model returns | If it fails |
+|---|---|---|
+| `POST /api/route` | one protocol id, target, organism | keyword routing |
+| `POST /api/plan` | a list of module ids with a reason each | the curated protocol |
+
+Neither writes steps or names tools, so a confused model gives you a wrong
+selection rather than an invented tool. An id that is not in the registry is
+thrown away by the endpoint and again by the page; neither side trusts the
+model. `GET /api/plan` reports how many modules and routes the running
+deployment can see, which is the quickest way to tell whether the function
+actually deployed.
 
 Everything falls back to keywords: no key, spent quota, slow model, unparseable
 reply, no function deployed. The page gets dumber for that one question and

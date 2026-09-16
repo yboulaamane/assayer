@@ -555,6 +555,23 @@ export function planToMarkdown(plan, target, structures, brief) {
   if (brief?.truncated) L.push("**Routing:** The model saw only the first 1,500 characters; review the selected workflow.", "");
   if (!plan.viable) L.push("**Provisional plan:** Missing inputs or excluded methods prevent this plan from being ready to follow. Resolve the conditions below first.", "");
   if (plan.rerouted) L.push(`**Route changed:** ${plan.rerouted.from} → ${plan.rerouted.to} (${plan.rerouted.because})`, "");
+  // The reasoning that produced this particular selection travels with it, or
+  // the exported file is a plan nobody can argue with.
+  if (plan.selected) {
+    L.push("**Steps chosen for this case** from the module registry, then validated against it.", "");
+    if (plan.understood) L.push(`**Understood as:** ${plan.understood}`, "");
+    if (plan.assumptions?.length) L.push(`**Assumed:** ${plan.assumptions.join("; ")}`, "");
+    if (plan.questions?.length) {
+      L.push("**Open questions that would change this plan:**", "");
+      for (const q of plan.questions) L.push(`- ${q}`);
+      L.push("");
+    }
+    if (plan.reinstated?.length) {
+      L.push("**Put back as required controls:**", "");
+      for (const r of plan.reinstated) L.push(`- ${r.title} \u2014 ${r.because}`);
+      L.push("");
+    }
+  }
   L.push(plan.summary, "");
   if (plan.decision) L.push(`**This decides:** ${plan.decision}`, "");
   if (plan.stop) L.push(`**Stop if:** ${plan.stop}`, "");

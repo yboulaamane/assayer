@@ -1,6 +1,6 @@
 import { icon } from "./icons.js";
 import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js";
-import { buildBrief, compose, validate } from "./compose.js";
+import { buildBrief, compose, composeFromSelection, validate } from "./compose.js";
 import { matchesAccess } from "./catalog.js";
 
 const app = document.getElementById("app");
@@ -420,14 +420,20 @@ function toolChip(name) {
   return `<a class="minitool" style="--h:${s?.hue ?? 220}" href="${window.updateTool(t.id)}">${icon(t.stage)}${esc(t.name)}</a>`;
 }
 
-function workflowLoading(stage, detail = "") {
-  const phases = ["Match question", "Resolve target", "Rank structures"];
-  const titles = ["Finding your workflow", "Getting to know your target", "Finding a structure to build on"];
-  const descriptions = [
-    "Matching your question to a protocol and checking its requirements.",
-    `Looking up ${detail} in UniProt.`,
-    `Comparing experimental structures for ${detail} and checking AlphaFold.`,
-  ];
+const PHASES = {
+  route: { label: "Match question", title: "Reading the question",
+           blurb: "Working out what result you need, and what you ruled out." },
+  target: { label: "Resolve target", title: "Getting to know your target",
+            blurb: (d) => `Looking up ${d} in UniProt.` },
+  structures: { label: "Rank structures", title: "Finding a structure to build on",
+                blurb: (d) => `Comparing experimental structures for ${d} and checking AlphaFold.` },
+  select: { label: "Choose the steps", title: "Choosing the steps for your case",
+            blurb: "Selecting modules against what you have, what you excluded and what the lookup found." },
+};
+
+function workflowLoading(order, at, detail = "") {
+  const phase = PHASES[order[at]] || PHASES.route;
+  const blurb = typeof phase.blurb === "function" ? phase.blurb(detail) : phase.blurb;
   return `<div class="workflow-loading" role="status" aria-live="polite">
     <div class="loading-art" aria-hidden="true">
       <svg viewBox="0 0 120 120" fill="none">
@@ -439,12 +445,97 @@ function workflowLoading(stage, detail = "") {
       </svg>
     </div>
     <div class="loading-copy"><span class="loading-eyebrow">From question to workflow</span>
-      <h3>${titles[stage]}</h3><p>${esc(descriptions[stage])}</p>
-      <ol class="loading-phases">${phases.map((label, i) => `<li class="${i < stage ? "done" : i === stage ? "active" : ""}"${i === stage ? ' aria-current="step"' : ""}>
-        <span aria-hidden="true">${i < stage ? "✓" : i + 1}</span>${label}</li>`).join("")}</ol>
+      <h3>${esc(phase.title)}</h3><p>${esc(blurb)}</p>
+      <ol class="loading-phases">${order.map((k, i) => `<li class="${i < at ? "done" : i === at ? "active" : ""}"${i === at ? ' aria-current="step"' : ""}>
+        <span aria-hidden="true">${i < at ? "\u2713" : i + 1}</span>${esc(PHASES[k].label)}</li>`).join("")}</ol>
     </div>
     <div class="loading-track" aria-hidden="true"></div>
   </div>`;
+}
+
+/**
+ * Resolve the target and rank its structures before the plan is chosen.
+ *
+ * This used to run after the plan was rendered, which meant the selection was
+ * made without knowing whether the target has four hundred structures or none.
+ */
+async function lookupEvidence(parsed, order, revision, host) {
+  const out = { target: null, structures: [], total: 0, af: null, hits: [], failed: false };
+  if (!parsed.target) return out;
+  try {
+    host.innerHTML = workflowLoading(order, order.indexOf("target"), parsed.target);
+    const hits = await findTarget(parsed.target, parsed.organism);
+    if (revision !== planRevision) return null;
+    out.hits = hits;
+    const asked = parsed.organism?.label || null;
+    const got = hits[0]?.organism || null;
+    out.asked = asked;
+    out.mismatch = Boolean(asked && got && !got.toLowerCase().startsWith(asked.toLowerCase().split(" ")[0]));
+    out.droppedOrganism = Boolean(hits.droppedOrganism);
+    if (!hits.length) return out;
+
+    out.target = hits[0];
+    host.innerHTML = workflowLoading(order, order.indexOf("structures"), out.target.accession);
+    const { entries, total } = await findStructures(out.target.accession, out.target.organism);
+    if (revision !== planRevision) return null;
+    out.structures = entries; out.total = total;
+    out.af = await alphafold(out.target.accession);
+    if (revision !== planRevision) return null;
+  } catch {
+    out.failed = true;
+  }
+  return out;
+}
+
+function targetBox(parsed, ev) {
+  if (!parsed.target) return "";
+  if (ev.failed) {
+    return `<p class="note" style="margin:0 0 20px"><b>Couldn't reach UniProt / RCSB.</b>
+      The lookup failed or took too long. Every step below still applies; resolve the target
+      and pick the structure by hand.</p>`;
+  }
+  if (!ev.target) {
+    return `<p class="note" style="margin:0 0 20px">No reviewed UniProt entry matched \u201c${esc(parsed.target)}\u201d. The protocol below still applies, resolve the target by hand and carry on.</p>`;
+  }
+  const t = ev.target, extra = ev.hits.length - 1;
+  return `
+    <div class="tbl-wrap" style="margin:0 0 24px;padding:16px 18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:6px">Target resolved</div>
+      <div style="font:500 17px/1.3 var(--serif)">${esc(t.name)}</div>
+      <div style="font-size:13px;color:var(--ink-2);margin-top:5px">
+        <a href="https://www.uniprot.org/uniprotkb/${esc(t.accession)}" target="_blank" rel="noopener" style="font-family:var(--mono)">${esc(t.accession)}</a>
+        \u00b7 ${esc(t.gene || "\u2014")} \u00b7 ${esc(t.organism || "")} \u00b7 ${t.length} aa
+        ${extra > 0 ? ` \u00b7 <span style="color:var(--ink-3)">${extra} other match${extra > 1 ? "es" : ""}</span>` : ""}
+      </div>
+      ${ev.mismatch || ev.droppedOrganism ? `<p class="note" style="margin:12px 0 0">
+        <b>Not the species you asked for.</b> You said ${esc(ev.asked)}; the closest entry UniProt holds
+        for \u201c${esc(parsed.target)}\u201d is <b>${esc(ev.hits[0]?.organism || "another organism")}</b>. Sequence and pocket may
+        differ, confirm the orthologue before building anything on it.</p>` : ""}
+    </div>`;
+}
+
+/**
+ * Ask the model which modules this case needs.
+ *
+ * Returns null on anything at all going wrong, which is the common path: no key
+ * configured, quota spent, provider down, malformed reply. The caller then uses
+ * the curated composition, which is always a complete, valid plan.
+ */
+async function selectModules(query, brief, evidence) {
+  try {
+    const r = await fetch("api/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, brief, evidence }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d || d.unsupported || !Array.isArray(d.modules) || !d.modules.length) return null;
+    return d;
+  } catch {
+    return null;
+  }
 }
 
 function workflowCorrection(q, activeIntent) {
@@ -459,7 +550,7 @@ function workflowCorrection(q, activeIntent) {
 async function drawPlan(q, forcedIntent = "") {
   const revision = ++planRevision;
   const host = document.getElementById("plan");
-  host.innerHTML = workflowLoading(0);
+  host.innerHTML = workflowLoading(["route", "target", "structures", "select"], 0);
 
   let parsed = await resolveQuery(q);
   if (revision !== planRevision) return;
@@ -471,8 +562,6 @@ async function drawPlan(q, forcedIntent = "") {
     };
   }
   const brief = buildBrief(parsed);
-  const plan = compose(brief);
-  const issues = plan.ok ? validate(plan) : [];
 
   if (parsed.matched === false) {
     host.innerHTML = `<div class="nomatch">
@@ -485,6 +574,29 @@ async function drawPlan(q, forcedIntent = "") {
     return;
   }
 
+  // Evidence first, so the module selection knows what actually exists.
+  const order = parsed.target ? ["route", "target", "structures", "select"] : ["route", "select"];
+  const ev = await lookupEvidence(parsed, order, revision, host);
+  if (ev === null) return;
+  const { target, structures } = ev;
+
+  // The curated composition is the floor: always complete, always valid. The
+  // model's selection only replaces it if it survives the same validator.
+  const baseline = compose(brief);
+  let plan = baseline;
+  if (baseline.ok) {
+    host.innerHTML = workflowLoading(order, order.indexOf("select"), parsed.target || "");
+    const selection = await selectModules(q, brief, {
+      target, structures: structures.slice(0, 4), total: ev.total, alphafold: Boolean(ev.af),
+    });
+    if (revision !== planRevision) return;
+    if (selection) {
+      const chosen = composeFromSelection(brief, selection);
+      if (chosen.ok && !validate(chosen).length && chosen.steps.length) plan = chosen;
+    }
+  }
+  const issues = plan.ok ? validate(plan) : [];
+
   if (!plan.ok || issues.length) {
     host.innerHTML = `<div class="nomatch"><b>This plan needs correction before it can be used.</b>
       <ul>${[...(plan.errors || []), ...issues].map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>`;
@@ -495,12 +607,22 @@ async function drawPlan(q, forcedIntent = "") {
     <div class="section-head" style="margin-top:10px">
       <h2>${esc(plan.label)}</h2>
       <span>${plan.steps.length} steps${parsed.target ? ` · target: ${esc(parsed.target)}` : ""}${parsed.organism ? ` · ${esc(parsed.organism.label)}` : ""}
-        · <span title="${parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : parsed.via === "manual" ? "Workflow selected manually" : "Matched on keywords, no model call needed"}">${parsed.via === "llm" ? "routed by model" : parsed.via === "manual" ? "selected by you" : "routed by keywords"}${parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
+        · <span title="${plan.selected ? "The steps were chosen for this case from the module registry, then validated" : parsed.via === "llm" ? "Routed by the LLM because the keyword router was unsure" : parsed.via === "manual" ? "Workflow selected manually" : "Matched on keywords, no model call needed"}">${plan.selected ? "steps chosen for your case" : parsed.via === "llm" ? "routed by model" : parsed.via === "manual" ? "selected by you" : "routed by keywords"}${!plan.selected && parsed.reason ? `: ${esc(parsed.reason)}` : ""}</span></span>
       <span class="spacer"></span>
     </div>
     <p class="lede" style="margin:-6px 0 20px;max-width:78ch">${esc(plan.summary)}</p>
     ${parsed.confidence === "medium" ? `<p class="note">The router found a plausible workflow but was not fully certain. Check the selection below before using the plan.</p>` : ""}
     ${workflowCorrection(q, plan.intent)}
+    ${plan.understood ? `<div class="understood">
+      <span class="lab">What I understood</span>
+      <p>${esc(plan.understood)}</p>
+      ${plan.assumptions?.length ? `<p class="why">Assumed: ${plan.assumptions.map(esc).join("; ")}.</p>` : ""}
+      ${plan.questions?.length ? `<div class="asks"><b>This would change the plan:</b>
+        <ul>${plan.questions.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p class="why">Answer either in the box above and plan again.</p></div>` : ""}
+      ${plan.reinstated?.length ? `<p class="why">Put back: ${plan.reinstated.map((r) => esc(r.title)).join(", ")}
+        \u2014 controls the rest of the plan depends on.</p>` : ""}
+    </div>` : ""}
     ${brief.degraded ? `<p class="note">Semantic routing was unavailable. This is a provisional plan based on recognised phrases; check that it captures your full request.</p>` : ""}
     ${brief.truncated ? `<p class="note">The routing model saw only the first 1,500 characters. Constraints were extracted from the full question, but the selected workflow needs review.</p>` : ""}
     ${!plan.viable ? `<div class="nomatch"><b>Provisional plan — inputs or methods are missing.</b>
@@ -528,7 +650,7 @@ async function drawPlan(q, forcedIntent = "") {
       ${plan.decision ? `<div class="dec"><span class="lab">This decides</span>${esc(plan.decision)}</div>` : ""}
       ${plan.stop ? `<div class="kill"><span class="lab">Stop if</span>${esc(plan.stop)}</div>` : ""}
     </div>` : ""}
-    <div id="target-box"></div>
+    <div id="target-box">${targetBox(parsed, ev)}</div>
     <div id="tailor-slot"></div>
     <div class="plan">${plan.steps.map((s, i) => `
       <div class="step">
@@ -540,8 +662,10 @@ async function drawPlan(q, forcedIntent = "") {
           ${s.unmet.length ? `<p class="gate"><b>Before this step:</b> Provide or complete ${s.unmet.map((n) => esc(n.replaceAll("_", " "))).join(", ")}. This step and dependent work are conditional.</p>` : ""}
           ${s.gate ? `<p class="gate"><b>Gate:</b> ${esc(s.gate)}</p>` : ""}
           ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
-          ${s.live === "structures" ? `<div id="struct-slot">${parsed.target ? "" :
-            `<p class="count-note" style="margin:0 0 12px">Name a protein in your question and the ranked PDB table appears here.</p>`}</div>` : ""}
+          ${s.live === "structures" ? `<div id="struct-slot">${
+            target ? renderStructures(structures, ev.total, ev.af, target)
+            : parsed.target ? ""
+            : `<p class="count-note" style="margin:0 0 12px">Name a protein in your question and the ranked PDB table appears here.</p>`}</div>` : ""}
           ${s.tools?.length ? `<div class="minitools">${s.tools.map(toolChip).join("")}</div>` : ""}
         </div>
       </div>`).join("")}
@@ -552,54 +676,6 @@ async function drawPlan(q, forcedIntent = "") {
     </div>
     <p class="note" style="margin-top:18px">Nothing on this page runs docking, MD or enrichment, those are yours to run
       on your own machine or cluster. This plans the work and tells you what each step has to prove.</p>`;
-
-  let target = null, structures = [];
-  const box = document.getElementById("target-box");
-  const slot = () => document.getElementById("struct-slot");
-
-  if (parsed.target) {
-    box.innerHTML = workflowLoading(1, parsed.target);
-    try {
-      const hits = await findTarget(parsed.target, parsed.organism);
-      if (revision !== planRevision) return;
-      const asked = parsed.organism?.label || null;
-      const got = hits[0]?.organism || null;
-      const mismatch = asked && got && !got.toLowerCase().startsWith(asked.toLowerCase().split(" ")[0]);
-      if (!hits.length) {
-        box.innerHTML = `<p class="note" style="margin:0 0 20px">No reviewed UniProt entry matched “${esc(parsed.target)}”. The protocol below still applies, resolve the target by hand and carry on.</p>`;
-      } else {
-        target = hits[0];
-        box.innerHTML = `
-          <div class="tbl-wrap" style="margin:0 0 24px;padding:16px 18px">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:6px">Target resolved</div>
-            <div style="font:500 17px/1.3 var(--serif)">${esc(target.name)}</div>
-            <div style="font-size:13px;color:var(--ink-2);margin-top:5px">
-              <a href="https://www.uniprot.org/uniprotkb/${esc(target.accession)}" target="_blank" rel="noopener" style="font-family:var(--mono)">${esc(target.accession)}</a>
-              · ${esc(target.gene || "—")} · ${esc(target.organism || "")} · ${target.length} aa
-              ${hits.length > 1 ? ` · <span style="color:var(--ink-3)">${hits.length - 1} other match${hits.length > 2 ? "es" : ""}</span>` : ""}
-            </div>
-            ${mismatch || hits.droppedOrganism ? `<p class="note" style="margin:12px 0 0">
-              <b>Not the species you asked for.</b> You said ${esc(asked)}; the closest entry UniProt holds
-              for “${esc(parsed.target)}” is <b>${esc(got || "another organism")}</b>. Sequence and pocket may
-              differ, confirm the orthologue before building anything on it.</p>` : ""}
-          </div>`;
-        if (slot()) {
-          slot().innerHTML = workflowLoading(2, target.accession);
-          const { entries, total } = await findStructures(target.accession, target.organism);
-          if (revision !== planRevision) return;
-          structures = entries;
-          const af = await alphafold(target.accession);
-          if (revision !== planRevision) return;
-          slot().innerHTML = renderStructures(entries, total, af, target);
-        }
-      }
-    } catch (err) {
-      if (revision !== planRevision) return;
-      box.innerHTML = `<p class="note" style="margin:0 0 20px"><b>Couldn't reach UniProt / RCSB.</b>
-        The lookup failed or took too long. You can retry the question later or review the target and structures yourself.</p>`;
-      if (slot()) slot().innerHTML = "";
-    }
-  }
 
   // Optional commentary uses the composed plan, including its prerequisites.
   if (parsed.matched !== false) offerTailor(plan, parsed, target, structures);

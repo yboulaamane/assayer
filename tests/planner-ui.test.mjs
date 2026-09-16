@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { parseQuery, statedConstraints, planToMarkdown, PROTOCOL_LIST } from "../web/assets/workflow.js";
-import { buildBrief, compose, validate } from "../web/assets/compose.js";
+import { buildBrief, compose, composeFromSelection, validate } from "../web/assets/compose.js";
 
 // Render smoke tests: execute the actual page controller with small DOM stubs.
 // These check content and copy behavior, not browser layout or remote lookups.
@@ -19,7 +19,9 @@ function page(query, overrides = {}) {
   const copied = [];
   const context = vm.createContext({
     document: { getElementById: get }, window: {}, addEventListener() {},
-    setTimeout() {}, icon: () => "", buildBrief, compose, validate, planToMarkdown, PROTOCOL_LIST,
+    setTimeout() {}, icon: () => "", buildBrief, compose, composeFromSelection, validate, planToMarkdown, PROTOCOL_LIST,
+    renderStructures: () => "", findTarget: async () => [], findStructures: async () => ({ entries: [], total: 0 }),
+    alphafold: async () => null, intentUsesProtein: () => true, AbortSignal: { timeout: () => undefined },
     resolveQuery: async () => ({ ...parseQuery(query), target: null, constraints: statedConstraints(query) }),
     navigator: { clipboard: { writeText: async (text) => copied.push(text) } },
     ...overrides,
@@ -121,4 +123,68 @@ test("a plan with no metal in it renders no metal steps", async () => {
   await p.context.drawPlan(query);
   const html = p.get("plan").innerHTML;
   assert.ok(!/metal centre|coordination sphere|metal-binding group/i.test(html));
+});
+
+/** A stubbed /api/plan that answers with this selection. */
+const planner = (reply, ok = true) => ({
+  fetch: async () => ({ ok, json: async () => reply }),
+});
+
+test("a model selection is rendered with what it understood and what it asks", async () => {
+  const query = "Find inhibitors of EGFR in human";
+  const p = page(query, planner({
+    understood: "Find new EGFR binders by screening against a validated docking setup.",
+    modules: [
+      { id: "structure.confirm_the_target_and", why: "pin the accession before anything else" },
+      { id: "docking.prepare_the_receptor_and", why: "EGFR needs care over the gatekeeper" },
+      { id: "docking.screen_the_library", why: "the campaign itself" },
+    ],
+    questions: ["Do you have known actives for the enrichment control?"],
+    assumptions: ["Human EGFR, kinase domain"],
+  }));
+  await p.context.drawPlan(query);
+  const html = p.get("plan").innerHTML;
+
+  assert.ok(html.includes("What I understood"));
+  assert.ok(html.includes("Find new EGFR binders"));
+  assert.ok(html.includes("Human EGFR, kinase domain"));
+  assert.ok(html.includes("known actives for the enrichment control"));
+  assert.ok(html.includes("steps chosen for your case"));
+  // Per-case reasoning appears against the step it belongs to.
+  assert.ok(html.includes("pin the accession before anything else"));
+  // The controls the selection omitted were put back and labelled.
+  assert.ok(html.includes("Redock the native ligand"));
+  assert.ok(html.includes("Kept in because"));
+});
+
+test("an unreachable or unusable planner leaves the curated plan in place", async () => {
+  const query = "Find inhibitors of EGFR in human";
+  for (const override of [
+    {},                                             // no fetch at all
+    planner({ modules: [] }),                       // nothing selected
+    planner({ modules: [{ id: "not.real" }] }),     // nothing that exists
+    planner({}, false),                             // upstream error
+  ]) {
+    const p = page(query, override);
+    await p.context.drawPlan(query);
+    const html = p.get("plan").innerHTML;
+    assert.ok(!html.includes("What I understood"));
+    assert.ok(html.includes("routed by"));
+    // The curated protocol is still complete and exportable.
+    assert.ok(html.includes("Redock the native ligand"));
+    assert.ok(html.includes("Download as Markdown"));
+  }
+});
+
+test("a selection cannot smuggle text into a step", async () => {
+  const query = "Find inhibitors of EGFR in human";
+  const p = page(query, planner({
+    understood: "<img src=x onerror=alert(1)>",
+    modules: [{ id: "docking.screen_the_library", why: "<script>alert(2)</script>" }],
+  }));
+  await p.context.drawPlan(query);
+  const html = p.get("plan").innerHTML;
+  assert.ok(!html.includes("<img src=x"));
+  assert.ok(!html.includes("<script>alert(2)"));
+  assert.ok(html.includes("&lt;img") || html.includes("&lt;script"));
 });

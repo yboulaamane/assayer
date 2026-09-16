@@ -136,35 +136,21 @@ function outputs(available, m, brief) {
   for (const cap of expand(m.produces)) if (!brief.missing.includes(cap)) available.add(cap);
 }
 
+/** Normalise a brief so every list field exists before anything reads it. */
+const settle = (brief) => ({
+  excluded: [], assets: [], missing: [], offTargets: [], metal: [], ...brief,
+});
+
 /**
- * Compose a plan.
+ * Turn an ordered list of module ids into steps.
  *
- * Returns every decision, not just the surviving steps: what was dropped and
- * why, what is still unmet, what was borrowed from another recipe. A planner
- * that silently omits a step is worse than one that prints too many.
+ * Shared by the curated route and the model-selected one, so a plan the model
+ * chose passes through exactly the same exclusions, asset reuse and dependency
+ * resolution as a plan the recipe chose. `open` widens only which modules may
+ * be pulled in to satisfy a prerequisite: a selected plan is allowed to draw on
+ * the whole registry, because choosing across protocols is the point of it.
  */
-export function compose(brief) {
-  brief = { excluded: [], assets: [], missing: [], offTargets: [], metal: [], ...brief };
-  let intent = brief.intent, rerouted = null;
-
-  // Structure-based discovery without a structure, or with docking ruled out,
-  // is not a shorter version of itself. It is a different route.
-  if (intent === "hit-discovery" &&
-      (brief.excluded.includes("docking") || brief.missing.includes("receptor_structure"))) {
-    rerouted = {
-      from: intent, to: "ligand-discovery",
-      because: brief.missing.includes("receptor_structure")
-        ? "you said there is no usable structure"
-        : "you excluded docking",
-    };
-    intent = "ligand-discovery";
-  }
-
-  brief = { ...brief, intent, excluded: brief.excluded || [], assets: brief.assets || [],
-    missing: brief.missing || [], offTargets: brief.offTargets || [], metal: brief.metal || [] };
-  const recipe = RECIPES[intent];
-  if (!recipe) return { ok: false, error: `no recipe for ${intent}` };
-
+function assemble(brief, intent, ids, { open = false } = {}) {
   // What the user brought, not what earlier steps in this plan will produce.
   // Skipping a step because a previous step covers it is how a plan loses the
   // step that was supposed to do the work.
@@ -178,8 +164,6 @@ export function compose(brief) {
     !m.produces.some((p) => brief.missing.includes(p)) &&
     !m.skipWith?.some((p) => supplied.has(p));
 
-  const ids = withMetalSite(brief.offTargets.length
-    ? ["selectivity.define_panel", ...recipe.modules, "selectivity.compare_panel"] : recipe.modules, brief);
   for (const id of ids) {
     const m = MODULES[id];
     if (!m) { errors.push(`unknown module: ${id}`); continue; }
@@ -220,7 +204,7 @@ export function compose(brief) {
       if (prior) { dependencies.push(prior.id); continue; }
       const candidate = [...chosen.map((k) => MODULES[k]), ...Object.values(MODULES)]
         .find((c) => c.id !== id && !visited.has(c.id) && eligible(c) &&
-          (compatible(c, intent) || injected(c, brief)) && c.produces.includes(need));
+          (open || compatible(c, intent) || injected(c, brief)) && c.produces.includes(need));
       if (candidate) {
         add(candidate.id, id, need);
         dependencies.push(candidate.id);
@@ -248,14 +232,159 @@ export function compose(brief) {
   };
   for (const id of chosen) add(id);
   const unmet = steps.flatMap((s) => s.unmet.map((capability) => ({ id: s.id, capability })));
-  const viable = steps.length > 0 && !unmet.length && !errors.length;
+
+  return { steps, dropped, borrowed, errors, unmet, chosen };
+}
+
+/** Re-route where the stated constraints make the route itself wrong. */
+function reroute(brief) {
+  // Structure-based discovery without a structure, or with docking ruled out,
+  // is not a shorter version of itself. It is a different route.
+  if (brief.intent === "hit-discovery" &&
+      (brief.excluded.includes("docking") || brief.missing.includes("receptor_structure"))) {
+    return {
+      from: brief.intent, to: "ligand-discovery",
+      because: brief.missing.includes("receptor_structure")
+        ? "you said there is no usable structure"
+        : "you excluded docking",
+    };
+  }
+  return null;
+}
+
+/**
+ * Compose a plan.
+ *
+ * Returns every decision, not just the surviving steps: what was dropped and
+ * why, what is still unmet, what was borrowed from another recipe. A planner
+ * that silently omits a step is worse than one that prints too many.
+ */
+export function compose(brief) {
+  brief = settle(brief);
+  const rerouted = reroute(brief);
+  const intent = rerouted ? rerouted.to : brief.intent;
+
+  brief = { ...brief, intent };
+  const recipe = RECIPES[intent];
+  if (!recipe) return { ok: false, error: `no recipe for ${intent}` };
+
+  const ids = withMetalSite(brief.offTargets.length
+    ? ["selectivity.define_panel", ...recipe.modules, "selectivity.compare_panel"] : recipe.modules, brief);
+  const built = assemble(brief, intent, ids);
+  const viable = built.steps.length > 0 && !built.unmet.length && !built.errors.length;
 
   return {
-    ok: !errors.length, errors, viable, id: intent, intent, rerouted, brief,
+    ok: !built.errors.length, errors: built.errors, viable, id: intent, intent, rerouted, brief,
     label: recipe.label, summary: recipe.summary,
     decision: recipe.decision, stop: recipe.stop,
-    steps, dropped, borrowed,
-    unmet,
+    steps: built.steps, dropped: built.dropped, borrowed: built.borrowed,
+    unmet: built.unmet,
+  };
+}
+
+// Steps a plan may not quietly lose. A model asked for "the smallest sufficient
+// set" will cheerfully drop the control that proves the work means anything,
+// because a plan without it looks leaner and reads fine. These are the checks
+// whose absence would make the rest of the plan unfalsifiable, so they are put
+// back whenever the work that needs them is present. They only ever add.
+const NON_NEGOTIABLE = [
+  { trigger: ["docking.screen_the_library"], anyOf: ["docking.redock_the_native_ligand"],
+    because: "a screen is only worth as much as a setup proven to recover a known pose" },
+  { trigger: ["docking.screen_the_library"], anyOf: ["docking.run_the_enrichment_control"],
+    because: "without an enrichment control the ranking has no measured skill" },
+  { trigger: ["qsar.only_then_reach_for", "qsar.establish_the_baseline_first"],
+    anyOf: ["qsar.split_the_way_you"],
+    because: "a model split at random reports its own leakage as accuracy" },
+  { trigger: ["qsar.only_then_reach_for", "qsar.establish_the_baseline_first"],
+    anyOf: ["qsar.check_the_applicability_domain"],
+    because: "a prediction from outside the applicability domain is not a prediction" },
+  { trigger: ["md.run_production_as_independent", "md.equilibrate_then_run_replicates"],
+    anyOf: ["md.prove_it_converged", "md.check_convergence_not_wall"],
+    because: "an unconverged trajectory cannot support the conclusion drawn from it" },
+  { trigger: ["docking.rank_with_free_energy", "fep.estimate_the_effect_on"],
+    anyOf: ["generative.validate_retrospectively_before_predicting"],
+    because: "free energy predictions are believed only after a retrospective check" },
+];
+
+/** Put back any control the selection dropped out from under its own work. */
+function reinstate(ids, brief) {
+  const out = [...ids];
+  const reinstated = [];
+  for (const rule of NON_NEGOTIABLE) {
+    const at = out.findIndex((id) => rule.trigger.includes(id));
+    if (at < 0 || rule.anyOf.some((id) => out.includes(id))) continue;
+    const pick = rule.anyOf.find((id) => MODULES[id] && !forbidden(MODULES[id], brief));
+    // Excluded on purpose is a decision; the drop is then recorded as the
+    // user's, which is not the same as the model forgetting it.
+    if (!pick) continue;
+    out.splice(at, 0, pick);
+    reinstated.push({ id: pick, title: MODULES[pick].title, because: rule.because });
+  }
+  return { ids: out, reinstated };
+}
+
+const MAX_SELECTED = 24;
+
+/**
+ * Build a plan from modules a model chose, rather than from a fixed recipe.
+ *
+ * The model picks ids; everything else is enforced here. Unknown ids are
+ * discarded, excluded methods are dropped exactly as in the curated path,
+ * dropped controls are put back, and the result has to survive validate()
+ * before the caller will show it. On anything that smells like a confused
+ * response, return ok:false and let the caller fall back to the curated plan.
+ */
+export function composeFromSelection(brief, selection) {
+  brief = settle(brief);
+  const rerouted = reroute(brief);
+  const intent = rerouted ? rerouted.to : brief.intent;
+  brief = { ...brief, intent };
+  const recipe = RECIPES[intent];
+  if (!recipe) return { ok: false, error: `no recipe for ${intent}` };
+
+  const proposed = Array.isArray(selection?.modules) ? selection.modules : [];
+  if (!proposed.length) return { ok: false, error: "no modules selected" };
+
+  const rejected = [], wanted = [];
+  for (const entry of proposed.slice(0, MAX_SELECTED)) {
+    const id = typeof entry === "string" ? entry : entry?.id;
+    if (typeof id !== "string" || !MODULES[id]) { rejected.push(String(id)); continue; }
+    if (!wanted.some((w) => w.id === id)) {
+      wanted.push({ id, why: typeof entry?.why === "string" ? entry.why.slice(0, 300) : null });
+    }
+  }
+  // A response mostly made of ids that do not exist is not a selection worth
+  // repairing. Fall back rather than show whatever survived the filter.
+  if (!wanted.length || rejected.length > wanted.length) {
+    return { ok: false, error: `selection named ${rejected.length} unknown modules` };
+  }
+
+  const { ids, reinstated } = reinstate(wanted.map((w) => w.id), brief);
+  const built = assemble(brief, intent, ids, { open: true });
+  if (!built.steps.length) return { ok: false, error: "selection left no steps" };
+
+  const why = new Map(wanted.map((w) => [w.id, w.why]));
+  for (const step of built.steps) {
+    const note = why.get(step.id);
+    if (note && !step.context) step.context = note;
+    const put = reinstated.find((r) => r.id === step.id);
+    if (put) step.context = `Kept in because ${put.because}.`;
+    step.chosen = why.has(step.id);
+  }
+
+  const viable = built.steps.length > 0 && !built.unmet.length && !built.errors.length;
+  return {
+    ok: !built.errors.length, errors: built.errors, viable, id: intent, intent, rerouted, brief,
+    label: recipe.label, summary: recipe.summary,
+    decision: recipe.decision, stop: recipe.stop,
+    steps: built.steps, dropped: built.dropped, borrowed: built.borrowed,
+    unmet: built.unmet,
+    selected: true, rejected, reinstated,
+    understood: typeof selection?.understood === "string" ? selection.understood.slice(0, 400) : null,
+    questions: (Array.isArray(selection?.questions) ? selection.questions : [])
+      .filter((q) => typeof q === "string").slice(0, 3).map((q) => q.slice(0, 200)),
+    assumptions: (Array.isArray(selection?.assumptions) ? selection.assumptions : [])
+      .filter((a) => typeof a === "string").slice(0, 4).map((a) => a.slice(0, 200)),
   };
 }
 
@@ -271,7 +400,11 @@ export function validate(plan) {
     if (seen.has(s.id)) issues.push(`module appears twice: ${s.id}`);
     if (forbidden(m, brief)) issues.push(`excluded method in ${s.id}`);
     const panel = brief.offTargets.length && ["selectivity.define_panel", "selectivity.compare_panel"].includes(s.id);
-    if (plan.intent && !compatible(m, plan.intent) && !panel && !injected(m, brief)) {
+    // A model-selected plan is allowed to draw modules from any protocol, which
+    // is the whole point of letting it choose. Its safety comes from every id
+    // resolving, the exclusions holding and the dependency order being checked,
+    // all of which still run below.
+    if (plan.intent && !plan.selected && !compatible(m, plan.intent) && !panel && !injected(m, brief)) {
       issues.push(`incompatible module: ${s.id}`);
     }
     for (const field of ["requires", "produces", "tools"]) {
