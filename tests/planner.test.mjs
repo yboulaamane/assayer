@@ -731,3 +731,25 @@ test("a landscape plan states the limits of its own search", () => {
   const md = planToMarkdown(result, null, [], brief);
   assert.ok(md.includes("Competitive & IP landscape"));
 });
+
+test("the model picks which modules, not where the injected ones go", () => {
+  const { brief } = plan("Dock hydroxamates into HDAC6 and spare HDAC1");
+  // A selection that puts the off-target panel last, as a live model did.
+  const result = composeFromSelection(brief, { modules: [
+    { id: "structure.confirm_the_target_and" }, { id: "structure.choose_the_receptor_structure" },
+    { id: "docking.prepare_the_receptor_and" }, { id: "docking.redock_the_native_ligand" },
+    { id: "docking.screen_the_library" }, { id: "docking.triage_the_hits_like" },
+    { id: "selectivity.define_panel" }, { id: "selectivity.compare_panel" },
+  ]});
+  assert.deepEqual(validate(result), []);
+  const ids = result.steps.map((s) => s.id);
+  // Knowing what you must spare shapes the library and the enrichment set, so
+  // the panel is defined first however the selection ordered it.
+  assert.equal(ids[0], "selectivity.define_panel");
+  assert.equal(ids[ids.length - 1 - (ids.at(-1).startsWith("metal.") ? 1 : 0)] === "selectivity.compare_panel"
+               || ids.includes("selectivity.compare_panel"), true);
+  assert.ok(ids.indexOf("selectivity.compare_panel") > ids.indexOf("docking.screen_the_library"));
+  // Metal setup still lands before the receptor is used, not wherever it was listed.
+  assert.ok(ids.indexOf("metal.characterise_the_metal_centre")
+            < ids.indexOf("docking.prepare_the_receptor_and"));
+});
