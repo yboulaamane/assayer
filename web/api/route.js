@@ -45,7 +45,14 @@ export const INTENTS = [
   ["retrosynthesis", "how to synthesise a molecule, routes, building blocks"],
   ["target-triage", "which target to pick for a disease; target identification and validation"],
   ["structure", "get or model the structure of a protein; pick the best PDB entry"],
-  ["qm-geometry", "optimise or minimise the geometry of a molecule or metal complex; DFT or semi-empirical calculation; conformer or spin-state energies; frequencies, transition states, orbitals"],
+  ["qm-geometry", "optimise or minimise the geometry of a molecule or metal complex; DFT or semi-empirical calculation; conformer or spin-state energies; frequencies and orbitals"],
+  ["qm-mechanism", "reaction mechanism, transition states, activation barriers, reaction paths, catalytic cycles, regio- or stereoselectivity explained by computed energies"],
+  ["qm-properties", "computed molecular properties: pKa, tautomer or protonation state, and predicted NMR, IR or UV spectra compared with measurement"],
+  ["protein-engineering", "engineer a protein or enzyme itself: thermostability, solubility, expression, activity; point mutations for stability; directed evolution library design"],
+  ["peptide-design", "design a peptide, macrocycle, cyclic or stapled peptide as the binder; peptide liabilities and constraint"],
+  ["landscape", "what already exists for a target: published chemical matter, clinical pipeline, patent position, competitive white space"],
+  ["library-design", "build, curate, standardise, filter or select a compound screening library; deduplication and diversity or focused selection"],
+  ["benchmarking", "test or validate a method, model or scoring function against a reference set; compare methods; choose metrics and baselines"],
 ];
 
 const PROMPT = `You route drug-discovery questions to a protocol. Classify the concrete outcome the user asks for, not the broad topic. Reply with JSON only.
@@ -70,6 +77,10 @@ Rules:
 - organism_taxid: human 9606, mouse 10090, rat 10116, SARS-CoV-2 2697049, E. coli 83333, yeast 559292. null if unstated.
 - Choose conformational-sampling over md-stability whenever the question is about exploring conformations rather than checking stability.
 - qm-geometry is for optimising a structure or computing its energy with quantum chemistry, including metal complexes and organometallics. "Optimise the geometry" is qm-geometry; "optimise a lead" or "optimise potency" is lead-opt. A ligand bound to a metal is a chemical structure, not a protein target.
+- Among the quantum chemistry routes: a structure or its energy is qm-geometry; a barrier, transition state or mechanism is qm-mechanism; pKa, tautomers or a predicted spectrum is qm-properties.
+- protein-engineering changes the protein itself (stability, solubility, expression, activity). resistance is about how a mutation affects drug binding. antibody is for antibodies and nanobodies; peptide-design is for peptides and macrocycles as the binder.
+- landscape is for what already exists (published compounds, trials, patents) rather than for making something new. A question about the competitive or patent position is landscape even when it names inhibitors.
+- library-design is for assembling or curating the compound set itself. benchmarking is for testing a method against a reference set rather than applying it.
 
 Examples:
 - "Help me with EGFR drug discovery" -> unsupported (goal is unspecified)

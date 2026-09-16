@@ -596,6 +596,26 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "structure",
+    "name": "ColabFold",
+    "description": "AlphaFold2 and friends with MMseqs2 doing the MSA, which turns an overnight job into minutes; the usual way people actually run structure prediction.",
+    "url": "https://github.com/sokrypton/ColabFold",
+    "code_url": "https://github.com/sokrypton/colabfold",
+    "paper_url": null,
+    "categories": [
+      "structure-prediction",
+      "msa"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "sokrypton/colabfold",
+    "also_in": [
+      "github-topics"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "binding-site",
     "name": "fpocket",
     "description": "Voronoi-based pocket detection and druggability scoring, with mdpocket for pocket dynamics over MD trajectories.",
@@ -4015,6 +4035,42 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "qm",
+    "name": "pysisyphus",
+    "description": "Optimises stationary points on reaction paths: chain-of-states methods, transition state searches and intrinsic reaction coordinates, driving whichever QM engine you have.",
+    "url": "https://github.com/eljost/pysisyphus",
+    "code_url": "https://github.com/eljost/pysisyphus",
+    "paper_url": null,
+    "categories": [
+      "reaction-path",
+      "transition-state"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "eljost/pysisyphus",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qm",
+    "name": "Multiwfn",
+    "description": "Wavefunction analysis: bond orders, charges, orbital composition, electron density topology and non-covalent interaction plots from the output of most QM programs.",
+    "url": "http://sobereva.com/multiwfn/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "wavefunction-analysis",
+      "bonding"
+    ],
+    "year": null,
+    "license": "academic",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "generative",
     "name": "MOSES",
     "description": "Benchmarking platform for molecular generative models with standard splits and distribution metrics.",
@@ -4812,6 +4868,43 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "biologics",
+    "name": "ESM",
+    "description": "Evolutionary-scale protein language models, used for embeddings, variant effect scores and as the front end of structure prediction without an MSA.",
+    "url": "https://github.com/facebookresearch/esm",
+    "code_url": "https://github.com/facebookresearch/esm",
+    "paper_url": null,
+    "categories": [
+      "protein-language-model",
+      "variant-effect"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "facebookresearch/esm",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "biologics",
+    "name": "ThermoMPNN",
+    "description": "Graph network predicting the change in folding stability for every point mutation in a structure, fast enough to scan a whole protein.",
+    "url": "https://github.com/Kuhlman-Lab/ThermoMPNN",
+    "code_url": "https://github.com/kuhlman-lab/thermompnn",
+    "paper_url": null,
+    "categories": [
+      "stability",
+      "ddg",
+      "protein-engineering"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "kuhlman-lab/thermompnn",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "benchmarks",
     "name": "Therapeutics Data Commons",
     "description": "66+ AI-ready therapeutic datasets with fixed splits and leaderboards, spanning ADMET to biologics.",
@@ -5057,6 +5150,42 @@
     "categories": [
       "literature",
       "api"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "clinical",
+    "name": "Google Patents",
+    "description": "Full-text patent search across the major offices with chemical structure indexing; the practical first look at whether a scaffold is already claimed.",
+    "url": "https://patents.google.com",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "patents",
+      "freedom-to-operate"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "clinical",
+    "name": "Espacenet",
+    "description": "The European Patent Office's search over 140 million patent documents, with family and legal-status data that the free aggregators do not carry.",
+    "url": "https://worldwide.espacenet.com",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "patents",
+      "freedom-to-operate"
     ],
     "year": null,
     "license": "free-web",
@@ -70473,7 +70602,9 @@
     "year": "2021",
     "license": "MIT",
     "repo": "sokrypton/colabfold",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-topics",

@@ -390,6 +390,9 @@ function renderWorkflow(params) {
            "Conformational sampling of CYP3A4",
            "Dock hydroxamates into HDAC6 and spare HDAC1",
            "Optimise the geometry of a palladium-bound ligand",
+           "Engineer this enzyme to be more thermostable",
+           "What is already in the clinic for this target?",
+           "Build a focused screening library",
            "ADMET and hERG risk for my compound set",
            "Plan a synthesis route for this molecule"]
           .map((x) => `<button data-q="${esc(x)}">${esc(x)}</button>`).join("")}

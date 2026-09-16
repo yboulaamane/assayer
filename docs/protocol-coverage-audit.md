@@ -178,3 +178,52 @@ Measured over 25 genuine requests and 11 out-of-scope ones: **17/25 (68%)** are
 still answered without a model call, and **0 of 11** out-of-scope questions are
 locked into a protocol. Before the fix, "find me the competitive landscape for
 KRAS inhibitors" was served a docking campaign with no model call at all.
+
+---
+
+**Addendum: the gaps, closed 16 September 2026**
+
+Seven protocols added, taking the planner from 19 routes over 129 modules to 26
+over 166. Every one of the fifteen audit questions that had nowhere to land now
+routes to a protocol, and no question that already worked was stolen.
+
+| Protocol | Covers |
+|---|---|
+| `qm-mechanism` | elementary steps, transition states, barriers, competing pathways |
+| `qm-properties` | protonation and tautomer state, pKa, predicted spectra |
+| `protein-engineering` | thermostability, solubility, expression, activity; directed evolution |
+| `peptide-design` | peptides, macrocycles, stapled and cyclic binders |
+| `landscape` | published chemistry, clinical pipeline, patent position, white space |
+| `library-design` | source, standardisation, filtering, diversity or focused selection |
+| `benchmarking` | claim, reference set, honest split, trivial baseline, uncertainty |
+
+Stage coverage after: the thinnest stages are now Workflow & infrastructure (2
+protocols) and Visualisation (3), which is the intended outcome — both are steps
+inside other work rather than workflows, exactly as the audit argued. Quantum
+chemistry went from 4 protocols to 7, Peptides & protein design from 3 to 5, and
+Clinical & competitive from 2 to 3.
+
+Seven tools were added to support them: ColabFold, ESM, ThermoMPNN, pysisyphus,
+Multiwfn, Google Patents and Espacenet. Every module still names only tools the
+catalogue holds, enforced by a test.
+
+Two things worth recording about the build:
+
+*Routing collisions are the real work.* "Transition state" had to move from
+`qm-geometry` to `qm-mechanism`; "patent position" needed to be a phrase so that
+`landscape` would beat `hit-discovery` on a question mentioning inhibitors;
+`peptide-design` had to be kept clear of `antibody` and `protein-engineering`
+clear of `resistance`. A test now holds all twenty-four characteristic questions,
+including the ten that worked before, so the next protocol cannot quietly take
+one of them.
+
+*Four existing tests failed, and all four were right to.* They asserted that
+questions like "the competitive landscape for KRAS inhibitors" reached no
+protocol — true when written, and the gap this work removed. They were rewritten
+to test the underlying principle against questions that genuinely still have no
+home ("who first discovered EGFR inhibitors"), rather than deleted.
+
+Remaining, and deliberately not built: visualisation and workflow infrastructure
+as routes of their own. Reproducibility and provenance would be better as a
+module other protocols borrow, which is a smaller change than a protocol and has
+not been made yet.
