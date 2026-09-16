@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { parseQuery, statedConstraints, planToMarkdown, PROTOCOL_LIST } from "../web/assets/workflow.js";
 import { buildBrief, compose, composeFromSelection, validate } from "../web/assets/compose.js";
+import { REFERENCES } from "../web/assets/modules.js";
 
 // Render smoke tests: execute the actual page controller with small DOM stubs.
 // These check content and copy behavior, not browser layout or remote lookups.
@@ -19,7 +20,7 @@ function page(query, overrides = {}) {
   const copied = [];
   const context = vm.createContext({
     document: { getElementById: get }, window: {}, addEventListener() {},
-    setTimeout() {}, icon: () => "", buildBrief, compose, composeFromSelection, validate, planToMarkdown, PROTOCOL_LIST,
+    setTimeout() {}, icon: () => "", buildBrief, compose, composeFromSelection, validate, planToMarkdown, PROTOCOL_LIST, REFERENCES,
     renderStructures: () => "", findTarget: async () => [], findStructures: async () => ({ entries: [], total: 0 }),
     alphafold: async () => null, intentUsesProtein: () => true, AbortSignal: { timeout: () => undefined },
     resolveQuery: async () => ({ ...parseQuery(query), target: null, constraints: statedConstraints(query) }),
