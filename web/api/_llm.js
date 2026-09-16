@@ -14,6 +14,12 @@
 
 export const PROVIDERS = {
   gemini: {
+    // Largest prompt, in tokens, this tier should be sent. Not the context
+    // window: the free tiers meter tokens per minute across prompt and
+    // completion together, so a prompt sized to the window buys one call a
+    // minute and a rate-limit after it. Gemini meters requests long before
+    // tokens, so it can take the full payload.
+    budget: 30000,
     model: "gemini-3.6-flash",
     fallbacks: ["gemini-2.5-flash", "gemini-flash-latest"],
     list: (k) => `https://generativelanguage.googleapis.com/v1beta/models?key=${k}`,
@@ -35,6 +41,10 @@ export const PROVIDERS = {
     finish: (d) => d?.candidates?.[0]?.finishReason || "",
   },
   groq: {
+    // 8,000 tokens per minute, shared between prompt and completion. Leaving
+    // room for a ~1,200-token answer and more than one question per minute puts
+    // the usable prompt here, which is under a full registry digest.
+    budget: 2800,
     model: "openai/gpt-oss-20b",
     fallbacks: ["openai/gpt-oss-120b", "qwen/qwen3.6-27b"],
     list: () => "https://api.groq.com/openai/v1/models",
@@ -49,6 +59,7 @@ export const PROVIDERS = {
     finish: (d) => d?.choices?.[0]?.finish_reason || "",
   },
   openrouter: {
+    budget: 8000,
     model: "meta-llama/llama-3.3-70b-instruct:free",
     fallbacks: [],
     list: () => "https://openrouter.ai/api/v1/models",
@@ -122,6 +133,10 @@ export async function discover(p, key) {
 /**
  * Call the first provider that answers, walking the model ladder within each.
  *
+ * `prompt` may be a string, or a function of the provider entry so the caller
+ * can size the payload to that tier's budget. Failing over from a large-context
+ * provider to a small one otherwise trades a rate-limit for a rate-limit.
+ *
  * Returns { ok, text, model, provider, detail, finish }. Never throws: a caller
  * that cannot reach a model must degrade, not break the page.
  */
@@ -129,8 +144,15 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
   const providers = configured();
   if (!providers.length) return { ok: false, detail: "no LLM_API_KEY configured", status: 501 };
 
-  let upstream, detail = "", used = "", winner = null;
+  let upstream, detail = "", used = "", winner = null, sent = 0;
   const opts = { maxTokens, temperature, json: wantJson };
+  const build = (p) => {
+    const text = typeof prompt === "function"
+      ? prompt({ budget: p.budget ?? 30000, provider: Object.keys(PROVIDERS).find((k) => PROVIDERS[k] === p) })
+      : prompt;
+    sent = Math.round(text.length / 3.8);
+    return text;
+  };
 
   outer:
   for (const { p, key, model, pinned } of providers) {
@@ -146,7 +168,7 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
         upstream = await fetch(p.url(candidate, key), {
           method: "POST",
           headers: p.headers(key),
-          body: JSON.stringify(p.body(candidate, prompt, opts)),
+          body: JSON.stringify(p.body(candidate, build(p), opts)),
           signal: AbortSignal.timeout(timeout),
         });
       } catch (e) {
@@ -182,7 +204,7 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
 
   try {
     const body = await upstream.json();
-    return { ok: true, text: winner.text(body) || "", finish: winner.finish(body),
+    return { ok: true, text: winner.text(body) || "", finish: winner.finish(body), promptTokens: sent,
              model: used, provider: Object.keys(PROVIDERS).find((k) => PROVIDERS[k] === winner) };
   } catch {
     return { ok: false, model: used, detail: "unreadable response", error: "bad upstream body", status: 502 };

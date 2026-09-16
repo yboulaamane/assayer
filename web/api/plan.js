@@ -20,25 +20,90 @@ import { ask, parseObject, configured, json } from "./_llm.js";
 
 export const config = { runtime: "edge" };
 
-// The registry, compact enough to send in full on every call. Sending all of it
-// is the point: choosing across protocols is what a fixed recipe cannot do.
-const CATALOGUE = Object.entries(MODULES)
-  .map(([id, m]) => `${id} | ${m.family} | ${m.title} | needs: ${m.requires.join(", ") || "nothing"} | gives: ${m.produces.join(", ") || "nothing"}`)
-  .join("\n");
+// The registry goes in every prompt, so its wire format is a running cost.
+// Free tiers meter tokens per minute: Groq's is 8,000, and a verbose digest of
+// 122 modules plus all eighteen orderings ate most of that in one call, which
+// meant the endpoint spent its life rate-limited and falling back. Terse field
+// separators instead of prose labels, grouped by family so the family name is
+// written once, and only the orderings that are actually near this request.
+function digest(excluded = [], only = null) {
+  const groups = new Map();
+  for (const [id, m] of Object.entries(MODULES)) {
+    // A family the user ruled out cannot be selected, so offering it only
+    // invites a violation the server would have to strip out again.
+    if (excluded.includes(m.family) || (m.methods || []).some((f) => excluded.includes(f))) continue;
+    if (only && !only.has(id)) continue;
+    if (!groups.has(m.family)) groups.set(m.family, []);
+    groups.get(m.family).push(`${id}|${m.title}|<${m.requires.join(",") || "-"}|>${m.produces.join(",") || "-"}`);
+  }
+  return [...groups].map(([family, rows]) => `[${family}]\n${rows.join("\n")}`).join("\n");
+}
 
-const ROUTES = Object.entries(RECIPES)
-  .map(([id, r]) => `${id}: ${r.modules.join(" -> ")}`)
-  .join("\n");
+/** The routed recipe, its nearest neighbours, and anything that feeds them.
+ *
+ *  Used only where the full registry will not fit the provider's per-minute
+ *  budget. It is a smaller menu, not a different one: the ordering rules,
+ *  validation and reinstated controls are identical either way.
+ */
+function nearby(intent, brief) {
+  const keep = new Set(RECIPES[intent]?.modules || []);
+  for (const [id, r] of neighbours(intent)) for (const m of r.modules) keep.add(m);
+  // Concerns the recipe list does not carry.
+  if (brief.metal?.length) for (const [id, m] of Object.entries(MODULES)) if (m.family === "metal") keep.add(id);
+  if (brief.offTargets?.length) { keep.add("selectivity.define_panel"); keep.add("selectivity.compare_panel"); }
+  // One hop of providers, so a prerequisite is always expressible.
+  for (const id of [...keep]) {
+    for (const need of MODULES[id]?.requires || []) {
+      for (const [other, m] of Object.entries(MODULES)) {
+        if (m.produces.includes(need)) keep.add(other);
+      }
+    }
+  }
+  return keep;
+}
 
-const RULES = `You are planning computational drug-discovery work for a medicinal or computational chemist.
+/** Recipes closest to this one, by how many modules they share with it. */
+function neighbours(intent, limit = 3) {
+  const here = new Set(RECIPES[intent]?.modules || []);
+  return Object.entries(RECIPES)
+    .filter(([id]) => id !== intent)
+    .map(([id, r]) => [id, r, r.modules.filter((m) => here.has(m)).length])
+    .sort((a, b) => b[2] - a[2])
+    .slice(0, limit)
+    .map(([id, r]) => [id, r]);
+}
+
+const blocked = (id, excluded) => {
+  const m = MODULES[id];
+  return !m || excluded.includes(m.family) || (m.methods || []).some((f) => excluded.includes(f));
+};
+
+/** The routed ordering plus its nearest neighbours, as grounding for shape.
+ *
+ *  Excluded modules are stripped here too. Printing them in an example
+ *  sequence puts them back on the menu however firmly the rules say otherwise,
+ *  and a selection the server then has to strip is a wasted call.
+ */
+function orderings(intent, excluded = []) {
+  const rows = RECIPES[intent] ? [[intent, RECIPES[intent]]] : [];
+  rows.push(...neighbours(intent));
+  return rows
+    .map(([id, r]) => [id, r.modules.filter((m) => !blocked(m, excluded))])
+    .filter(([, mods]) => mods.length)
+    .map(([id, mods]) => `${id}: ${mods.join(" -> ")}`)
+    .join("\n");
+}
+
+const rules = (excluded, intent, only) => `You are planning computational drug-discovery work for a medicinal or computational chemist.
 
 Choose the modules this specific request needs. Return JSON only.
 
-MODULE REGISTRY (id | family | title | needs | gives):
-${CATALOGUE}
+MODULE REGISTRY, grouped by family. One module per line as:
+  id|title|<what it needs|>what it gives     ("-" means none)
+${digest(excluded, only)}
 
-CURATED ORDERINGS, as reference for what a sound plan of each kind looks like:
-${ROUTES}
+CURATED ORDERINGS, as reference for what a sound plan of this shape looks like:
+${orderings(intent, excluded)}
 
 Return exactly:
 {"understood": "<one sentence restating what they asked for, in your words>",
@@ -94,8 +159,12 @@ const clean = (v, n) => (typeof v === "string" ? v.slice(0, n) : null);
 
 export default async function handler(req) {
   if (req.method === "GET") {
+    const full = rules([], "hit-discovery");
+    const near = rules([], "hit-discovery", nearby("hit-discovery", {}));
     return json({ modules: Object.keys(MODULES).length, routes: Object.keys(RECIPES).length,
-                  providers: configured().length });
+                  providers: configured().length,
+                  fullPromptTokens: Math.round(full.length / 3.8),
+                  narrowPromptTokens: Math.round(near.length / 3.8) });
   }
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
   if (!configured().length) return json({ error: "no LLM_API_KEY configured", fallback: true }, 501);
@@ -112,7 +181,19 @@ export default async function handler(req) {
 
   // Selecting and justifying a dozen modules is a longer answer than routing,
   // and a reasoning model spends output tokens before any of it appears.
-  const reply = await ask(`${RULES}\n\n${brief(input)}`, { timeout: 20000, maxTokens: 4096 });
+  const excluded = Array.isArray(input.brief?.excluded) ? input.brief.excluded.filter((x) => typeof x === "string") : [];
+  const intent = typeof input.brief?.intent === "string" ? input.brief.intent : "";
+  const context = brief(input);
+
+  // Sized to the provider actually being tried. Sending one payload everywhere
+  // meant the small free tier answered with a rate-limit every time, so the
+  // selection never happened there at all.
+  const build = ({ budget }) => {
+    const full = `${rules(excluded, intent)}\n\n${context}`;
+    if (Math.round(full.length / 3.8) <= budget) return full;
+    return `${rules(excluded, intent, nearby(intent, input.brief || {}))}\n\n${context}`;
+  };
+  const reply = await ask(build, { timeout: 20000, maxTokens: 4096 });
   if (!reply.ok) {
     return json({ error: reply.error || reply.detail, model: reply.model, detail: reply.detail, fallback: true },
                 reply.status || 502);
