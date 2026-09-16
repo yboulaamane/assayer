@@ -213,3 +213,16 @@ test("a family the user ruled out is never even offered", async () => {
   assert.ok(!prompt.includes("md.build_the_system"));
   assert.ok(prompt.includes("qsar.curate_the_data_properly"));
 });
+
+test("the router's protocol list and the registry cannot drift apart", async () => {
+  const { INTENTS } = await import("../web/api/route.js");
+  const { RECIPES } = await import("../web/assets/modules.js");
+  const routable = INTENTS.map(([id]) => id).sort();
+  const real = Object.keys(RECIPES).sort();
+  // A recipe the router cannot name is a protocol no question can reach; an id
+  // the router offers with no recipe behind it is a dead route.
+  assert.deepEqual(routable, real);
+  for (const [id, description] of INTENTS) {
+    assert.ok(description.length > 20, `${id} needs a description the model can route on`);
+  }
+});

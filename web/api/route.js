@@ -21,11 +21,12 @@
 
 export const config = { runtime: "edge" };
 
-// Kept in step with PROTOCOLS in ../assets/workflow.js by hand: the list is
-// hardcoded here so a caller cannot talk this endpoint into arbitrary work.
-// An id the client does not know is rejected there too, so drift degrades to a
-// keyword fallback rather than a broken page.
-const INTENTS = [
+// Hardcoded so a caller cannot talk this endpoint into arbitrary work, and
+// exported so a test can hold it against the registry: this list and RECIPES
+// drifted apart once already, and the symptom was a whole protocol the router
+// could never reach. An id the client does not know is rejected there too, so
+// drift degrades to a keyword fallback rather than a broken page.
+export const INTENTS = [
   ["network-pharmacology", "network or systems pharmacology: connect plant/natural-product or compound sets to disease targets, protein networks and enriched pathways"],
   ["hit-discovery", "find hits/inhibitors/binders for a target; virtual screening; docking campaign"],
   ["lead-opt", "improve an existing series: potency, selectivity, SAR, free-energy ranking"],
@@ -44,6 +45,7 @@ const INTENTS = [
   ["retrosynthesis", "how to synthesise a molecule, routes, building blocks"],
   ["target-triage", "which target to pick for a disease; target identification and validation"],
   ["structure", "get or model the structure of a protein; pick the best PDB entry"],
+  ["qm-geometry", "optimise or minimise the geometry of a molecule or metal complex; DFT or semi-empirical calculation; conformer or spin-state energies; frequencies, transition states, orbitals"],
 ];
 
 const PROMPT = `You route drug-discovery questions to a protocol. Classify the concrete outcome the user asks for, not the broad topic. Reply with JSON only.
@@ -67,6 +69,7 @@ Rules:
 - Expand informal names: "3A4" -> "CYP3A4", "Mpro"/"main protease" -> "3C-like proteinase", "PD-L1" -> "CD274".
 - organism_taxid: human 9606, mouse 10090, rat 10116, SARS-CoV-2 2697049, E. coli 83333, yeast 559292. null if unstated.
 - Choose conformational-sampling over md-stability whenever the question is about exploring conformations rather than checking stability.
+- qm-geometry is for optimising a structure or computing its energy with quantum chemistry, including metal complexes and organometallics. "Optimise the geometry" is qm-geometry; "optimise a lead" or "optimise potency" is lead-opt. A ligand bound to a metal is a chemical structure, not a protein target.
 
 Examples:
 - "Help me with EGFR drug discovery" -> unsupported (goal is unspecified)

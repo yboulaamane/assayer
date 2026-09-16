@@ -1140,6 +1140,74 @@ export const MODULES = {
     produces: ["chelation_risk_assessment"],
     tools: ["ChEMBL","BindingDB","ChemFH","RDKit"],
   },
+
+  // ------------------------------------------------------- quantum chemistry
+  // Optimising a structure is not a protein workflow with the protein removed.
+  // It has its own failure modes, and nearly all of them are settled before the
+  // first SCF cycle: the wrong charge, the wrong spin, a basis that cannot
+  // describe the metal, or a starting geometry that was never plausible.
+  "qm.fix_the_electronic_state": {
+    family: "qm",
+    title: "Fix the charge and spin state before anything else",
+    why: "Write down the total charge, the metal's oxidation state, its d-electron count and the spin multiplicity, and check they agree with each other. Every later number depends on this and nothing downstream will warn you if it is wrong. A d8 palladium(II) centre is square planar and closed-shell; a d10 palladium(0) centre is not, and the two optimise to different structures from the same input file.",
+    gate: "Charge and multiplicity are stated explicitly and are consistent with the oxidation state and d-count. Where the metal has accessible spin states, optimise each one and compare, rather than assuming.",
+    pitfall: "Accepting the default singlet. For first-row metals especially, the ground state is often not the one the default picks, and the geometry that comes back is the right answer to the wrong question.",
+    requires: [], produces: ["electronic_state"],
+    tools: ["molSimplify", "Architector", "Avogadro"],
+  },
+  "qm.build_a_defensible_starting_geometry": {
+    family: "qm",
+    title: "Build a starting geometry worth optimising",
+    why: "An optimiser finds the minimum nearest to where you put it. Hand it a coordination geometry that does not exist for that metal and oxidation state and it will either walk somewhere irrelevant or shed a ligand on the way. Build the complex with something that knows coordination chemistry rather than drawing it by hand.",
+    gate: "Coordination number and geometry match the oxidation state, and the donor distances start inside the range crystallography actually shows for that metal and donor set.",
+    pitfall: "A general-purpose organic toolkit guessing at the metal. Most treat a dative bond as either absent or as a normal covalent bond, and both give you a starting structure that is wrong before you begin.",
+    requires: ["electronic_state"], produces: ["starting_geometry"],
+    tools: ["molSimplify", "Architector", "Open Babel", "RDKit", "Cambridge Structural Database (CCDC)"],
+  },
+  "qm.choose_a_method_that_can_describe_the_metal": {
+    family: "qm",
+    title: "Choose a method that can actually describe the metal",
+    why: "Decide the functional, the basis set, the treatment of core electrons, the dispersion correction and the solvent model, and record them as one string. For a 4d or 5d metal the core needs an effective core potential carrying the relativistic effects; for anything with a ligand sphere, dispersion is not optional.",
+    gate: "A relativistic effective core potential on any 4d or 5d metal. A valence basis of at least double-zeta plus polarisation for geometry, triple-zeta for final energies. An explicit dispersion correction. An implicit solvent model whenever the chemistry you are describing happens in solution.",
+    pitfall: "Omitting dispersion, which quietly costs you tens of kJ/mol on anything with ligand-ligand contact, and optimising in the gas phase for a question that was about solution.",
+    requires: ["electronic_state"], produces: ["qm_method"],
+    tools: ["ORCA", "Psi4", "NWChem", "PySCF", "xtb"],
+  },
+  "qm.explore_conformers_before_committing": {
+    family: "qm",
+    title: "Search conformers and isomers before committing to one",
+    why: "One optimisation gives you one minimum, and there is no reason it is the relevant one. Search cheaply first, at a semi-empirical level, over ligand conformers and over coordination isomers where they exist, then carry the survivors into the expensive method.",
+    gate: "State the energy window you kept and why you chose it, and how many distinct structures survived. A single starting structure carried straight to DFT is a choice to report, not a default to leave unmentioned.",
+    pitfall: "Searching organic torsions only. For a metal complex the isomer question, which donor sits trans to which, usually matters more than the ligand's own conformers.",
+    requires: ["starting_geometry", "qm_method"], produces: ["conformer_set"],
+    tools: ["CREST", "xtb", "Architector", "molSimplify"],
+  },
+  "qm.optimise_then_prove_it_is_a_minimum": {
+    family: "qm",
+    title: "Optimise, then prove what you found is a minimum",
+    why: "An optimisation that converged is not evidence of a minimum; it is evidence the gradient got small. Run the frequencies at the same level of theory and look at what comes back. This is the step that turns a structure into a result.",
+    gate: "No imaginary frequencies for a minimum. Exactly one, along the coordinate you intended, for a transition state. Anything else means you optimised to a saddle point and the geometry is not what you think it is.",
+    pitfall: "Reporting an optimised geometry that was never frequency-checked, and loose convergence criteria on the flat potential around a metal, where the default thresholds stop long before the structure has settled.",
+    requires: ["starting_geometry", "qm_method"], produces: ["optimised_geometry"],
+    tools: ["ORCA", "Psi4", "NWChem", "PySCF"],
+  },
+  "qm.check_it_against_measured_geometry": {
+    family: "qm",
+    title: "Check the geometry against something measured",
+    why: "Crystallography has already measured thousands of complexes of most metals. Compare your optimised bond lengths and angles at the metal against what is actually observed for that metal, oxidation state and donor set. It is the cheapest reality check available and it catches a wrong spin state immediately.",
+    gate: "Metal-donor distances and angles fall inside the range the structural databases show for that centre. A geometry outside that range needs an explanation before it is used, not a footnote after.",
+    pitfall: "Comparing against a single crystal structure rather than the distribution. One entry may itself be poorly refined, disordered or at a different oxidation state.",
+    requires: ["optimised_geometry"], produces: ["geometry_validation"],
+    tools: ["Cambridge Structural Database (CCDC)", "MESPEUS", "MetalPDB", "CheckMyMetal"],
+  },
+  "qm.report_it_so_someone_can_repeat_it": {
+    family: "qm",
+    title: "Report it so someone else could repeat it",
+    why: "A quantum chemistry result is the coordinates plus the method that produced them. Without the full method string the number is not reproducible and cannot be compared with anyone else's, including your own next calculation.",
+    gate: "Final coordinates, absolute and relative energies, the complete method string including functional, basis, core potential, dispersion and solvent model, and the program version.",
+    requires: ["optimised_geometry"], produces: ["qm_report"],
+    tools: ["ESIgen", "ORCA", "Psi4"],
+  },
 };
 
 // The key is the id; keep them from drifting apart by deriving one from the other.
@@ -1391,6 +1459,21 @@ export const RECIPES = {
       "structure.assess_tractability",
       "identity.check_the_competitive_and",
       "admet.check_safety_signal_early",
+    ],
+  },
+  "qm-geometry": {
+    label: "Geometry optimisation",
+    summary: "Settle the electronic state and the method before optimising, then prove the structure you found is a minimum and that it matches what crystallography already knows.",
+    decision: "What the structure actually is, and whether any energy computed from it can be trusted.",
+    stop: "If the frequencies come back with an imaginary mode you did not intend, the geometry is not a minimum and nothing derived from it holds. Fix the structure before computing anything else from it.",
+    modules: [
+      "qm.fix_the_electronic_state",
+      "qm.build_a_defensible_starting_geometry",
+      "qm.choose_a_method_that_can_describe_the_metal",
+      "qm.explore_conformers_before_committing",
+      "qm.optimise_then_prove_it_is_a_minimum",
+      "qm.check_it_against_measured_geometry",
+      "qm.report_it_so_someone_can_repeat_it",
     ],
   },
   "structure": {

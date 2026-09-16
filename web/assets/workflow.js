@@ -11,6 +11,14 @@ import { RECIPES, FAMILY_TERMS } from "./modules.js";
 const INTENTS = [
   ["network-pharmacology", ["network pharmacology", "network-pharmacology", "systems pharmacology",
     "compound-target-disease", "compound target disease"]],
+  ["qm-geometry", ["geometry optimisation", "geometry optimization", "optimise geometry",
+    "optimize geometry", "optimise the geometry", "optimize the geometry", "geometry of",
+    "dft", "b3lyp", "wb97", "def2", "basis set", "effective core potential", "ecp",
+    "single point", "frequency calculation", "imaginary frequency", "transition state",
+    "spin state", "multiplicity", "oxidation state", "organometallic", "metal complex",
+    "coordination geometry", "quantum chemistry", "qm calculation", "ab initio",
+    "energy minimis", "energy minimiz", "optimise the structure", "optimize the structure",
+    "relaxed scan", "conformer energy", "nbo", "homo", "lumo"]],
   ["fbdd", ["fragment", "fragments", "fbdd", "fragment screen", "fragment hit", "fragment growing",
     "fragment merging", "fragment linking", "xchem", "crystallographic screen", "ligand efficiency",
     "soaking", "fragment library"]],
@@ -53,7 +61,10 @@ const INTENTS = [
   ["md-stability", ["molecular dynamics", "simulate", "simulation", "stability of", "md of",
     "allosteric", "residence time", "pocket dynamics", "stable", "stability", "dynamics",
     "trajectory", "equilibrat", "rmsd", "rmsf", "in md", "run md"]],
-  ["retrosynthesis", ["synthesi", "retrosynthe", "route", "make this molecule", "synthesise", "synthesize"]],
+  // "route" on its own is not a synthesis word. It matched "plan a route to the
+  // train station", and at a low threshold that is enough to lock in a protocol.
+  ["retrosynthesis", ["synthesi", "retrosynthe", "synthetic route", "synthesis route",
+    "make this molecule", "synthesise", "synthesize", "building block"]],
   ["target-triage", ["which target", "find a target", "target for", "target identification",
     "validate the target", "druggable", "disease", "novel target", "target selection"]],
   ["structure", ["structure of", "best structure", "model of", "fold", "crystal structure",
@@ -115,7 +126,8 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
 
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
-const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology"]);
+const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology",
+  "qm-geometry"]);
 export const intentUsesProtein = (intent) => !NO_PROTEIN.has(intent);
 
 // Common informal names that UniProt search alone handles badly.
@@ -172,6 +184,70 @@ export function aliasTarget(text, substring = false) {
   return ALIASES[trimmed] || null;
 }
 
+// Words that name a thing rather than an operation on it. They are decent
+// evidence of subject matter and poor evidence of a requested workflow: a
+// question about the competitive landscape for KRAS inhibitors is not a
+// screening campaign, however many times it says "inhibitors". They still help
+// choose an intent, but on their own they never license skipping the semantic
+// router. This is the rule the semantic router is already given — "a protein,
+// disease, compound or the phrase 'drug discovery' is context, not evidence of
+// a workflow" — and the keyword router was not.
+const CONTEXT_ONLY = new Set([
+  "inhibitor", "inhibitors", "binders", "actives", "antagonist", "agonist", "block",
+  "hit", "hits", "analog", "analogue", "series", "lead series", "potency", "sar",
+  "fragment", "fragments", "fragment hit", "fragment library", "ligand efficiency",
+  "variants", "variant", "mutation", "mutant", "mutations", "missense", "polymorphism",
+  "snp", "allele", "wild-type", "wildtype", "resistance", "resistant",
+  "antibody", "antibodies", "nanobody", "vhh", "biologic", "epitope", "bispecific", "cdr",
+  "protac", "degrader", "molecular glue", "e3 ligase", "ternary complex", "cereblon", "vhl",
+  "off-target", "off target", "paralog", "promiscuous", "promiscuity",
+  "disease", "pdb", "alphafold", "trajectory", "descriptor", "chemprop",
+]);
+
+// Verbs that name a requested action. On their own they mean little — every
+// question contains one — but a verb applied to the noun the intent matched on
+// is the difference between asking for the thing and merely mentioning it.
+const ACTION = "find|identify|discover|screen|dock|design|generate|propose|make|build|" +
+  "optimi[sz]e|minimi[sz]e|improve|rank|predict|prioriti[sz]e|develop|engineer|" +
+  "search for|look for|looking for|want|need";
+
+/**
+ * Is one of these nouns the object of a requested action, or just mentioned?
+ *
+ * "Find inhibitors of EGFR" asks for inhibitors. "Find me the competitive
+ * landscape for KRAS inhibitors" asks for a landscape and mentions inhibitors
+ * six words later. Allowing a few modifiers in between covers "find new
+ * inhibitors" and "design a selective degrader" without reaching across the
+ * whole sentence.
+ */
+function actsOn(text, nouns) {
+  if (!nouns.length) return false;
+  const objects = nouns.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  return new RegExp(`\\b(?:${ACTION})\\b(?:\\W+\\w+){0,2}\\W+(?:${objects})\\b`, "i").test(text);
+}
+
+/**
+ * Terms that match, with nothing counted inside another term's span.
+ *
+ * Longest first, so "virtual screening" consumes the text before "screening"
+ * can claim it again. Without this a single word scores twice whenever the
+ * list holds both its singular and plural: "inhibitors" contains "inhibitor",
+ * both clear the length bonus, and one noun was worth four points.
+ */
+function matchedTerms(text, words) {
+  const spans = [], hits = [];
+  for (const w of [...words].sort((a, b) => b.length - a.length)) {
+    for (let i = text.indexOf(w); i >= 0; i = text.indexOf(w, i + 1)) {
+      const end = i + w.length;
+      if (spans.some(([from, to]) => i >= from && end <= to)) continue;
+      spans.push([i, end]);
+      hits.push(w);
+      break;
+    }
+  }
+  return hits;
+}
+
 export function parseQuery(raw) {
   const q = (raw || "").replace(FAMILY_SPLIT, "$1$2").trim();
   // Score on what is being asked for. "Do not run docking or virtual screening"
@@ -184,11 +260,11 @@ export function parseQuery(raw) {
   // method exactly, while "analogue" appears in half the questions people ask.
   const STRONG = new Set(["fep", "rbfe", "abfe", "fbdd", "protac", "gamd", "tpd",
                           "molecular glue", "degrader", "off-target", "selectivity"]);
-  let intent = "hit-discovery", best = 0;
+  let intent = "hit-discovery", best = 0, evidence = [];
   for (const [id, words] of INTENTS) {
-    let s = 0;
-    for (const w of words) if (low.includes(w)) s += (w.length > 8 || STRONG.has(w)) ? 2 : 1;
-    if (s > best) { best = s; intent = id; }
+    const hits = matchedTerms(low, words);
+    const s = hits.reduce((n, w) => n + ((w.length > 8 || STRONG.has(w)) ? 2 : 1), 0);
+    if (s > best) { best = s; intent = id; evidence = hits; }
   }
   if (!best) intent = "hit-discovery";
   // An explicitly named network study can mention screening, hits and docking
@@ -196,9 +272,15 @@ export function parseQuery(raw) {
   if (INTENTS.find(([id]) => id === "network-pharmacology")[1].some((w) => low.includes(w))) {
     intent = "network-pharmacology";
     best = Math.max(best, 4);
+    evidence = matchedTerms(low, INTENTS.find(([id]) => id === "network-pharmacology")[1]);
   }
 
   const score = best;
+  // Did anything matched actually name the operation being requested? A score
+  // built only from entity nouns is confidence in the subject, not the task —
+  // unless one of those nouns is what the question asks to be done something to.
+  const nouns = evidence.filter((w) => CONTEXT_ONLY.has(w));
+  const operational = evidence.some((w) => !CONTEXT_ONLY.has(w)) || actsOn(low, nouns);
   // Flattened and sorted by phrase length so "guinea pig" beats "pig".
   let organism = null;
   for (const [w, id, label] of ORGANISM_TERMS) {
@@ -207,7 +289,8 @@ export function parseQuery(raw) {
 
   let target = null;
   if (NO_PROTEIN.has(intent)) {
-    return { query: q, intent, organism, target: null, score, via: "keywords", matched: true };
+    return { query: q, intent, organism, target: null, score, evidence, operational,
+             via: "keywords", matched: true };
   }
   target = aliasTarget(entityText, true);
   if (!target) {
@@ -226,7 +309,8 @@ export function parseQuery(raw) {
   // orthologue, which is a silent, confident, wrong answer.
   if (target && !organism) organism = { id: 9606, label: "Homo sapiens", assumed: true };
 
-  return { query: q, intent, organism, target, score, via: "keywords", matched: best > 0 };
+  return { query: q, intent, organism, target, score, evidence, operational,
+           via: "keywords", matched: best > 0 };
 }
 
 function organismByTaxid(taxid) {
@@ -252,7 +336,22 @@ export async function resolveQuery(raw) {
   // is. Always ask when constraints are stated.
   const constraints = statedConstraints(raw);
   kw.constraints = constraints;
-  if (!constraints.length && ((kw.score >= 2 && resolved) || kw.score >= 4)) return kw;
+  // Only constraints that can change which modules apply are worth a model call.
+  // A compute or time limit is reported as not applied and changes nothing; a
+  // metal note annotates the plan rather than re-routing it. Treating those as
+  // grounds to ask spent quota on questions the keywords had already settled.
+  const routeChanging = constraints.some((c) =>
+    ["excluded method", "missing asset", "no structure", "existing asset"].includes(c.kind));
+  // Skipping the model also needs evidence of the requested operation, not just
+  // a pile of matching nouns. "Find me the competitive landscape for KRAS
+  // inhibitors" scores highly on hit-discovery vocabulary and is not a
+  // screening campaign; asked, the semantic router correctly declines it.
+  // The thresholds sit lower than they used to because the scores are honest
+  // now: overlapping terms used to count twice, so a single matched noun could
+  // reach four, and the bar was set against those inflated numbers. The
+  // operational test above does the work the high threshold was standing in for.
+  if (!routeChanging && kw.operational &&
+      ((kw.score >= 1 && resolved) || kw.score >= 3)) return kw;
 
   try {
     const r = await fetch("api/route", {

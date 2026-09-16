@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,967 tools for medicinal and computational chemistry, plus 18
+A catalogue of 3,967 tools for medicinal and computational chemistry, plus 19
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -92,7 +92,7 @@ prints too many.
 complete, always valid, and what you get with no key configured. On top of it,
 `web/api/plan.js` hands a model the whole registry and asks which modules *this*
 request needs, in what order, and why each one. That is the difference between
-choosing one of eighteen pre-written documents and composing from 122 parts.
+choosing one of nineteen pre-written documents and composing from 129 parts.
 
 The model returns ids and nothing else. It never writes a step, a gate, a
 threshold or a tool name — those come from the registry, which lives on the
@@ -215,8 +215,22 @@ human protein and looked confident doing it.
 
 ## Optional: LLM routing
 
-Keyword matching handles roughly 80% of questions. For the rest — vague or oddly
-phrased ones — `web/api/route.js` asks a model which protocol applies.
+Keyword matching handles roughly two thirds of questions on its own. For the
+rest — vague, oddly phrased, or carrying a constraint that changes the route —
+`web/api/route.js` asks a model which protocol applies.
+
+Skipping that call takes more than a high keyword score. A score is confidence
+in vocabulary, and vocabulary is not intent: "find me the competitive landscape
+for KRAS inhibitors" matched hit-discovery on the word "inhibitors" alone and
+was served a docking campaign, while the model, asked the same question,
+correctly declined it. So the shortcut now also requires that something matched
+names the *operation* being asked for, not only its subject — a verb applied to
+the noun, within a couple of words of it. "Find inhibitors of EGFR" asks for
+inhibitors; "the landscape for KRAS inhibitors" mentions them.
+
+Scores are also counted per matched span rather than per matched term. Both
+"inhibitor" and "inhibitors" were in the list, both cleared the length bonus,
+and one noun was therefore worth four points, which was the whole threshold.
 
 Set `LLM_API_KEY` in Vercel's environment variables. A free Gemini key from
 [aistudio.google.com](https://aistudio.google.com/apikey) covers it.
@@ -258,7 +272,7 @@ deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
 **Selection costs tokens, and free tiers meter them per minute.** The registry
-goes in every selection prompt, which is about 3,700 tokens for all 122 modules.
+goes in every selection prompt, which is about 3,900 tokens for all 129 modules.
 Gemini's free tier meters requests long before tokens and takes that happily.
 Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
 digest buys one call a minute and a rate-limit after it — which is how it
