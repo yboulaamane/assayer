@@ -359,7 +359,18 @@ export function composeFromSelection(brief, selection) {
     return { ok: false, error: `selection named ${rejected.length} unknown modules` };
   }
 
-  const { ids, reinstated } = reinstate(wanted.map((w) => w.id), brief);
+  // Injected modules keep the position the injector chose, not the one the
+  // model put them in. Knowing what you must spare shapes the library and the
+  // enrichment set, so the panel belongs at the front whatever order the
+  // selection came back in; the metal steps belong where the coordination
+  // problem bites. The model chooses *which* modules, not where these go.
+  const INJECTED = (id) => id.startsWith("metal.") ||
+    ["selectivity.define_panel", "selectivity.compare_panel"].includes(id);
+  const asked = wanted.map((w) => w.id).filter((id) => !INJECTED(id));
+  const positioned = withMetalSite(brief.offTargets.length
+    ? ["selectivity.define_panel", ...asked, "selectivity.compare_panel"] : asked, brief);
+
+  const { ids, reinstated } = reinstate(positioned, brief);
   const built = assemble(brief, intent, ids, { open: true });
   if (!built.steps.length) return { ok: false, error: "selection left no steps" };
 
