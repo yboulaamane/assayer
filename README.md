@@ -1,6 +1,6 @@
 # Assayer
 
-A catalogue of 3,973 tools for medicinal and computational chemistry, plus 26
+A catalogue of 3,973 tools for medicinal and computational chemistry, plus 27
 protocols that lay out how to actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -92,7 +92,7 @@ prints too many.
 complete, always valid, and what you get with no key configured. On top of it,
 `web/api/plan.js` hands a model the whole registry and asks which modules *this*
 request needs, in what order, and why each one. That is the difference between
-choosing one of 26 pre-written documents and composing from 166 parts.
+choosing one of 27 pre-written documents and composing from 173 parts.
 
 The model returns ids and nothing else. It never writes a step, a gate, a
 threshold or a tool name — those come from the registry, which lives on the
@@ -143,6 +143,15 @@ Run the planner regression and rendering checks with Node.js 24 or later:
 ```bash
 node --test tests/*.test.mjs
 ```
+
+`tests/coverage-sweep.test.mjs` is combinatorial rather than example-based: every
+metal in the periodic table across every task that mentions one, several
+phrasings for each of the 27 protocols, and a set of phrases that must never
+read as coordination chemistry ("the gold standard for docking"). It asserts on
+the composed plan rather than the keyword guess, and it fails on a route that is
+locked in without a model call rather than on one the model would correct. A new
+protocol has to appear in it, so one cannot be added without phrasings that find
+it.
 
 Optional browser checks cover mobile and desktop navigation, catalogue recovery,
 licence filtering, workflow loading, structure rendering and Markdown export.
@@ -272,7 +281,7 @@ deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
 **Selection costs tokens, and free tiers meter them per minute.** The registry
-goes in every selection prompt, which is about 5,100 tokens for all 166 modules.
+goes in every selection prompt, which is about 5,400 tokens for all 173 modules.
 Gemini's free tier meters requests long before tokens and takes that happily.
 Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
 digest buys one call a minute and a rate-limit after it — which is how it

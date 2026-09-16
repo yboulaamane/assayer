@@ -390,6 +390,7 @@ function renderWorkflow(params) {
            "Conformational sampling of CYP3A4",
            "Dock hydroxamates into HDAC6 and spare HDAC1",
            "Optimise the geometry of a palladium-bound ligand",
+           "Parameterise a gold(III) complex for MD",
            "Engineer this enzyme to be more thermostable",
            "What is already in the clinic for this target?",
            "Build a focused screening library",
