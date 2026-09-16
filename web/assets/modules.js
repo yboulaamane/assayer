@@ -1083,6 +1083,63 @@ export const MODULES = {
     produces: [],
     tools: ["PDBFixer","PROPKA","PDB2PQR / APBS","Meeko"],
   },
+
+  // ---------------------------------------------------------------- metals
+  // Injected into whichever recipe was routed when the request involves a
+  // metal centre. A metalloenzyme is not a separate kind of project; it is the
+  // same project with a coordination problem in the middle of it.
+  "metal.characterise_the_metal_centre": {
+    family: "metal",
+    title: "Characterise the metal centre before anything else",
+    why: "Establish which metal is actually there, its oxidation state, coordination number and geometry, which residues donate, and whether it is catalytic or structural. That determines the ligand charge you dock, the protonation you assign and whether a chelating group is even the right idea.",
+    gate: "Donor distances and coordination geometry must fall inside the ranges observed for that metal and donor set. Validate the deposited site rather than assuming it.",
+    pitfall: "Trusting the metal in the coordinate file. Nickel from an affinity tag gets modelled as the physiological zinc, magnesium is fitted where sodium belongs, and partially occupied sites are deposited at full occupancy. A predicted model is worse: AlphaFold returns the fold with an empty site.",
+    requires: ["receptor_structure"],
+    produces: ["metal_site_definition"],
+    tools: ["CheckMyMetal","MetalPDB","MESPEUS","MIB2","AlphaFill"],
+  },
+  "metal.prepare_the_coordination_sphere": {
+    family: "metal",
+    title: "Set up the coordination sphere explicitly",
+    why: "The defaults are wrong at a metal. Cysteine is a thiolate when it coordinates zinc, not a thiol; histidine tautomers decide which nitrogen points at the ion; a metal-bound water may be a hydroxide at working pH. Fix the total charge of the site and record what you chose.",
+    gate: "Write down the metal charge, the protonation state of every donor residue, and the fate of each metal-bound water, before any pose is generated.",
+    pitfall: "Running a standard protonation tool over the site and accepting the result. Most assign residues as if the ion were not there.",
+    requires: ["metal_site_definition","receptor_structure"],
+    produces: ["metal_ready_receptor"],
+    tools: ["ProteinsPlus / DoGSiteScorer","PROPKA","PDB2PQR / APBS","PDBFixer","Meeko"],
+  },
+  "metal.score_the_coordination": {
+    family: "metal",
+    methods: ["docking"],
+    title: "Score coordination as coordination, not as electrostatics",
+    why: "General scoring functions model a metal as a charged sphere with no directionality. Coordination is directional, so poses with impossible geometry score well and genuine chelators rank below inert look-alikes. Use a function that knows about the ion, or restrain the geometry yourself.",
+    gate: "The top pose must reproduce a coordination geometry seen for that metal and donor set, at a sensible donor distance. A good score with a geometry no crystal structure shows is a failed pose, whatever the number says.",
+    pitfall: "Comparing scores across ligands with different metal-binding groups. The metal term dominates and you end up ranking warheads rather than molecules.",
+    requires: ["metal_ready_receptor","prepared_ligands"],
+    produces: ["metal_aware_poses"],
+    tools: ["AutoDock4Zn","MetalDock","GOLD (CCDC)","Glide (Schrödinger)","PLIP"],
+  },
+  "metal.parameterise_the_centre": {
+    family: "metal",
+    methods: ["parameters"],
+    title: "Parameterise the metal centre for simulation",
+    why: "Standard ion parameters are non-bonded spheres fitted to solvation, not to a protein site. Run one and the coordination geometry relaxes away, the ion wanders, and you report a trajectory of an enzyme that has lost its cofactor. Derive a bonded model from a QM optimisation of the site, or use ion parameters fitted with the ion-induced dipole term.",
+    gate: "Over an unrestrained equilibration the coordination number and donor distances must hold at their starting values. If the site opens up, the parameters are wrong, not the protein.",
+    pitfall: "A bonded model fixes the coordination you gave it, so it cannot describe ligand exchange or a change in coordination number. If the mechanism you care about involves either, a bonded model will hide it.",
+    requires: ["metal_site_definition"],
+    produces: ["metal_parameters"],
+    tools: ["MCPB.py","easyPARM","AMBER / AmberTools","ORCA","Psi4","ParmEd"],
+  },
+  "metal.check_the_binding_group": {
+    family: "metal",
+    title: "Treat the metal-binding group as a liability, not just a handle",
+    why: "Hydroxamates, catechols, thiols, hydroxypyridinones and carboxylates bind metals because they bind metals; they do not distinguish your enzyme from the rest of the family. Potency won at the ion is the easy part and the part least likely to survive selectivity and safety.",
+    gate: "Counter-screen against the other metalloenzymes that share the donor set before committing to a series. Confirm the activity is not buffer chelation or ion depletion in the assay.",
+    pitfall: "Several common metal-binding groups are frequent hitters and redox-active interference compounds. A clean dose-response curve does not rule that out.",
+    requires: ["metal_site_definition"],
+    produces: ["chelation_risk_assessment"],
+    tools: ["ChEMBL","BindingDB","ChemFH","RDKit"],
+  },
 };
 
 // The key is the id; keep them from drifting apart by deriving one from the other.

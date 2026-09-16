@@ -56,6 +56,7 @@ export function buildBrief(parsed) {
     assets: [...assets],
     missing: [...missing],
     offTargets: said.filter((c) => c.kind === "off-target").map((c) => c.phrase),
+    metal: said.filter((c) => c.kind === "metal site").map((c) => c.phrase),
     compute: said.filter((c) => c.kind === "compute limit").map((c) => c.phrase),
     time: said.filter((c) => c.kind === "time limit").map((c) => c.phrase),
     stated: said,
@@ -84,9 +85,52 @@ function expand(assets) {
   return out;
 }
 
+// A metal centre is not a protocol of its own; it is a complication inside
+// whichever protocol was routed. These go where the coordination problem
+// actually bites: before the structure is used, before anything is simulated,
+// and alongside the scoring that a metal breaks.
+const METAL_SETUP = ["metal.characterise_the_metal_centre", "metal.prepare_the_coordination_sphere"];
+const STRUCTURAL = ["docking", "md", "fep"];
+const familyAt = (list, families) => list.findIndex((id) => families.includes(MODULES[id]?.family));
+
+function withMetalSite(ids, brief) {
+  if (!brief.metal?.length) return ids;
+
+  // A route that only picks a structure still has to check the metal in it —
+  // that is part of judging the structure — but it has nothing to protonate
+  // for, nothing to score and nothing to simulate.
+  if (familyAt(ids, STRUCTURAL) < 0) {
+    const structural = familyAt(ids, ["structure"]);
+    if (structural < 0) return ids;
+    const only = [...ids];
+    only.splice(structural + 1, 0, "metal.characterise_the_metal_centre");
+    return only;
+  }
+
+  const out = [...ids];
+  out.splice(familyAt(out, STRUCTURAL), 0, ...METAL_SETUP);
+
+  const simulation = familyAt(out, ["md", "fep"]);
+  if (simulation >= 0) out.splice(simulation, 0, "metal.parameterise_the_centre");
+
+  // Scoring belongs with the setup it corrects, not after the screen it should
+  // have informed, so it follows whichever step prepares the ligands.
+  const prepared = out.findIndex((id) => MODULES[id]?.produces.includes("prepared_ligands"));
+  const firstDock = familyAt(out, ["docking"]);
+  const at = prepared >= 0 ? prepared + 1 : firstDock;
+  if (at >= 0) out.splice(at, 0, "metal.score_the_coordination");
+
+  // Only where compounds are actually being chosen. Simulating a zinc finger
+  // does not involve a metal-binding warhead, so the liability step would be
+  // padding there.
+  if (familyAt(out, ["docking", "generative"]) >= 0) out.push("metal.check_the_binding_group");
+  return out;
+}
+
 const methods = (m) => [m.family, ...(m.methods || [])];
 const forbidden = (m, brief) => methods(m).some((f) => brief.excluded.includes(f));
 const compatible = (m, intent) => RECIPES[intent]?.modules.includes(m.id) || m.borrowFor?.includes(intent);
+const injected = (m, brief) => m.family === "metal" && Boolean(brief.metal?.length);
 const inputs = (brief) => new Set([...expand(brief.assets)].filter((a) => !brief.missing.includes(a)));
 function outputs(available, m, brief) {
   for (const cap of expand(m.produces)) if (!brief.missing.includes(cap)) available.add(cap);
@@ -100,7 +144,7 @@ function outputs(available, m, brief) {
  * that silently omits a step is worse than one that prints too many.
  */
 export function compose(brief) {
-  brief = { excluded: [], assets: [], missing: [], offTargets: [], ...brief };
+  brief = { excluded: [], assets: [], missing: [], offTargets: [], metal: [], ...brief };
   let intent = brief.intent, rerouted = null;
 
   // Structure-based discovery without a structure, or with docking ruled out,
@@ -117,7 +161,7 @@ export function compose(brief) {
   }
 
   brief = { ...brief, intent, excluded: brief.excluded || [], assets: brief.assets || [],
-    missing: brief.missing || [], offTargets: brief.offTargets || [] };
+    missing: brief.missing || [], offTargets: brief.offTargets || [], metal: brief.metal || [] };
   const recipe = RECIPES[intent];
   if (!recipe) return { ok: false, error: `no recipe for ${intent}` };
 
@@ -134,8 +178,8 @@ export function compose(brief) {
     !m.produces.some((p) => brief.missing.includes(p)) &&
     !m.skipWith?.some((p) => supplied.has(p));
 
-  const ids = brief.offTargets.length
-    ? ["selectivity.define_panel", ...recipe.modules, "selectivity.compare_panel"] : recipe.modules;
+  const ids = withMetalSite(brief.offTargets.length
+    ? ["selectivity.define_panel", ...recipe.modules, "selectivity.compare_panel"] : recipe.modules, brief);
   for (const id of ids) {
     const m = MODULES[id];
     if (!m) { errors.push(`unknown module: ${id}`); continue; }
@@ -176,7 +220,7 @@ export function compose(brief) {
       if (prior) { dependencies.push(prior.id); continue; }
       const candidate = [...chosen.map((k) => MODULES[k]), ...Object.values(MODULES)]
         .find((c) => c.id !== id && !visited.has(c.id) && eligible(c) &&
-          compatible(c, intent) && c.produces.includes(need));
+          (compatible(c, intent) || injected(c, brief)) && c.produces.includes(need));
       if (candidate) {
         add(candidate.id, id, need);
         dependencies.push(candidate.id);
@@ -188,6 +232,10 @@ export function compose(brief) {
       s.context = `Study request: ${brief.question}`;
     }
     if (s.borrowed) borrowed.push({ id, title: m.title, for: forStep, capability });
+    if (m.family === "metal") {
+      s.context = `Added because the question mentions ${brief.metal.join(", ")}. `
+        + "If there is no metal in the site you care about, these steps do not apply.";
+    }
     if (id === "selectivity.define_panel" || id === "selectivity.compare_panel") {
       s.context = `Primary target: ${brief.target || "not specified"}. Must spare: ${brief.offTargets.join(", ")}.`;
     }
@@ -214,7 +262,7 @@ export function compose(brief) {
 /** Structural checks a model's choices would have to pass too. */
 export function validate(plan) {
   const issues = [];
-  const brief = { assets: [], missing: [], excluded: [], offTargets: [], ...plan.brief };
+  const brief = { assets: [], missing: [], excluded: [], offTargets: [], metal: [], ...plan.brief };
   const available = inputs(brief);
   const seen = new Set();
   for (const s of plan.steps || []) {
@@ -223,7 +271,9 @@ export function validate(plan) {
     if (seen.has(s.id)) issues.push(`module appears twice: ${s.id}`);
     if (forbidden(m, brief)) issues.push(`excluded method in ${s.id}`);
     const panel = brief.offTargets.length && ["selectivity.define_panel", "selectivity.compare_panel"].includes(s.id);
-    if (plan.intent && !compatible(m, plan.intent) && !panel) issues.push(`incompatible module: ${s.id}`);
+    if (plan.intent && !compatible(m, plan.intent) && !panel && !injected(m, brief)) {
+      issues.push(`incompatible module: ${s.id}`);
+    }
     for (const field of ["requires", "produces", "tools"]) {
       if (JSON.stringify(s[field]) !== JSON.stringify(m[field])) issues.push(`modified ${field} in ${s.id}`);
     }

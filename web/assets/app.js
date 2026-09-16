@@ -388,6 +388,7 @@ function renderWorkflow(params) {
            "Why is my series hitting the wrong kinase?",
            "Rank these analogues with FEP",
            "Conformational sampling of CYP3A4",
+           "Dock hydroxamates into HDAC6 and spare HDAC1",
            "ADMET and hERG risk for my compound set",
            "Plan a synthesis route for this molecule"]
           .map((x) => `<button data-q="${esc(x)}">${esc(x)}</button>`).join("")}

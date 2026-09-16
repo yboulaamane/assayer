@@ -558,6 +558,44 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "structure",
+    "name": "CheckMyMetal",
+    "description": "Validates metal sites in deposited or refined structures against expected coordination number, geometry and donor distances. Mis-assigned metals are common; check before you build a docking model on one.",
+    "url": "https://cmm.minorlab.org",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "validation",
+      "crystallography"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "structure",
+    "name": "AlphaFill",
+    "description": "Transplants ligands, cofactors and metal ions into AlphaFold models by sequence and structure similarity. AlphaFold predicts the fold, not the metal, so a metalloprotein model without this step has an empty site.",
+    "url": "https://alphafill.eu",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "cofactors",
+      "model-repair"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "binding-site",
     "name": "fpocket",
     "description": "Voronoi-based pocket detection and druggability scoring, with mdpocket for pocket dynamics over MD trajectories.",
@@ -645,6 +683,202 @@
     "license": "free-web",
     "repo": null,
     "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "MetalPDB",
+    "description": "Every metal site in the PDB, abstracted into minimal functional sites so you can compare coordination geometry and donor sets across unrelated folds.",
+    "url": "https://metalpdb.cerm.unifi.it",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "database"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "MESPEUS",
+    "description": "Metal coordination geometry measured across the PDB: bond lengths, angles and donor-set frequencies per metal. The reference for judging whether a site's geometry is physically reasonable.",
+    "url": "https://mespeus.nchu.edu.tw",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "geometry"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "MIB2",
+    "description": "Predicts metal ion-binding residues and models the ion into the structure, by fragment transfer from known sites; covers a dozen biologically common ions.",
+    "url": "http://bioinfo.cmu.edu.tw/MIB2/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "prediction"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": [
+      "biotools"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "Metal3D",
+    "description": "3D CNN predicting zinc site location and probability density directly from protein geometry; useful when the apo structure has no ion modelled.",
+    "url": "https://github.com/lcbc-epfl/metal-site-prediction",
+    "code_url": "https://github.com/lcbc-epfl/metal-site-prediction",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "zinc",
+      "prediction"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "lcbc-epfl/metal-site-prediction",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "BioMetAll",
+    "description": "Geometry-based search for candidate metal-binding sites using only backbone and side-chain positions, so it finds sites in apo and predicted structures. This is the published v1; v2 adds scoring and metal discrimination.",
+    "url": "https://github.com/insilichem/biometall",
+    "code_url": "https://github.com/insilichem/biometall",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "prediction"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/biometall",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "BioMetAll v2",
+    "description": "The current BioMetAll: adds a score per candidate site, discriminates between metals rather than reporting any site, and uses side-chain descriptors instead of backbone geometry alone.",
+    "url": "https://github.com/insilichem/biometallv2",
+    "code_url": "https://github.com/insilichem/biometallv2",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "prediction"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/biometallv2",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "BioBrigit",
+    "description": "Predicts how a metal ion travels through a protein to reach its site, not just where the site is. Combines a 3D CNN over the biochemical environment with known bioinorganic coordination preferences.",
+    "url": "https://github.com/insilichem/BioBrigit",
+    "code_url": "https://github.com/insilichem/biobrigit",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "diffusion-pathway"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/biobrigit",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "LMetalSite",
+    "description": "Alignment-free metal-binding residue prediction from sequence alone, via a protein language model; the fallback when there is no structure at all.",
+    "url": "https://github.com/biomed-AI/LMetalSite",
+    "code_url": "https://github.com/biomed-ai/lmetalsite",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "sequence"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "biomed-ai/lmetalsite",
+    "also_in": [
+      "biotools"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "ZincBind",
+    "description": "Curated database of zinc binding sites extracted from the PDB, grouped by coordinating residue family and site type.",
+    "url": "https://zincbind.net",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "zinc",
+      "database"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "binding-site",
+    "name": "InterMetalDB",
+    "description": "Intermolecular metal sites, where the ion bridges two chains or a chain and a ligand; the place to look before assuming a metal-mediated contact is an artefact.",
+    "url": "https://intermetaldb.biotech.uwr.edu.pl",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "metal-site",
+      "database"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": [
+      "biotools"
+    ]
   },
   {
     "source": "curated",
@@ -2274,6 +2508,65 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "cheminformatics",
+    "name": "molSimplify",
+    "description": "Builds, optimises and screens transition-metal complexes from a metal, oxidation state and ligand set; generates sane 3D geometries where general-purpose toolkits guess badly.",
+    "url": "https://github.com/hjkgrp/molSimplify",
+    "code_url": "https://github.com/hjkgrp/molsimplify",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "organometallic",
+      "structure-generation"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "hjkgrp/molsimplify",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "cheminformatics",
+    "name": "Architector",
+    "description": "Generates 3D conformers for metal complexes across the periodic table, including multiple spin states and coordination geometries, as a Python API.",
+    "url": "https://github.com/lanl/Architector",
+    "code_url": "https://github.com/lanl/architector",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "organometallic",
+      "conformers"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "lanl/architector",
+    "also_in": [
+      "github-topics"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "cheminformatics",
+    "name": "Cambridge Structural Database (CCDC)",
+    "description": "The small-molecule crystal structure archive, over half of it metal-organic. The empirical reference for coordination geometry, bond lengths and ligand conformation.",
+    "url": "https://www.ccdc.cam.ac.uk/solutions/software/csd/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "crystal-structures",
+      "reference"
+    ],
+    "year": null,
+    "license": "commercial",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "libraries",
     "name": "ChEMBL",
     "description": "Manually curated bioactivity database (~2.4M compounds, 20M+ activities) mapped to targets and assays.",
@@ -2826,6 +3119,90 @@
     "license": "open-source",
     "repo": "dkoes/pharmit",
     "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "docking",
+    "name": "MetalDock",
+    "description": "Docks organometallic and metal-complex ligands into proteins, DNA and other biomolecules, optimising the complex with QM and generating the metal parameters the docking needs.",
+    "url": "https://github.com/MatthijsHak/MetalDock",
+    "code_url": "https://github.com/matthijshak/metaldock",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "docking",
+      "organometallic"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "matthijshak/metaldock",
+    "also_in": [
+      "biotools"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "docking",
+    "name": "AutoDock4Zn",
+    "description": "Zinc force field for AutoDock4 adding directional pseudo-atoms around the ion, so tetrahedral coordination is rewarded geometrically rather than as undirected electrostatics.",
+    "url": "https://autodock.scripps.edu/resources/autodock-zn/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "zinc",
+      "docking",
+      "scoring"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "docking",
+    "name": "gnina",
+    "description": "Fork of smina with convolutional neural network scoring and rescoring, run alongside the empirical score rather than instead of it.",
+    "url": "https://github.com/gnina/gnina",
+    "code_url": "https://github.com/gnina/gnina",
+    "paper_url": null,
+    "categories": [
+      "docking",
+      "cnn-scoring"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "gnina/gnina",
+    "also_in": [
+      "biotools",
+      "github-stars:yboulaamane",
+      "github-topics"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "docking",
+    "name": "GaudiMM",
+    "description": "Multi-objective genetic algorithm that optimises binding, geometry and any other objective you define at once, instead of collapsing them into one score. Handles metal coordination and flexible systems that fixed-receptor docking cannot express.",
+    "url": "https://gaudi.readthedocs.io",
+    "code_url": "https://github.com/insilichem/gaudi",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "optimisation",
+      "molecular-design"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/gaudi",
+    "also_in": [
+      "github-topics"
+    ]
   },
   {
     "source": "curated",
@@ -3387,6 +3764,84 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "md",
+    "name": "MCPB.py",
+    "description": "AmberTools' metal centre parameter builder: derives bonded-model force field parameters for a metal site from QM, the standard route to simulating a metalloprotein without the ion drifting out.",
+    "url": "https://ambermd.org/tutorials/advanced/tutorial20/",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "force-field",
+      "parameterisation"
+    ],
+    "year": null,
+    "license": "academic",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "md",
+    "name": "easyPARM",
+    "description": "Automates force field parameter derivation for metal complexes and organometallics from a QM optimisation, producing ready-to-run Amber, GROMACS, CHARMM and OpenMM inputs.",
+    "url": "https://github.com/Abdelazim-Abdelgawwad/easyPARM",
+    "code_url": "https://github.com/abdelazim-abdelgawwad/easyparm",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "force-field",
+      "parameterisation"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "abdelazim-abdelgawwad/easyparm",
+    "also_in": [
+      "github-topics"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "md",
+    "name": "GPathFinder",
+    "description": "Finds the route a ligand takes in and out of a buried site by multi-objective search over GaudiMM, giving binding pathways and intermediate poses rather than only the bound state.",
+    "url": "https://gpathfinder.readthedocs.io/en/latest/",
+    "code_url": "https://github.com/insilichem/gpathfinder",
+    "paper_url": null,
+    "categories": [
+      "binding-pathway",
+      "optimisation"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/gpathfinder",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "md",
+    "name": "OMMProtocol",
+    "description": "Runs a complete OpenMM pipeline, from minimisation through equilibration to production, from one YAML file, with checkpointing and standard reporters.",
+    "url": "https://ommprotocol.readthedocs.io",
+    "code_url": "https://github.com/insilichem/ommprotocol",
+    "paper_url": null,
+    "categories": [
+      "md-engine",
+      "workflow"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/ommprotocol",
+    "also_in": [
+      "github-topics"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "qm",
     "name": "Psi4",
     "description": "Open-source quantum chemistry (DFT, MP2, CC) with a Python API suited to automated workflows.",
@@ -3523,6 +3978,43 @@
   {
     "source": "curated",
     "stars": null,
+    "stage": "qm",
+    "name": "Garleek",
+    "description": "Bridges Gaussian's ONIOM to molecular mechanics backends such as Tinker and OpenMM, so a QM/MM job can put a metal centre in the QM layer and the rest of the protein in MM.",
+    "url": "https://garleek.readthedocs.io",
+    "code_url": "https://github.com/insilichem/garleek",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "qm-mm",
+      "oniom"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/garleek",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qm",
+    "name": "ESIgen",
+    "description": "Turns raw quantum chemistry output into a formatted supporting information document: geometries, energies, frequencies and images, from a template.",
+    "url": "https://github.com/insilichem/esigen",
+    "code_url": "https://github.com/insilichem/esigen",
+    "paper_url": null,
+    "categories": [
+      "reporting",
+      "supporting-information"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/esigen",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
     "stage": "generative",
     "name": "MOSES",
     "description": "Benchmarking platform for molecular generative models with standard splits and distribution metrics.",
@@ -3631,6 +4123,47 @@
     "license": "open-source",
     "repo": "dauparas/ligandmpnn",
     "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qsar-ml",
+    "name": "scikit-mol",
+    "description": "RDKit featurisation wrapped as scikit-learn transformers, so fingerprints and descriptors live inside a Pipeline and cannot leak across a split.",
+    "url": "https://github.com/EBjerrum/scikit-mol",
+    "code_url": "https://github.com/ebjerrum/scikit-mol",
+    "paper_url": null,
+    "categories": [
+      "featurisation",
+      "sklearn"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "ebjerrum/scikit-mol",
+    "also_in": [
+      "github-stars:yboulaamane"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qsar-ml",
+    "name": "DeepChem",
+    "description": "Long-running deep learning library for chemistry and biology: featurisers, splitters, model zoo and the MoleculeNet task collection.",
+    "url": "https://github.com/deepchem/deepchem",
+    "code_url": "https://github.com/deepchem/deepchem",
+    "paper_url": null,
+    "categories": [
+      "deep-learning",
+      "library"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "deepchem/deepchem",
+    "also_in": [
+      "github-stars:yboulaamane",
+      "github-topics"
+    ]
   },
   {
     "source": "curated",
@@ -3798,6 +4331,44 @@
     "year": null,
     "license": "open-source",
     "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qsar-ml",
+    "name": "CheMeleon",
+    "description": "Foundation model pretrained to reproduce Mordred descriptors, then fine-tuned through Chemprop with --from-foundation CheMeleon; beats descriptor and GNN baselines on small property datasets.",
+    "url": "https://github.com/JacksonBurns/chemeleon",
+    "code_url": "https://github.com/jacksonburns/chemeleon",
+    "paper_url": null,
+    "categories": [
+      "pretrained",
+      "property-prediction",
+      "chemprop"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "jacksonburns/chemeleon",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qsar-ml",
+    "name": "Mol-JEPA",
+    "description": "Boehringer Ingelheim's multimodal joint-embedding model, fusing cellular effects, binding affinity, ADMET and quantum chemistry into one molecular representation. Code is unlicensed; the weights are CC BY-NC 4.0.",
+    "url": "https://github.com/Boehringer-Ingelheim/mol-jepa",
+    "code_url": "https://github.com/boehringer-ingelheim/mol-jepa",
+    "paper_url": null,
+    "categories": [
+      "pretrained",
+      "multimodal",
+      "embeddings"
+    ],
+    "year": null,
+    "license": "academic",
+    "repo": "boehringer-ingelheim/mol-jepa",
     "also_in": []
   },
   {
@@ -4630,6 +5201,45 @@
     "year": null,
     "license": "free-web",
     "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "viz",
+    "name": "PyChimera",
+    "description": "Use the UCSF Chimera Python API from an ordinary interpreter, so Chimera's structure handling can be scripted inside a normal pipeline instead of its own shell.",
+    "url": "https://github.com/insilichem/pychimera",
+    "code_url": "https://github.com/insilichem/pychimera",
+    "paper_url": null,
+    "categories": [
+      "chimera",
+      "scripting"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "insilichem/pychimera",
+    "also_in": [
+      "biotools"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "viz",
+    "name": "Tangram",
+    "description": "A suite of UCSF Chimera extensions from the same group: QM and QM/MM setup, PLIP interaction depiction, PropKa states, normal modes, and dummy-atom preparation of metal systems for MD. Free for academic use.",
+    "url": "https://github.com/insilichem/tangram",
+    "code_url": "https://github.com/insilichem/tangram",
+    "paper_url": null,
+    "categories": [
+      "metals",
+      "chimera",
+      "modelling"
+    ],
+    "year": null,
+    "license": "academic",
+    "repo": "insilichem/tangram",
     "also_in": []
   },
   {
@@ -28561,6 +29171,7 @@
     "repo": "gnina/gnina",
     "has_paper": true,
     "also_in": [
+      "curated",
       "github-stars:yboulaamane",
       "github-topics"
     ]
@@ -33356,7 +33967,9 @@
     "license": "Free of charge",
     "repo": null,
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
@@ -36266,7 +36879,9 @@
     "license": "Not licensed",
     "repo": "biomed-ai/lmetalsite",
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
@@ -39165,7 +39780,9 @@
     "license": "MIT",
     "repo": "matthijshak/metaldock",
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
@@ -39579,7 +40196,9 @@
     "license": "Free of charge",
     "repo": null,
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
@@ -53819,7 +54438,9 @@
     "license": "LGPL-3.0",
     "repo": "insilichem/pychimera",
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
@@ -69722,6 +70343,7 @@
     "license": "MIT",
     "repo": "deepchem/deepchem",
     "also_in": [
+      "curated",
       "github-stars:yboulaamane"
     ]
   },
@@ -70411,6 +71033,7 @@
     "repo": "gnina/gnina",
     "also_in": [
       "biotools",
+      "curated",
       "github-stars:yboulaamane"
     ]
   },
@@ -78340,7 +78963,9 @@
     "year": "2022",
     "license": "NOASSERTION",
     "repo": "lanl/architector",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-topics",
@@ -84366,7 +84991,9 @@
     "year": "2024",
     "license": "LGPL-2.1",
     "repo": "abdelazim-abdelgawwad/easyparm",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-topics",
@@ -85691,7 +86318,9 @@
     "year": "2016",
     "license": "LGPL-3.0",
     "repo": "insilichem/ommprotocol",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-topics",
@@ -88272,7 +88901,9 @@
     "year": "2017",
     "license": "LGPL-3.0",
     "repo": "insilichem/gaudi",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-topics",
@@ -90090,7 +90721,9 @@
     "year": "2022",
     "license": "LGPL-3.0",
     "repo": "ebjerrum/scikit-mol",
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "github-stars:yboulaamane",
@@ -90699,6 +91332,7 @@
     "repo": "gnina/gnina",
     "also_in": [
       "biotools",
+      "curated",
       "github-topics"
     ]
   },
@@ -91203,6 +91837,7 @@
     "license": "MIT",
     "repo": "deepchem/deepchem",
     "also_in": [
+      "curated",
       "github-topics"
     ]
   },

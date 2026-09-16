@@ -234,3 +234,117 @@ test("all recipes compose valid conditional graphs across single-family exclusio
     }
   }
 });
+
+test("a metal centre is detected from real coordination language, not from lookalikes", () => {
+  const metals = (q) => statedConstraints(q).filter((c) => c.kind === "metal site").map((c) => c.phrase);
+  for (const query of [
+    "find inhibitors of carbonic anhydrase II in human",
+    "dock hydroxamates into HDAC6",
+    "metalloprotein docking for a zinc enzyme",
+    "simulate an Fe(III) porphyrin site",
+    "MMP-13 selectivity over MMP1",
+    "a chelating fragment for a manganese enzyme",
+  ]) assert.ok(metals(query).length, `expected a metal site in: ${query}`);
+
+  // Bare two-letter symbols collide with ordinary words, calcium channels are
+  // not coordination chemistry, and "heme" hides inside unrelated names.
+  for (const query of [
+    "find inhibitors of EGFR in human",
+    "calcium channel blocker for hypertension",
+    "co-crystal structure of CDK2 with a fragment",
+    "train a CheMeleon model for solubility",
+    "design a PROTAC for BRD4",
+    "improve potency of my analogues using measured SAR",
+  ]) assert.deepEqual(metals(query), [], `unexpected metal site in: ${query}`);
+});
+
+test("metal work is inserted into the routed protocol, before the structure is used", () => {
+  const { brief, result } = plan("find inhibitors of carbonic anhydrase II in human");
+  assert.equal(result.intent, "hit-discovery");
+  assert.deepEqual(validate(result), []);
+  assert.deepEqual(brief.metal, ["carbonic anhydrase"]);
+
+  const order = ids(result);
+  const at = (id) => order.indexOf(id);
+  assert.ok(at("metal.characterise_the_metal_centre") > at("structure.choose_the_receptor_structure"));
+  assert.ok(at("metal.characterise_the_metal_centre") < at("docking.prepare_the_receptor_and"));
+  assert.ok(at("metal.prepare_the_coordination_sphere") < at("docking.prepare_the_receptor_and"));
+  // Scoring corrects the setup, so it must precede the screen it informs.
+  assert.ok(at("metal.score_the_coordination") > at("docking.prepare_the_receptor_and"));
+  assert.ok(at("metal.score_the_coordination") < at("docking.screen_the_library"));
+
+  // Every metal step says what triggered it, so a wrong guess is correctable.
+  for (const step of result.steps.filter((s) => s.family === "metal")) {
+    assert.match(step.context, /carbonic anhydrase/);
+    assert.match(step.context, /do not apply/);
+  }
+  const md = planToMarkdown(result, null, [], brief);
+  assert.ok(md.includes("Characterise the metal centre before anything else"));
+  assert.ok(md.includes("carbonic anhydrase"));
+});
+
+test("metal steps follow the same exclusions and route changes as everything else", () => {
+  // Docking excluded reroutes to the ligand-based branch, which has no receptor
+  // to set up, so no metal step is bolted on to it.
+  const withoutDocking = plan("find inhibitors of carbonic anhydrase II without docking").result;
+  assert.equal(withoutDocking.intent, "ligand-discovery");
+  assert.deepEqual(validate(withoutDocking), []);
+  assert.deepEqual(ids(withoutDocking).filter((id) => id.startsWith("metal.")), []);
+
+  // A simulation of a metal site needs parameters, but has no metal-binding
+  // warhead to hold liable.
+  const zincFinger = plan("simulate the stability of a zinc finger protein").result;
+  assert.equal(zincFinger.intent, "md-stability");
+  assert.deepEqual(validate(zincFinger), []);
+  const order = ids(zincFinger);
+  assert.ok(order.includes("metal.parameterise_the_centre"));
+  assert.ok(!order.includes("metal.check_the_binding_group"));
+  assert.ok(order.indexOf("metal.parameterise_the_centre") < order.indexOf("md.build_the_system"));
+
+  // Ruling out force field work drops the parameterisation, not the whole plan.
+  const noParams = plan("simulate a zinc finger protein without force field parameterisation").result;
+  assert.deepEqual(validate(noParams), []);
+  assert.ok(!ids(noParams).includes("metal.parameterise_the_centre"));
+  assert.ok(noParams.dropped.some((d) => d.id === "metal.parameterise_the_centre"));
+});
+
+test("no question without a metal ever acquires a metal step", () => {
+  for (const query of [
+    "find inhibitors of EGFR in human",
+    "improve potency of my EGFR analogues using measured SAR",
+    "my fragment screen gave 40 hits, which should I grow?",
+    "analyse my existing EGFR trajectory",
+    "plan a synthesis route for this molecule",
+  ]) {
+    const { result } = plan(query);
+    assert.deepEqual(ids(result).filter((id) => id.startsWith("metal.")), [], `metal step in: ${query}`);
+    assert.deepEqual(validate(result), []);
+  }
+});
+
+test("every metal module resolves, and names only tools the catalogue holds", async () => {
+  const { readFileSync } = await import("node:fs");
+  const catalogue = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const names = new Set(catalogue.tools.flatMap((t) => [t.name, ...(t.aliases || [])]));
+  const metal = Object.values(MODULES).filter((m) => m.family === "metal");
+  assert.ok(metal.length >= 5);
+  for (const m of metal) {
+    assert.ok(m.title && m.why && m.produces.length, `incomplete metal module: ${m.id}`);
+    for (const tool of m.tools) assert.ok(names.has(tool), `${m.id} names a missing tool: ${tool}`);
+  }
+  // Injected, never listed in a recipe; that is what keeps them out of plans
+  // for questions with no metal in them.
+  for (const recipe of Object.values(RECIPES)) {
+    assert.deepEqual(recipe.modules.filter((id) => id.startsWith("metal.")), []);
+  }
+});
+
+test("a structure-only question checks the metal without setting up for work it is not doing", () => {
+  const { result } = plan("what is the best structure for a copper-binding protein");
+  assert.equal(result.intent, "structure");
+  assert.deepEqual(validate(result), []);
+  const metal = ids(result).filter((id) => id.startsWith("metal."));
+  assert.deepEqual(metal, ["metal.characterise_the_metal_centre"]);
+  assert.ok(ids(result).indexOf("metal.characterise_the_metal_centre")
+    > ids(result).indexOf("structure.rank_the_experimental_structures"));
+});

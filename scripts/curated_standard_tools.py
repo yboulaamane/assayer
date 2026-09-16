@@ -81,12 +81,26 @@ T = [
     ("Biopython", "structure", "General bioinformatics library: sequence and structure parsing, alignment, PDB handling.", "https://biopython.org", "biopython/biopython", "open-source", ["library"]),
     ("DSSP", "structure", "Reference secondary-structure and solvent-accessibility assignment from 3D coordinates.", "https://github.com/PDB-REDO/dssp", "PDB-REDO/dssp", "open-source", ["secondary-structure"]),
 
+    ("CheckMyMetal", "structure", "Validates metal sites in deposited or refined structures against expected coordination number, geometry and donor distances. Mis-assigned metals are common; check before you build a docking model on one.", "https://cmm.minorlab.org", None, "free-web", ["metals", "validation", "crystallography"]),
+    ("AlphaFill", "structure", "Transplants ligands, cofactors and metal ions into AlphaFold models by sequence and structure similarity. AlphaFold predicts the fold, not the metal, so a metalloprotein model without this step has an empty site.", "https://alphafill.eu", None, "free-web", ["metals", "cofactors", "model-repair"]),
+
     # ---------------- binding site detection ----------------
     ("fpocket", "binding-site", "Voronoi-based pocket detection and druggability scoring, with mdpocket for pocket dynamics over MD trajectories.", "https://github.com/Discngine/fpocket", "Discngine/fpocket", "open-source", ["pocket-detection", "druggability"]),
     ("P2Rank", "binding-site", "Machine-learning ligand-binding site prediction from structure; fast, template-free, used inside several docking pipelines.", "https://github.com/rdk/p2rank", "rdk/p2rank", "open-source", ["pocket-detection"]),
     ("PrankWeb", "binding-site", "Web front end for P2Rank with conservation scoring and in-browser visualisation.", "https://prankweb.cz", None, "free-web", ["pocket-detection"]),
     ("CASTp", "binding-site", "Computed atlas of surface topography: analytic pocket and cavity measurement.", "http://sts.bioe.uic.edu/castp/", None, "free-web", ["pocket-detection"]),
     ("ProteinsPlus / DoGSiteScorer", "binding-site", "Pocket detection with druggability scores, plus protonation (Protoss) and pose analysis tools.", "https://proteins.plus", None, "free-web", ["pocket-detection", "druggability"]),
+
+    ("MetalPDB", "binding-site", "Every metal site in the PDB, abstracted into minimal functional sites so you can compare coordination geometry and donor sets across unrelated folds.", "https://metalpdb.cerm.unifi.it", None, "free-web", ["metals", "metal-site", "database"]),
+    ("MESPEUS", "binding-site", "Metal coordination geometry measured across the PDB: bond lengths, angles and donor-set frequencies per metal. The reference for judging whether a site's geometry is physically reasonable.", "https://mespeus.nchu.edu.tw", None, "free-web", ["metals", "metal-site", "geometry"]),
+    ("MIB2", "binding-site", "Predicts metal ion-binding residues and models the ion into the structure, by fragment transfer from known sites; covers a dozen biologically common ions.", "http://bioinfo.cmu.edu.tw/MIB2/", None, "free-web", ["metals", "metal-site", "prediction"]),
+    ("Metal3D", "binding-site", "3D CNN predicting zinc site location and probability density directly from protein geometry; useful when the apo structure has no ion modelled.", "https://github.com/lcbc-epfl/metal-site-prediction", "lcbc-epfl/metal-site-prediction", "open-source", ["metals", "zinc", "prediction"]),
+    ("BioMetAll", "binding-site", "Geometry-based search for candidate metal-binding sites using only backbone and side-chain positions, so it finds sites in apo and predicted structures. This is the published v1; v2 adds scoring and metal discrimination.", "https://github.com/insilichem/biometall", "insilichem/biometall", "open-source", ["metals", "metal-site", "prediction"]),
+    ("BioMetAll v2", "binding-site", "The current BioMetAll: adds a score per candidate site, discriminates between metals rather than reporting any site, and uses side-chain descriptors instead of backbone geometry alone.", "https://github.com/insilichem/biometallv2", "insilichem/biometallv2", "open-source", ["metals", "metal-site", "prediction"]),
+    ("BioBrigit", "binding-site", "Predicts how a metal ion travels through a protein to reach its site, not just where the site is. Combines a 3D CNN over the biochemical environment with known bioinorganic coordination preferences.", "https://github.com/insilichem/BioBrigit", "insilichem/BioBrigit", "open-source", ["metals", "metal-site", "diffusion-pathway"]),
+    ("LMetalSite", "binding-site", "Alignment-free metal-binding residue prediction from sequence alone, via a protein language model; the fallback when there is no structure at all.", "https://github.com/biomed-AI/LMetalSite", "biomed-AI/LMetalSite", "open-source", ["metals", "metal-site", "sequence"]),
+    ("ZincBind", "binding-site", "Curated database of zinc binding sites extracted from the PDB, grouped by coordinating residue family and site type.", "https://zincbind.net", None, "free-web", ["metals", "zinc", "database"]),
+    ("InterMetalDB", "binding-site", "Intermolecular metal sites, where the ion bridges two chains or a chain and a ligand; the place to look before assuming a metal-mediated contact is an artefact.", "https://intermetaldb.biotech.uwr.edu.pl", None, "free-web", ["metals", "metal-site", "database"]),
 
     # ---------------- cheminformatics toolkits ----------------
     ("RDKit", "cheminformatics", "The open cheminformatics toolkit everything else is built on: descriptors, fingerprints, conformers, substructure search, reaction handling.", "https://www.rdkit.org", "rdkit/rdkit", "open-source", ["toolkit", "descriptors", "fingerprints"]),
@@ -184,6 +198,10 @@ T = [
     ("DataWarrior", "cheminformatics", "Free desktop app for chemical data visualisation, SAR analysis, clustering and property prediction.", "https://openmolecules.org/datawarrior/", None, "free-web", ["visualisation", "sar"]),
     ("CReM", "cheminformatics", "Chemically reasonable mutations: fragment-based structure generation with medicinal-chemistry-valid replacements.", "https://github.com/DrrDom/crem", "DrrDom/crem", "open-source", ["enumeration", "fragments"]),
 
+    ("molSimplify", "cheminformatics", "Builds, optimises and screens transition-metal complexes from a metal, oxidation state and ligand set; generates sane 3D geometries where general-purpose toolkits guess badly.", "https://github.com/hjkgrp/molSimplify", "hjkgrp/molSimplify", "open-source", ["metals", "organometallic", "structure-generation"]),
+    ("Architector", "cheminformatics", "Generates 3D conformers for metal complexes across the periodic table, including multiple spin states and coordination geometries, as a Python API.", "https://github.com/lanl/Architector", "lanl/Architector", "open-source", ["metals", "organometallic", "conformers"]),
+    ("Cambridge Structural Database (CCDC)", "cheminformatics", "The small-molecule crystal structure archive, over half of it metal-organic. The empirical reference for coordination geometry, bond lengths and ligand conformation.", "https://www.ccdc.cam.ac.uk/solutions/software/csd/", None, "commercial", ["metals", "crystal-structures", "reference"]),
+
     # ---------------- compound & bioactivity databases ----------------
     ("ChEMBL", "libraries", "Manually curated bioactivity database (~2.4M compounds, 20M+ activities) mapped to targets and assays.", "https://www.ebi.ac.uk/chembl/", None, "free-web", ["bioactivity", "database"]),
     ("PubChem", "libraries", "The largest open chemical database: compounds, substances, bioassays, patents and literature links.", "https://pubchem.ncbi.nlm.nih.gov", None, "free-web", ["database"]),
@@ -218,6 +236,12 @@ T = [
     ("SwissDock", "docking", "Free docking web service (AutoDock Vina and Attracting Cavities backends) for occasional runs.", "https://www.swissdock.ch", None, "free-web", ["docking", "web"]),
     ("Pharmit", "docking", "Interactive pharmacophore and shape search over billions of purchasable compounds, with in-browser minimisation.", "https://pharmit.csb.pitt.edu", "dkoes/pharmit", "open-source", ["pharmacophore", "virtual-screening"]),
 
+    ("MetalDock", "docking", "Docks organometallic and metal-complex ligands into proteins, DNA and other biomolecules, optimising the complex with QM and generating the metal parameters the docking needs.", "https://github.com/MatthijsHak/MetalDock", "MatthijsHak/MetalDock", "open-source", ["metals", "docking", "organometallic"]),
+    ("AutoDock4Zn", "docking", "Zinc force field for AutoDock4 adding directional pseudo-atoms around the ion, so tetrahedral coordination is rewarded geometrically rather than as undirected electrostatics.", "https://autodock.scripps.edu/resources/autodock-zn/", None, "open-source", ["metals", "zinc", "docking", "scoring"]),
+
+    ("gnina", "docking", "Fork of smina with convolutional neural network scoring and rescoring, run alongside the empirical score rather than instead of it.", "https://github.com/gnina/gnina", "gnina/gnina", "open-source", ["docking", "cnn-scoring"]),
+    ("GaudiMM", "docking", "Multi-objective genetic algorithm that optimises binding, geometry and any other objective you define at once, instead of collapsing them into one score. Handles metal coordination and flexible systems that fixed-receptor docking cannot express.", "https://gaudi.readthedocs.io", "insilichem/gaudi", "open-source", ["metals", "optimisation", "molecular-design"]),
+
     # ---------------- molecular dynamics & free energy ----------------
     ("GROMACS", "md", "The most widely used open MD engine; fast on CPU and GPU, with a complete analysis toolchain.", "https://www.gromacs.org", None, "open-source", ["md-engine"]),
     ("AMBER / AmberTools", "md", "Amber force fields and simulation stack; AmberTools is free, pmemd.CUDA is licensed.", "https://ambermd.org", None, "academic", ["md-engine", "force-field"]),
@@ -249,6 +273,12 @@ T = [
     ("PocketMiner", "binding-site", "Predicts where cryptic pockets are likely to open from a single structure, so you know whether long sampling is worth running at all.", "https://pocketminer.azurewebsites.net", "Mickdub/gvp", "open-source", ["cryptic-pocket", "machine-learning"]),
     ("deeptime", "md", "Markov state models, TICA/VAMP and kinetic analysis of long or many-replica trajectories.", "https://github.com/deeptime-ml/deeptime", "deeptime-ml/deeptime", "open-source", ["msm", "kinetics"]),
 
+    ("MCPB.py", "md", "AmberTools' metal centre parameter builder: derives bonded-model force field parameters for a metal site from QM, the standard route to simulating a metalloprotein without the ion drifting out.", "https://ambermd.org/tutorials/advanced/tutorial20/", None, "academic", ["metals", "force-field", "parameterisation"]),
+    ("easyPARM", "md", "Automates force field parameter derivation for metal complexes and organometallics from a QM optimisation, producing ready-to-run Amber, GROMACS, CHARMM and OpenMM inputs.", "https://github.com/Abdelazim-Abdelgawwad/easyPARM", "Abdelazim-Abdelgawwad/easyPARM", "open-source", ["metals", "force-field", "parameterisation"]),
+
+    ("GPathFinder", "md", "Finds the route a ligand takes in and out of a buried site by multi-objective search over GaudiMM, giving binding pathways and intermediate poses rather than only the bound state.", "https://gpathfinder.readthedocs.io/en/latest/", "insilichem/gpathfinder", "open-source", ["binding-pathway", "optimisation"]),
+    ("OMMProtocol", "md", "Runs a complete OpenMM pipeline, from minimisation through equilibration to production, from one YAML file, with checkpointing and standard reporters.", "https://ommprotocol.readthedocs.io", "insilichem/ommprotocol", "open-source", ["md-engine", "workflow"]),
+
     # ---------------- quantum chemistry ----------------
     ("Psi4", "qm", "Open-source quantum chemistry (DFT, MP2, CC) with a Python API suited to automated workflows.", "https://psicode.org", "psi4/psi4", "open-source", ["dft", "ab-initio"]),
     ("PySCF", "qm", "Python-native electronic structure library, easy to embed in ML and screening pipelines.", "https://pyscf.org", "pyscf/pyscf", "open-source", ["dft", "python"]),
@@ -257,6 +287,9 @@ T = [
     ("CREST", "qm", "Conformer-rotamer ensemble sampling on top of xtb; the standard cheap conformational search.", "https://github.com/crest-lab/crest", "crest-lab/crest", "open-source", ["conformers"]),
     ("NWChem", "qm", "Scalable HPC quantum chemistry for large systems and plane-wave/molecular hybrids.", "https://github.com/nwchemgit/nwchem", "nwchemgit/nwchem", "open-source", ["hpc", "ab-initio"]),
     ("autodE", "qm", "Automated reaction-profile generation: conformers, transition states and barriers with minimal manual setup.", "https://github.com/duartegroup/autodE", "duartegroup/autodE", "open-source", ["reaction-mechanism", "transition-state"]),
+
+    ("Garleek", "qm", "Bridges Gaussian's ONIOM to molecular mechanics backends such as Tinker and OpenMM, so a QM/MM job can put a metal centre in the QM layer and the rest of the protein in MM.", "https://garleek.readthedocs.io", "insilichem/garleek", "open-source", ["metals", "qm-mm", "oniom"]),
+    ("ESIgen", "qm", "Turns raw quantum chemistry output into a formatted supporting information document: geometries, energies, frequencies and images, from a template.", "https://github.com/insilichem/esigen", "insilichem/esigen", "open-source", ["reporting", "supporting-information"]),
 
     # ---------------- generative design ----------------
     ("MOSES", "generative", "Benchmarking platform for molecular generative models with standard splits and distribution metrics.", "https://github.com/molecularsets/moses", "molecularsets/moses", "open-source", ["benchmark", "generative"]),
@@ -267,6 +300,8 @@ T = [
     ("LigandMPNN", "generative", "Sequence design conditioned on ligands, nucleotides and cofactors; the successor to ProteinMPNN for binding sites.", "https://github.com/dauparas/LigandMPNN", "dauparas/LigandMPNN", "open-source", ["protein-design", "sequence-design"]),
 
     # ---------------- QSAR / property-prediction ML ----------------
+    ("scikit-mol", "qsar-ml", "RDKit featurisation wrapped as scikit-learn transformers, so fingerprints and descriptors live inside a Pipeline and cannot leak across a split.", "https://github.com/EBjerrum/scikit-mol", "EBjerrum/scikit-mol", "open-source", ["featurisation", "sklearn"]),
+    ("DeepChem", "qsar-ml", "Long-running deep learning library for chemistry and biology: featurisers, splitters, model zoo and the MoleculeNet task collection.", "https://github.com/deepchem/deepchem", "deepchem/deepchem", "open-source", ["deep-learning", "library"]),
     ("QSARtuna", "qsar-ml", "AstraZeneca's automated QSAR model building: preprocessing, algorithm and hyperparameter search, uncertainty.", "https://github.com/MolecularAI/QSARtuna", "MolecularAI/QSARtuna", "open-source", ["qsar", "automl"]),
     ("Uni-Mol", "qsar-ml", "3D-aware molecular representation model used as a pretrained backbone for property and binding tasks.", "https://github.com/deepmodeling/Uni-Mol", "deepmodeling/Uni-Mol", "open-source", ["pretrained", "3d"]),
     ("MolSkill", "qsar-ml", "Learns medicinal chemists' implicit preferences from pairwise choices to score compound attractiveness.", "https://github.com/microsoft/molskill", "microsoft/molskill", "open-source", ["scoring", "med-chem"]),
@@ -276,6 +311,9 @@ T = [
     ("scikit-learn", "qsar-ml", "The classical ML baseline stack (RF, SVM, calibration, CV) that every QSAR study is measured against.", "https://scikit-learn.org", "scikit-learn/scikit-learn", "open-source", ["ml", "baseline"]),
     ("XGBoost", "qsar-ml", "Gradient boosting that remains highly competitive on descriptor/fingerprint tabular chemistry data.", "https://github.com/dmlc/xgboost", "dmlc/xgboost", "open-source", ["ml", "boosting"]),
     ("KNIME", "qsar-ml", "Visual workflow platform with mature chemistry nodes (RDKit, Schrödinger, Vernalis) for no-code pipelines.", "https://www.knime.com", None, "open-source", ["workflow", "no-code"]),
+
+    ("CheMeleon", "qsar-ml", "Foundation model pretrained to reproduce Mordred descriptors, then fine-tuned through Chemprop with --from-foundation CheMeleon; beats descriptor and GNN baselines on small property datasets.", "https://github.com/JacksonBurns/chemeleon", "JacksonBurns/chemeleon", "open-source", ["pretrained", "property-prediction", "chemprop"]),
+    ("Mol-JEPA", "qsar-ml", "Boehringer Ingelheim's multimodal joint-embedding model, fusing cellular effects, binding affinity, ADMET and quantum chemistry into one molecular representation. Code is unlicensed; the weights are CC BY-NC 4.0.", "https://github.com/Boehringer-Ingelheim/mol-jepa", "Boehringer-Ingelheim/mol-jepa", "academic", ["pretrained", "multimodal", "embeddings"]),
 
     # ---------------- ADMET, PK & toxicity ----------------
     ("ADMETlab 3.0", "admet", "Web predictor covering 88 ADMET endpoints with uncertainty estimates and batch submission.", "https://admetlab3.scbdd.com", None, "free-web", ["admet", "web"]),
@@ -336,6 +374,8 @@ T = [
     ("Hugging Face Hub", "infra", "Where most released protein and molecule model weights and datasets now live.", "https://huggingface.co", None, "free-web", ["models", "datasets"]),
 
     # ---------------- visualisation ----------------
+    ("PyChimera", "viz", "Use the UCSF Chimera Python API from an ordinary interpreter, so Chimera's structure handling can be scripted inside a normal pipeline instead of its own shell.", "https://github.com/insilichem/pychimera", "insilichem/pychimera", "open-source", ["chimera", "scripting"]),
+    ("Tangram", "viz", "A suite of UCSF Chimera extensions from the same group: QM and QM/MM setup, PLIP interaction depiction, PropKa states, normal modes, and dummy-atom preparation of metal systems for MD. Free for academic use.", "https://github.com/insilichem/tangram", "insilichem/tangram", "academic", ["metals", "chimera", "modelling"]),
     ("PyMOL (open source)", "viz", "The de facto structure viewer for figures and pose inspection; open-source build plus a commercial edition.", "https://github.com/schrodinger/pymol-open-source", "schrodinger/pymol-open-source", "open-source", ["visualisation", "structures"]),
     ("UCSF ChimeraX", "viz", "Modern successor to Chimera: large structures, cryo-EM maps, AlphaFold integration and scripting.", "https://www.cgl.ucsf.edu/chimerax/", None, "academic", ["visualisation", "cryo-em"]),
     ("VMD", "viz", "Trajectory visualisation and analysis for MD, with scripting and rendering for publication figures.", "https://www.ks.uiuc.edu/Research/vmd/", None, "academic", ["visualisation", "md"]),
@@ -351,6 +391,7 @@ T = [
 BOT_PROTECTED = {
     "go.drugbank.com", "www.drugbank.com", "www.genecards.org",
     "mcule.com", "chem-space.com", "www.synthiaonline.com", "probeminer.icr.ac.uk",
+    "europepmc.org",
 }
 
 FIELDS = ["name", "stage", "stage_label", "description", "url", "repo", "access", "tags", "url_status"]

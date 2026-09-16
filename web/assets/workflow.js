@@ -302,6 +302,31 @@ const EXCLUDED_METHODS = new RegExp(
   `\\b(?:no need for|no|without|avoid|exclude|skip|don['’]?t (?:use|run|want)|do not (?:use|run|want)|not run|cannot run|can['’]?t run|rather not)\\s+(${METHOD_NAME}(?:\\s*(?:,\\s*(?:(?:and|or)\\s+)?|/|\\b(?:and|or)\\s+)${METHOD_NAME})*)`, "gi");
 const MISSING_ASSETS = /\b(?:no|without|do not have|don['’]?t have)\s+((?:(?:usable|experimental|known|measured|matching)\s+)?(?:structures?|actives?|data|topology|trajector\w*))\b/gi;
 
+// A metal centre changes the preparation, the scoring and the parameters, in
+// whatever protocol the question routed to. Detection has to be specific:
+// element symbols are matched only with an oxidation state or charge, because
+// bare two-letter symbols collide with ordinary words ("Co" in "co-crystal").
+// Calcium is deliberately absent, "calcium channel blocker" is not a
+// coordination-chemistry question.
+const METAL_ELEMENT = "zinc|iron|copper|magnesium|manganese|nickel|cobalt|molybdenum|tungsten|vanadium|ruthenium|rhodium|palladium|platinum|iridium|osmium|rhenium|cadmium|mercury|gallium|gadolinium";
+const METAL_ENZYME = "carbonic anhydrase|histone deacetylase|hdac-?\\d*s?|matrix metalloproteinase|mmp-?\\d*s?|lpxc|urease|arginase|glyoxalase|insulin-degrading enzyme";
+const METAL_SITE = new RegExp([
+  // an explicit statement that there is a metal
+  String.raw`\bmetallo[\w-]*\b`,
+  String.raw`\bmetal[- ](?:ions?|sites?|centres?|centers?|complex(?:es)?|binding|bound|dependent|mediated|chelat\w*)\b`,
+  String.raw`\b(?:ions?|cofactors?|catalytic)\s+metals?\b`,
+  String.raw`\borganometallic\b`,
+  String.raw`\bcoordination\s+(?:sphere|geometry|chemistry|number|bonds?)\b`,
+  String.raw`\bchelat\w+\b`,
+  String.raw`\b(?:heme|haem|porphyrin|iron[- ]sulfur|iron[- ]sulphur|fe-?s cluster)\b`,
+  // element names, and symbols only when carrying a charge or oxidation state
+  String.raw`\b(?:${METAL_ELEMENT})[- ]?(?:ion|binding|bound|dependent|site|centre|center|finger|complex)\w*\b`,
+  String.raw`\b(?:${METAL_ELEMENT})\b(?=[^.]{0,60}\b(?:protein|enzyme|site|ion|dock|coordinat|complex|cofactor)\w*)`,
+  String.raw`\b(?:Zn|Fe|Cu|Mg|Mn|Ni|Co|Mo|Ru|Pt|Pd|Cd|Hg|V|W)\s*(?:\d?\+|\((?:i{1,3}|iv|v|vi)\))`,
+  // enzyme families whose metal dependence is the point
+  String.raw`\b(?:${METAL_ENZYME})\b`,
+].join("|"), "gi");
+
 const CONSTRAINT_PATTERNS = [
   [EXCLUDED_METHODS, "excluded method"],
   [/\b(cpu[- ]only|no gpu|without a gpu|single (?:cpu|core)|laptop only)\b/gi, "compute limit"],
@@ -311,6 +336,7 @@ const CONSTRAINT_PATTERNS = [
   [/\b(\d+\s+(?:measured|assayed|known|screened)?\s*(?:compounds?|analogues?|hits?|actives?|variants?|mutations?|structures?))\b/gi, "existing asset"],
   [/\b(measured SAR|assay data|measured data)\b/gi, "existing asset"],
   [MISSING_ASSETS, "missing asset"],
+  [METAL_SITE, "metal site"],
 ];
 
 /** Preserve all stated constraints; presentation limits must not discard facts. */

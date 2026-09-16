@@ -442,6 +442,13 @@ def main():
         if not name or len(name) < 3:   # "xtb" is a real tool
             continue
         if name in canon and canon[name] != key:
+            # The canonical name ignores a trailing version, which is right for
+            # one tool listed twice, and wrong for two curated entries that are
+            # separate methods (BioMetAll and BioMetAll v2). The curated list is
+            # hand-written, so a deliberate second entry outranks the match.
+            if (any(m["source"] == "curated" for m in members)
+                    and any(m["source"] == "curated" for m in groups[canon[name]])):
+                continue
             groups[canon[name]] += members
             del groups[key]
         else:
