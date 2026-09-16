@@ -97,3 +97,26 @@ test("a gate that states a number either cites a source or says it has none", as
   assert.deepEqual(unsourced, [],
     "a numeric gate must carry a source, or say in its own text that it is a convention");
 });
+
+test("every asset URL carries a hash of what it serves", async () => {
+  const { readFileSync, readdirSync } = await import("node:fs");
+  const dir = new URL("../web/assets/", import.meta.url);
+  const stamped = /from "\.\/[\w-]+\.js\?v=[0-9a-f]{10}"/;
+  const bare = /from "\.\/[\w-]+\.js"/;
+  const bad = [];
+
+  for (const name of readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+    const src = readFileSync(new URL(name, dir), "utf8");
+    // An unstamped import is a URL that cannot change when its contents do,
+    // which is how a browser ends up running last week's code.
+    if (bare.test(src)) bad.push(`${name} imports without a version stamp`);
+    if (src.includes("from \"./") && !stamped.test(src) && bare.test(src)) {
+      bad.push(`${name} has an unstamped relative import`);
+    }
+  }
+  const html = readFileSync(new URL("../web/index.html", import.meta.url), "utf8");
+  for (const m of html.matchAll(/(?:src|href)="(assets\/[\w-]+\.(?:js|css))(\?v=[0-9a-f]{10})?"/g)) {
+    if (!m[2]) bad.push(`index.html references ${m[1]} without a version stamp`);
+  }
+  assert.deepEqual(bad, [], "run: python3 scripts/version_assets.py");
+});

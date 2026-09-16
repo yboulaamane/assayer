@@ -5,9 +5,9 @@
 /* ------------------------------------------------------------------ intent */
 // The protocol texts live in the module registry now; this file routes a
 // question to one and resolves what it is about.
-export { RECIPES as PROTOCOLS } from "./modules.js";
-import { REFERENCES } from "./modules.js";
-import { RECIPES, FAMILY_TERMS } from "./modules.js";
+export { RECIPES as PROTOCOLS } from "./modules.js?v=dc14e373f6";
+import { REFERENCES } from "./modules.js?v=dc14e373f6";
+import { RECIPES, FAMILY_TERMS } from "./modules.js?v=dc14e373f6";
 
 const INTENTS = [
   ["network-pharmacology", ["network pharmacology", "network-pharmacology", "systems pharmacology",

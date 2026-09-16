@@ -1,8 +1,8 @@
-import { icon } from "./icons.js";
-import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js";
-import { buildBrief, compose, composeFromSelection, validate } from "./compose.js";
-import { REFERENCES } from "./modules.js";
-import { matchesAccess } from "./catalog.js";
+import { icon } from "./icons.js?v=6212755783";
+import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js?v=d6b84e3947";
+import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=3e00eaac44";
+import { REFERENCES } from "./modules.js?v=dc14e373f6";
+import { matchesAccess } from "./catalog.js?v=d3a394a1b9";
 
 const app = document.getElementById("app");
 let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
