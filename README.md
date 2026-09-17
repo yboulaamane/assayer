@@ -27,39 +27,99 @@ cross-origin requests, so the browser talks to them directly.
 
 ## What's in the catalogue
 
-| Stage | Tools | | Stage | Tools |
-|---|--:|---|---|--:|
-| Dynamics & free energy | 822 | | QSAR & property models | 97 |
-| Docking & virtual screening | 526 | | Compounds & bioactivity | 84 |
-| Binding sites & pockets | 471 | | Workflow & infrastructure | 65 |
-| Protein structures | 439 | | Target & druggability | 40 |
-| ADMET, PK & toxicity | 345 | | Synthesis & retrosynthesis | 28 |
-| Cheminformatics | 256 | | Benchmarks & datasets | 18 |
-| Quantum chemistry | 203 | | Clinical & competitive | 17 |
-| Generative & de novo design | 176 | | Everything else | 158 |
-| Peptides & protein design | 120 | | Visualisation | 105 |
+| Stage | Curated | Listed | | Stage | Curated | Listed |
+|---|--:|--:|---|---|--:|--:|
+| Docking & virtual screening | 28 | 576 | | Quantum chemistry | 12 | 88 |
+| ADMET, PK & toxicity | 11 | 324 | | Protein structures | 19 | 67 |
+| Cheminformatics | 19 | 250 | | Target & druggability | 36 | 59 |
+| Dynamics & free energy | 32 | 195 | | Workflow & infrastructure | 8 | 56 |
+| Binding sites & pockets | 18 | 166 | | Peptides & protein design | 16 | 51 |
+| Generative & de novo design | 11 | 157 | | Clinical & competitive | 10 | 34 |
+| Compounds & bioactivity | 21 | 111 | | Synthesis & retrosynthesis | 22 | 28 |
+| QSAR & property models | 16 | 104 | | Benchmarks & datasets | 7 | 14 |
+| Visualisation | 9 | 100 | | | | |
 
-238 tools carry a verified `pip` or `conda` command, and 34 of the most-used ones
-have a worked example in the detail panel. Those examples are hand-written,
-because the first command you need is rarely the one in the README's quick start.
+295 of the 2,380 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 189 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 31 quote one from the project's own README. No example is generated.
 
 ## Where the data comes from
 
 | Source | Rows | Licence |
 |---|--:|---|
-| [bio.tools](https://bio.tools), 12 drug-discovery EDAM topics | 3,092 | CC BY 4.0 |
-| GitHub repos with 30+ stars across 40 topics | 867 | public metadata |
-| Written for this project | 293 | ours |
+| [bio.tools](https://bio.tools), 10 drug-discovery EDAM topics | 2,746 | CC BY 4.0 |
+| GitHub repos with 30+ stars across 23 topics | 713 | public metadata |
+| Written for this project | 295 | ours |
 | My own starred repos, filtered | 130 | ours |
 
-bio.tools gives breadth. I filtered it to the topics a chemist would care about
-rather than taking the whole registry, which is mostly sequence analysis. The
-GitHub layer answers a question registries can't: is anyone still maintaining
-this. The 293 curated entries cover the things a project actually runs on, which
-both other sources are patchy about.
+Both topic lists are deliberately narrow: **medicinal and computational chemistry
+for drug design, and nothing else.** They used to reach into structural biology,
+bioinformatics and imaging, and the catalogue paid for it — bio.tools' "Biophysics"
+and "Structural biology" topics alone contributed 346 rows that turned out to be
+cone-beam CT backprojection, MRI browsers and image-registration toolboxes. Real
+software, correctly labelled, and nothing to do with designing a drug.
 
-336 of 4,382 rows appear in more than one source. They get merged into one entry
-that remembers where it came from.
+bio.tools gives breadth within that scope. The GitHub layer answers a question
+registries can't: is anyone still maintaining this. The 295 curated
+entries cover what a project actually runs on, which both other sources are
+patchy about.
+
+326 of 3,884 rows appear in more than one source. They get merged into one
+entry that remembers where it came from.
+
+### What gets thrown away, and why
+
+bio.tools labels a tool by **method** and says nothing about **purpose**. That is
+right for a registry and wrong for this catalogue: "Molecular dynamics" is a
+structural-biology topic, so scraping it brings in all of structural biology — a
+microbial community simulator, a flow-cytometry utility, an embryo morphodynamics
+browser, all correctly labelled and none of them drug discovery.
+
+Measured share of scraped rows per stage whose name, description and tags never
+once mention this field:
+
+| Swamped | | Tight | |
+|---|--:|---|--:|
+| Protein structures | 86% | ADMET, PK & toxicity | 0% |
+| Dynamics & free energy | 83% | Docking & virtual screening | 3% |
+| Quantum chemistry | 82% | Generative & de novo design | 4% |
+| Binding sites & pockets | 69% | Compounds & bioactivity | 5% |
+| Peptides & protein design | 63% | Target & druggability | 8% |
+
+Nobody docks for a reason unrelated to drug discovery, so those stages need no
+gate. The five on the left do. `excluded_because()` in `scripts/build_catalog.py`
+drops 1,144 rows, in this order: no description, a paper's code drop,
+courseware, a list of other people's work, and — only in the five stages where the
+topic cannot carry the purpose — anything that never mentions the field.
+
+Two things rescue a row from that last rule. A tool the protocols recommend is
+exempt, and so is one with **100+ GitHub stars whose own words are recognisably
+this kind of science** — traction in an adjacent field is better evidence than a
+keyword, and it is what keeps LAMMPS, OpenFold, deepmd-kit and SchNetPack. It
+exempts a row from the relevance rule only, never from the checks above, so no
+number of stars can turn a reading list into a tool: `cs-video-courses` arrived
+here with 83,480 of them.
+
+Known residue: two entries in the registry layer survive on stars and topic tags
+that the repository does not really earn — NVIDIA's `DeepLearningExamples` and
+Folding@home's `coronavirus`. Both would need a rule written around one
+repository, which is how a classifier rots, so they stay and are named here
+instead.
+
+Two things it must never drop, both enforced in `tests/catalog.test.mjs`:
+
+- **anything curated.** A person judged it; that is the whole point of the layer.
+- **anything a protocol recommends.** A plan that names a tool the catalogue has
+  dropped renders a dead chip and tells you to use something this site refuses to
+  describe. The gate reads the tool names out of `modules.js` and exempts them.
+
+Every exclusion is written to `data/excluded.json` with the reason. A good tool
+caught by the gate is a tool to curate by hand, not a reason to widen the rule.
+
+### Two layers, said out loud
+
+The catalogue is 295 entries someone chose and wrote up, and 2,085 that arrived
+from a registry and were only filtered. Those are different promises, so the site
+does not render them identically: browsing opens on the curated layer, the wider
+one is one click away and says on the page that nobody here has read it.
 
 ## How a plan is built
 
@@ -473,6 +533,11 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
 ## Licence
 
 Code (`scripts/`, `web/`) is MIT. Data (`data/`, `web/catalog.json`) is CC BY 4.0.
+
+The two typefaces in `web/assets/fonts/` are not ours: Newsreader and Instrument
+Sans, both under the SIL Open Font Licence, whose text sits beside them. They are
+self-hosted rather than loaded from a font CDN, so that reading the catalogue
+sends a request to nobody but the catalogue.
 
 The data is CC BY because bio.tools is, and that requirement carries through to
 anything derived from it. If you reuse the catalogue:

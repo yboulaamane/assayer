@@ -112,6 +112,13 @@ CATEGORY_MAP = {
 
     # --- EDAM topics and operations, as used by bio.tools ---------------
     "molecular docking": "docking", "virtual screening": "docking",
+    # Added when the topic lists were narrowed to medicinal and computational
+    # chemistry. Unmapped topics fall through to keyword matching, the weakest
+    # rule the classifier has.
+    "pharmacophore": "docking", "adme": "admet",
+    "de novo drug design": "generative", "drug design": "generative",
+    "drug target interaction": "target-id",
+    "molecular representation learning": "qsar-ml",
     "protein-ligand docking": "docking", "docking simulation": "docking",
     "binding sites": "binding-site", "ligand-binding site prediction": "binding-site",
     "binding site prediction": "binding-site", "protein binding site prediction": "binding-site",
@@ -291,6 +298,13 @@ def norm(s):
     return re.sub(r"[^a-z0-9]+", " ", s).strip()
 
 
+# Categories are looked up as norm(c), which folds hyphens and slashes into
+# spaces. Eleven keys here were written with them and so could never match --
+# "protein-ligand docking" and "ligand-binding site prediction" among them.
+# Normalising the keys once, here, fixes those and stops the next one happening.
+CATEGORY_MAP = {norm(k): v for k, v in CATEGORY_MAP.items()}
+
+
 def is_repo_name(s):
     """True for "owner/repo", false for a display name like "py3Dmol / 3Dmol.js"."""
     return bool(re.match(r"^[\w.-]+/[\w.-]+$", (s or "").strip()))
@@ -364,6 +378,114 @@ def classify(row):
     return "other", "unmatched"
 
 
+# --------------------------------------------------------------- the gate
+#
+# bio.tools labels a tool by method, and says nothing about purpose. That is
+# fine for a registry and wrong for this catalogue: "Molecular dynamics" is a
+# structural-biology topic, so scraping it brings in all of structural biology.
+# Measured share of scraped rows in each stage whose name, description and tags
+# never once mention this field:
+#
+#   protein structures 86%   docking            3%
+#   dynamics           83%   ADMET              0%
+#   quantum chemistry  82%   generative         4%
+#   binding sites      69%   compounds          5%
+#   peptides           63%   target/druggability 8%
+#
+# Nobody docks for a reason unrelated to drug discovery, so the docking rows
+# need no gate. The five on the left do. A curated entry is never gated: it was
+# judged by a person, which is the whole point of the curated layer.
+PLANNER_TOOLS = set()
+
+METHOD_ONLY = {"md", "structure", "qm", "binding-site", "protein-design", "other"}
+
+IN_FIELD = re.compile(
+    r"drug|ligand|compound|pharmacophore|pharmac|admet|adme\b|toxic|"
+    r"binding affinit|lead optimi|medicinal|inhibitor|small molecule|"
+    r"virtual screen|docking|qsar|chembl|bioactivit|scaffold|\bhit\b", re.I)
+
+# Not tools. A paper's code drop, a course, or a row that never got past
+# "owner/repo" cannot be recommended to anyone, whatever stage it landed in.
+COURSEWARE = re.compile(r"\b(tutorials?|courses?|workshops?|lectures?|teaching|"
+                        r"intro(duction)?\s+to|awesome|cheat\s?sheets?|roadmaps?|"
+                        r"syllabus)\b", re.I)
+# A list of other people's work is not a tool, however popular it is. Without
+# this, the most-starred entry in the whole catalogue was cs-video-courses:
+# "List of Computer Science courses with video lectures", 83,480 stars.
+# Popularity exempts a row from the relevance gate only if it is at least
+# recognisably this kind of science. Without this, NVIDIA's DeepLearningExamples
+# ("State-of-the-Art Deep Learning scripts", 14,843 stars) sat at the very top
+# of Protein structures.
+SCIENTIFIC = re.compile(
+    r"protein|molecul|chemi|atom|ligand|drug|biolog|peptide|enzyme|crystal|"
+    r"dock|simulat|force.?field|quantum|\bdft\b|trajector|structur|\brna\b|"
+    r"\bdna\b|genom|spectro|conformer|solvent|binding", re.I)
+
+COLLECTION = re.compile(
+    r"^\s*(a\s+|an\s+|the\s+)?(curated\s+)?(list|collection|catalogue|catalog|"
+    r"compilation|index)\s+of\b|\bpapers?[_\s]+(for|about|on)\b|"
+    r"\breading[_\s]list\b|\bresources?\s+for\b", re.I)
+PAPER_DROP = re.compile(r"\b(code|repository|repo|implementation)\b.{0,24}\b(for|of)\b"
+                        r".{0,30}\b(paper|manuscript|publication|preprint)\b|"
+                        r"supplementary (code|material)", re.I)
+
+
+def planner_tools():
+    """Every tool name the workflow protocols recommend.
+
+    A tool a protocol names has been judged by a person just as surely as a
+    curated row has — the protocol is where that judgement is written down. So
+    the gate must never remove one, or a plan ends up pointing at a tool this
+    catalogue no longer admits exists. tests/ enforces that this stays true.
+    """
+    path = os.path.join(ROOT, "web", "assets", "modules.js")
+    if not os.path.exists(path):
+        return set()
+    src = open(path, encoding="utf-8").read()
+    names = set()
+    for block in re.findall(r"tools:\s*\[(.*?)\]", src, re.S):
+        names.update(n for n in re.findall(r'"([^"]+)"', block))
+    return {norm(n) for n in names}
+
+
+def excluded_because(entry):
+    """Why this entry should not be shown, or None to keep it.
+
+    Returns a reason rather than a boolean so the build can write down what it
+    threw away. A good tool caught by this gate is a tool to curate by hand,
+    not a reason to widen it.
+    """
+    if entry.get("curated"):
+        return None
+    if norm(entry.get("name")) in PLANNER_TOOLS:
+        return None
+    # "Unsorted" says the catalogue cannot tell you what this is for. That is
+    # not a shelf to put things on; it is a reason not to show them.
+    if entry.get("stage") == "other":
+        return "nothing here could say what it is for"
+    desc = (entry.get("description") or "").strip()
+    if not desc:
+        return "no description"
+    if PAPER_DROP.search(desc):
+        return "a paper's code, not a tool"
+    haystack = f"{entry.get('name') or ''} {desc} {' '.join(entry.get('tags') or [])}"
+    if COURSEWARE.search(haystack):
+        return "teaching material"
+    if COLLECTION.search(desc) or COLLECTION.search(entry.get("name") or ""):
+        return "a list of other people's work"
+    # Traction beats keywords. Of the rows this gate would drop, all but 19 have
+    # no repository or no stars at all; the ones that do are TorchMD, PyPDB,
+    # PENSA, wepy, MD-TASK — tools people in this field plainly use, whose
+    # descriptions simply never say the word "drug". The GitHub layer's own
+    # floor is 30 stars; 100 is where traction stops being noise. It exempts a
+    # row from the relevance gate only — never from the checks above, so no
+    # number of stars can turn a reading list into a tool.
+    if (entry.get("stars") or 0) >= 100 and SCIENTIFIC.search(haystack):
+        return None
+    if entry.get("stage") in METHOD_ONLY and not IN_FIELD.search(haystack):
+        return f"real science, different field ({entry.get('stage')})"
+    return None
+
 def merge_key(row):
     if row.get("repo"):
         # Curated entries are deliberately distinct even when they ship from one
@@ -410,6 +532,8 @@ def load_extras():
 
 
 def main():
+    global PLANNER_TOOLS
+    PLANNER_TOOLS = planner_tools()
     packages, snips, quickstarts = load_extras()
     rows = json.load(open(os.path.join(DATA, "tools_index.json")))
     groups = {}
@@ -470,7 +594,7 @@ def main():
             print(f"  !! rule produced an unknown stage {row['_stage']!r}; filed as other")
             row["_stage"] = "other"
 
-    catalogue = []
+    catalogue, excluded = [], []
     for key, members in groups.items():
         if all(m["_stage"] in DROPPED for m in members):
             continue
@@ -488,6 +612,11 @@ def main():
             nicer = next((m for m in members if not is_repo_name(m.get("name"))), None)
             if nicer:
                 head = dict(head, name=nicer["name"])
+            else:
+                # Nothing gave it a display name, so take the repository's own,
+                # in the authors' casing. Dropping these would have cost
+                # graphein, htmd, pytraj, openfold and ChemicalX.
+                head = dict(head, name=head["name"].split("/")[-1])
         # A merged tool can inherit a dropped stage from whichever record won
         # the head slot. Prefer a stage this catalogue actually shows.
         usable = [m["_stage"] for m in members
@@ -544,6 +673,12 @@ def main():
                 entry["quickstart"] = qs
         if entry["description"] and len(entry["description"]) > 300:
             entry["description"] = entry["description"][:297].rstrip() + "…"
+        why = excluded_because(entry)
+        if why:
+            excluded.append({"name": entry["name"], "stage": entry["stage"],
+                             "reason": why, "url": entry.get("url"),
+                             "description": (entry.get("description") or "")[:120]})
+            continue
         entry = {k: v for k, v in entry.items() if v not in (None, [], False) or k == "curated"}
         catalogue.append(entry)
 
@@ -558,14 +693,18 @@ def main():
                                   -e.get("rank", 0), (e["name"] or "").lower()))
 
     stage_counts = Counter(e["stage"] for e in catalogue)
+    # Counted separately so the site can show what it vouches for and what it
+    # merely lists, without the two numbers ever drifting apart.
+    curated_counts = Counter(e["stage"] for e in catalogue if e.get("curated"))
     payload = {
         "generated_from": "data/tools_index.json",
+        "curated": sum(curated_counts.values()),
+        "excluded": len(excluded),
         "stages": [
-            {"slug": s, "label": l, "blurb": b, "hue": h, "count": stage_counts.get(s, 0)}
+            {"slug": s, "label": l, "blurb": b, "hue": h,
+             "count": stage_counts.get(s, 0), "curated": curated_counts.get(s, 0)}
             for (s, l, b, h) in STAGES
-        ] + ([{"slug": "other", "label": "Unsorted",
-               "blurb": "Nothing else fitted: niche, cross-field, or too thinly described to place.",
-               "hue": 220, "count": stage_counts["other"]}] if stage_counts.get("other") else []),
+        ],
         "tools": catalogue,
     }
     os.makedirs(WEB, exist_ok=True)
@@ -582,9 +721,20 @@ def main():
                       html)
         open(idx, "w").write(html)
 
+    # What the gate threw away, written down. A catalogue that silently drops
+    # rows is not reviewable, and this file is how a good tool caught by the
+    # rule gets noticed and curated by hand instead.
+    excluded.sort(key=lambda e: (e["reason"], (e["name"] or "").lower()))
+    with open(os.path.join(DATA, "excluded.json"), "w") as f:
+        json.dump({"count": len(excluded), "entries": excluded}, f,
+                  ensure_ascii=False, indent=1)
+
     how = Counter(r["_how"] for r in rows)
     print(f"{len(rows)} index rows -> {len(catalogue)} unique tools "
-          f"({len(rows) - len(catalogue)} merged as duplicates)")
+          f"({len(rows) - len(catalogue) - len(excluded)} merged as duplicates)")
+    print(f"excluded {len(excluded)} (data/excluded.json):")
+    for reason, n in Counter(e["reason"] for e in excluded).most_common():
+        print(f"  {n:4d}  {reason}")
     print("classified by:", dict(how))
     for s, l, _b, _h in STAGES:
         print(f"  {stage_counts.get(s, 0):4d}  {l}")

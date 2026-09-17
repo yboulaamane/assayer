@@ -33,6 +33,12 @@ HEADERS = {"Accept": "application/json", "User-Agent": "assayer/1.0 (tool catalo
 # structure analysis") were tried and dropped: they add ~1,800 general-purpose
 # sequence and structure tools that dilute the catalogue without helping anyone
 # design a molecule. Receptor preparation is covered by the curated stack.
+#
+# "Biophysics" and "Structural biology" went the same way, for the same reason
+# and with the same evidence: 346 rows were attributable to those two topics
+# alone, and they were 3D cone-beam CT backprojection, MRI image browsers and
+# free-form image registration toolboxes. Real software, correctly labelled by
+# bio.tools, and nothing whatsoever to do with designing a drug.
 TOPICS = [
     "Drug discovery",
     "Medicinal chemistry",
@@ -44,8 +50,6 @@ TOPICS = [
     "Compound libraries and screening",
     "Pharmacology",
     "Toxicology",
-    "Biophysics",
-    "Structural biology",
 ]
 
 FIELDS = ["biotools_id", "name", "description", "homepage", "topics", "functions",
