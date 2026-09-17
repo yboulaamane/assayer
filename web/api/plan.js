@@ -121,7 +121,9 @@ Rules:
 - Keep the controls. A screen needs its redock and enrichment checks, a model needs its split and applicability domain, a simulation needs its convergence check. Never drop a step whose absence would make the rest unfalsifiable.
 - Use the evidence given below. No experimental structure changes which modules apply; do not treat an empty structure list as proof none exists.
 - Ask a question only when the answer changes the module set. Never ask for information already in the request.
-- Set unsupported true, with an empty module list, when the registry cannot address the request at all.
+- Set unsupported true, with an empty module list, ONLY when the registry cannot address the request at all.${intent ? `
+  That is not this request: the router already matched it to "${intent}", and the ordering above is a
+  working plan for it. Your job is to improve on that ordering, not to judge whether the work is in scope.` : ""}
 - "why" is about this case. Do not restate the module title.`;
 
 function brief(input) {
@@ -193,7 +195,11 @@ export default async function handler(req) {
     if (Math.round(full.length / 3.8) <= budget) return full;
     return `${rules(excluded, intent, nearby(intent, input.brief || {}))}\n\n${context}`;
   };
-  const reply = await ask(build, { timeout: 20000, maxTokens: 4096 });
+  // The edge gateway hangs up at 25s and the browser aborts at the same mark,
+  // so the whole call has to finish inside that with room to serialise. One
+  // provider normally answers in 8-13s; the deadline is what turns a bad day
+  // into a fallback to the deterministic plan instead of a 504.
+  const reply = await ask(build, { timeout: 16000, maxTokens: 4096, deadline: 21000 });
   if (!reply.ok) {
     return json({ error: reply.error || reply.detail, model: reply.model, detail: reply.detail, fallback: true },
                 reply.status || 502);

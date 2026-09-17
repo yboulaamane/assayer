@@ -9,6 +9,10 @@ let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const hue = (slug) => STAGE.get(slug)?.hue ?? 220;
+const countIn = (slug, curatedOnly) => DATA.tools.reduce(
+  (n, t) => n + (t.stage === slug && (!curatedOnly || t.curated) ? 1 : 0), 0);
+const curatedIn = (s) => s.curated ?? countIn(s.slug, true);
+const listedIn = (s) => s.count ?? countIn(s.slug, false);
 const num = (v) => Number(v).toLocaleString("en");
 
 /* ------------------------------------------------------------------- theme */
@@ -122,10 +126,10 @@ function renderHome() {
 
     <div class="section-head"><h2>Browse by stage</h2><span>where it sits in the pipeline</span></div>
     <div class="stage-grid">
-      ${DATA.stages.filter((s) => s.count).map((s) => `
+      ${DATA.stages.filter((s) => listedIn(s)).map((s) => `
         <a class="stage-card" href="#/stage/${s.slug}" style="--h:${s.hue}">
           <div class="top-row"><span class="badge">${icon(s.slug)}</span>
-            <span class="n" title="${s.curated ?? 0} curated, ${s.count} listed in all">${s.curated ?? 0}</span></div>
+            <span class="n" title="${num(curatedIn(s))} curated, ${num(listedIn(s))} listed in all">${num(curatedIn(s))}</span></div>
           <h3>${esc(s.label)}</h3><p>${esc(s.blurb)}</p>
         </a>`).join("")}
     </div>
@@ -229,7 +233,8 @@ function renderBrowse(params) {
 
     <div class="toolbar">
       ${chip("All stages", "stage", "")}
-      ${DATA.stages.filter((s) => s.count).map((s) => chip(s.label, "stage", s.slug, s.count)).join("")}
+      ${DATA.stages.filter((s) => listedIn(s)).map((s) =>
+        chip(s.label, "stage", s.slug, src === "curated" ? curatedIn(s) : listedIn(s))).join("")}
     </div>
     <div class="toolbar">
       ${layer("Curated", "curated", curatedHere)}
