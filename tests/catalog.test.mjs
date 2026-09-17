@@ -116,8 +116,9 @@ test("the stage a tool is filed under is one the catalogue lists", () => {
 // if the page is honest about which layer you are looking at, and that is markup,
 // not data, so it needs rendering to check.
 
-async function browseView(query) {
+async function browseView(query, mangle) {
   const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  if (mangle) mangle(cat);
   const nodes = new Map();
   const get = (id) => {
     if (!nodes.has(id)) {
@@ -153,7 +154,9 @@ async function browseView(query) {
   vm.runInContext(source, context);
   vm.runInContext("route = () => {};", context);
   await context.boot();
-  vm.runInContext(`renderBrowse(new URLSearchParams(${JSON.stringify(query)}))`, context);
+  vm.runInContext(query === "HOME"
+    ? "renderHome()"
+    : `renderBrowse(new URLSearchParams(${JSON.stringify(query)}))`, context);
   // The cards land in #grid, which renderBrowse fills after writing #app.
   return { html: get("app").innerHTML + get("grid").innerHTML, cat };
 }
@@ -194,4 +197,40 @@ test("a curated card is marked as curated, and not as a warning", async () => {
   const { html } = await browseView("");
   assert.match(html, /<span class="pill curated">curated<\/span>/);
   assert.doesNotMatch(html, /pill star">standard/);
+});
+
+test("stage counts are computed, never defaulted to zero", async () => {
+  // A catalogue built before the per-stage counts existed, or a stale cached
+  // copy, used to render every stage as "0" because the fallback was a literal.
+  // The tools are in hand either way, so the number is always computable.
+  const strip = (h) => [...h.matchAll(/<span class="n"[^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
+
+  const full = await browseView("HOME");
+  const shown = strip(full.html).filter((x) => x !== "plan →");
+  assert.ok(shown.length >= 15, `only ${shown.length} stage cards rendered`);
+  assert.deepEqual(shown.filter((x) => x === "0"), [], "a stage card showed 0");
+
+  const bare = await browseView("HOME", (cat) => {
+    for (const s of cat.stages) { delete s.curated; delete s.count; }
+  });
+  const fallback = strip(bare.html).filter((x) => x !== "plan →");
+  assert.deepEqual(fallback.filter((x) => x === "0"), [],
+                   "a catalogue without per-stage counts still must not render 0");
+  assert.deepEqual(fallback, shown, "computed counts must match the ones the build wrote");
+});
+
+test("a stage chip counts the layer the page is actually showing", async () => {
+  const cur = await browseView("");
+  const all = await browseView("src=all");
+  const counts = (h) => Object.fromEntries(
+    [...h.matchAll(/class="chip[^"]*"[^>]*>([^<]+)<span class="cnt">([^<]*)<\/span>/g)]
+      .map((m) => [m[1], m[2]]));
+  const a = counts(cur.html), b = counts(all.html);
+  const label = Object.keys(a).find((k) => /Docking/.test(k));
+  assert.ok(label, "no docking chip found");
+  // Promising 576 and then showing 28 is the mismatch this guards against.
+  assert.notEqual(a[label], b[label]);
+  const curatedDocking = cur.cat.tools.filter((t) => t.curated && t.stage === "docking").length;
+  assert.equal(Number(a[label]), curatedDocking);
+  assert.equal(Number(b[label]), cur.cat.tools.filter((t) => t.stage === "docking").length);
 });

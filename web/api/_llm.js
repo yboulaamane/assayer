@@ -140,7 +140,15 @@ export async function discover(p, key) {
  * Returns { ok, text, model, provider, detail, finish }. Never throws: a caller
  * that cannot reach a model must degrade, not break the page.
  */
-export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperature = 0, json: wantJson = true } = {}) {
+export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperature = 0,
+                                    json: wantJson = true, deadline = 0 } = {}) {
+  // `timeout` bounds one attempt; `deadline` bounds the whole call. Without the
+  // second, two providers at 20s each can spend 40s behind a gateway that hangs
+  // up at 25 -- which the caller sees as a 504 rather than as a degradation it
+  // could handle. Each attempt gets whatever is left, and when too little is
+  // left to be worth sending, we stop and let the caller fall back.
+  const startedAt = Date.now();
+  const remaining = () => (deadline ? deadline - (Date.now() - startedAt) : Infinity);
   const providers = configured();
   if (!providers.length) return { ok: false, detail: "no LLM_API_KEY configured", status: 501 };
 
@@ -164,12 +172,14 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
     while (queue.length) {
       const candidate = queue.shift();
       used = candidate;
+      const slice = Math.min(timeout, remaining());
+      if (slice < 1500) { detail = detail || "deadline reached before a model answered"; break outer; }
       try {
         upstream = await fetch(p.url(candidate, key), {
           method: "POST",
           headers: p.headers(key),
           body: JSON.stringify(p.body(candidate, build(p), opts)),
-          signal: AbortSignal.timeout(timeout),
+          signal: AbortSignal.timeout(slice),
         });
       } catch (e) {
         detail = `unreachable: ${e.name}`;
@@ -179,7 +189,7 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
       detail = (await upstream.text()).slice(0, 200);
 
       // 503 is the model being briefly overloaded: worth exactly one retry.
-      if (upstream.status === 503 && !retried) {
+      if (upstream.status === 503 && !retried && remaining() > 2500) {
         retried = true;
         await new Promise((r) => setTimeout(r, 700));
         queue.unshift(candidate);
@@ -189,7 +199,7 @@ export async function ask(prompt, { timeout = 9000, maxTokens = 2048, temperatur
       if (upstream.status === 429) continue outer;
       if (upstream.status !== 404) continue outer;
 
-      if (!queue.length && !asked) {
+      if (!queue.length && !asked && remaining() > 4000) {
         asked = true;
         queue.push(...(await discover(p, key)).slice(0, 3));
       }

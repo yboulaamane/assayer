@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import handler from "../web/api/plan.js";
 import { MODULES } from "../web/assets/modules.js";
 
@@ -225,4 +226,34 @@ test("the router's protocol list and the registry cannot drift apart", async () 
   for (const [id, description] of INTENTS) {
     assert.ok(description.length > 20, `${id} needs a description the model can route on`);
   }
+});
+
+// The edge gateway hangs up at 25s. A call that can outlast it turns a
+// degradation the client knows how to handle into a 504 it does not.
+
+test("the whole model call is bounded, not just each attempt", async () => {
+  const src = readFileSync(new URL("../web/api/_llm.js", import.meta.url), "utf8");
+  assert.match(src, /deadline = 0/, "ask must accept an overall deadline");
+  assert.match(src, /const slice = Math\.min\(timeout, remaining\(\)\)/,
+               "each attempt must be clipped to what the deadline leaves");
+  assert.match(src, /if \(slice < \d+\).*break outer/s,
+               "ask must stop rather than send a request it cannot wait for");
+
+  const plan = readFileSync(new URL("../web/api/plan.js", import.meta.url), "utf8");
+  const call = plan.match(/ask\(build,\s*\{([^}]*)\}/);
+  assert.ok(call, "plan.js must call ask with options");
+  const deadline = Number(call[1].match(/deadline:\s*(\d+)/)?.[1]);
+  const perAttempt = Number(call[1].match(/timeout:\s*(\d+)/)?.[1]);
+  assert.ok(deadline > 0, "plan.js must set a deadline");
+
+  // The client aborts at 25s (app.js), and the platform does too. The server
+  // has to be done before that or the fallback never runs.
+  const app = readFileSync(new URL("../web/assets/app.js", import.meta.url), "utf8");
+  const clientAbort = Number(app.match(/api\/plan[\s\S]{0,400}?AbortSignal\.timeout\((\d+)\)/)?.[1]);
+  assert.ok(clientAbort > 0, "could not find the client timeout for api/plan");
+  assert.ok(deadline < clientAbort,
+            `server deadline ${deadline}ms must beat the client's ${clientAbort}ms`);
+  assert.ok(deadline <= 23000, `deadline ${deadline}ms leaves nothing for the gateway`);
+  assert.ok(perAttempt < deadline,
+            "one attempt must not be able to consume the entire deadline");
 });
