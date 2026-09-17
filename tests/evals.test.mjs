@@ -120,3 +120,35 @@ test("every asset URL carries a hash of what it serves", async () => {
   }
   assert.deepEqual(bad, [], "run: python3 scripts/version_assets.py");
 });
+
+test("an example is always quoted or hand-written, never generated", async () => {
+  const { readFileSync, existsSync } = await import("node:fs");
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const bad = [];
+  for (const t of cat.tools) {
+    // A README example must carry the URL it was taken from. Without that it is
+    // indistinguishable from something written for it, which is the line this
+    // project does not cross.
+    if (t.quickstart && !/^https:\/\/raw\.githubusercontent\.com\//.test(t.quickstart.source || "")) {
+      bad.push(`${t.name}: quickstart has no verifiable source`);
+    }
+    if (t.quickstart && !t.quickstart.code?.trim()) bad.push(`${t.name}: empty quickstart`);
+    // Showing both would imply one was derived from the other.
+    if (t.quickstart && t.snippet) bad.push(`${t.name}: has both a snippet and a quickstart`);
+    // A declared Python version is copied from package metadata, so it looks
+    // like a version specifier or it did not come from there.
+    if (t.python && !/^[<>=!~ ,.\d*]+$/.test(t.python)) {
+      bad.push(`${t.name}: "${t.python}" is not a version specifier`);
+    }
+  }
+  assert.deepEqual(bad, []);
+
+  // Every quoted example traces back to the file it was fetched into.
+  const path = new URL("../data/quickstarts.json", import.meta.url);
+  if (existsSync(path)) {
+    const source = JSON.parse(readFileSync(path));
+    for (const t of cat.tools.filter((x) => x.quickstart)) {
+      assert.ok(source[t.repo], `${t.name}: quickstart not traceable to data/quickstarts.json`);
+    }
+  }
+});

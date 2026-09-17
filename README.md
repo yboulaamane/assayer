@@ -339,7 +339,8 @@ python3 scripts/scrape_biotools.py         # bio.tools
 python3 scripts/scrape_github_topics.py    # GITHUB_TOKEN optional, just faster
 python3 scripts/scrape_github_stars.py     # optional: another username as argv[1]
 python3 scripts/curated_standard_tools.py  # also HTTP-checks every curated URL
-python3 scripts/enrich_packages.py         # resolves pip/conda names
+python3 scripts/enrich_packages.py         # resolves pip/conda names + Python version
+python3 scripts/fetch_quickstarts.py       # quotes each README's first real example
 python3 scripts/build_index.py             # -> data/tools_index.json
 python3 scripts/build_catalog.py           # -> web/catalog.json
 ```
@@ -347,6 +348,31 @@ python3 scripts/build_catalog.py           # -> web/catalog.json
 Stdlib Python 3 only, nothing to install. Raw API responses are cached under
 `data/.cache/`; delete a file to force a refresh. `web/catalog.json` is
 generated, so don't edit it by hand.
+
+## What a tool's panel shows
+
+Install, and where the data allows it, a Python version and a usage example.
+
+`scripts/enrich_packages.py` only accepts a package whose metadata points back
+at the same GitHub repository, so "boltz" cannot resolve to an unrelated
+package of the same name. That strictness is why coverage is what it is: **243
+of 3,973** tools have a verified package, **148** carry the Python version the
+authors declared in `requires_python`. Everything else with a repository gets a
+`git clone` and an honest note that there is no published package; the ~2,000
+web servers and databases get nothing, because there is nothing to install.
+
+Usage examples come in two kinds and are never generated. A **snippet** is
+hand-written for this catalogue (34 tools). A **quickstart** is the first real
+Python block from the project's own README, quoted unedited and shown with a
+link to the file it came from (31 tools). Writing usage prose for three
+thousand tools nobody here has run would be fabrication at scale, which is the
+thing the rest of this project exists to avoid — so the site says plainly that a
+quoted example is how the authors introduce the tool, not how to use it for any
+particular task.
+
+A test enforces it: a quoted example must carry a resolvable source URL, a
+declared Python version must look like a version specifier, and no tool may
+show both kinds at once.
 
 ## Cache busting
 
