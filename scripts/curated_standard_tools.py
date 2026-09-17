@@ -342,6 +342,7 @@ T = [
     # ---------------- antibodies & protein engineering ----------------
     ("PyRosetta", "biologics", "Python interface to Rosetta for design, docking, loop modelling and energy calculations; free academic licence.", "https://www.pyrosetta.org", None, "academic", ["protein-design", "rosetta"]),
     ("RosettaCommons", "biologics", "The Rosetta software suite for macromolecular modelling and design, and its licensing/community hub.", "https://rosettacommons.org", None, "academic", ["protein-design"]),
+    ("Protein-Sol", "biologics", "Sequence-based prediction of heterologous expression solubility in E. coli, scaled against an experimental set; a cheap first read on whether a construct will express before anyone orders it.", "https://protein-sol.manchester.ac.uk", None, "free-web", ["solubility", "developability"]),
     ("ANARCI", "biologics", "Antibody numbering and germline assignment (IMGT, Kabat, Chothia); the preprocessing step for antibody ML.", "https://github.com/oxpig/ANARCI", "oxpig/ANARCI", "open-source", ["antibody", "numbering"]),
     ("ImmuneBuilder", "biologics", "Fast antibody, nanobody and TCR structure prediction with accuracy competitive on CDR loops.", "https://github.com/oxpig/ImmuneBuilder", "oxpig/ImmuneBuilder", "open-source", ["antibody", "structure-prediction"]),
     ("AbLang2", "biologics", "Antibody language model for restoring missing residues and generating germline-plausible sequences.", "https://github.com/oxpig/AbLang2", "oxpig/AbLang2", "open-source", ["antibody", "language-model"]),
@@ -351,6 +352,7 @@ T = [
     ("FoldX", "biologics", "Empirical force field for fast stability and binding ddG on point mutations; free academic licence.", "https://foldxsuite.crg.eu", None, "academic", ["stability", "mutation"]),
 
     ("ESM", "biologics", "Evolutionary-scale protein language models, used for embeddings, variant effect scores and as the front end of structure prediction without an MSA.", "https://github.com/facebookresearch/esm", "facebookresearch/esm", "open-source", ["protein-language-model", "variant-effect"]),
+    ("FireProt", "biologics", "Automated design of thermostable variants, combining energy- and evolution-based predictions into a short list of mutations worth making rather than a ranked dump of all of them.", "https://loschmidt.chemi.muni.cz/fireprotweb", None, "free-web", ["stability", "protein-engineering"]),
     ("ThermoMPNN", "biologics", "Graph network predicting the change in folding stability for every point mutation in a structure, fast enough to scan a whole protein.", "https://github.com/Kuhlman-Lab/ThermoMPNN", "Kuhlman-Lab/ThermoMPNN", "open-source", ["stability", "ddg", "protein-engineering"]),
 
     # ---------------- benchmarks & reference datasets ----------------

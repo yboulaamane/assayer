@@ -58,3 +58,140 @@ test("failed catalogue loads can retry successfully without duplicate routing", 
     assert.doesNotMatch(get("app").innerHTML, /Couldn't load/);
   }
 });
+
+// The catalogue is pruned at build time (scripts/build_catalog.py). These hold
+// the prune to the two things it must never do: remove a tool a protocol
+// recommends, or remove one a person curated.
+
+test("the prune never removes a tool a protocol recommends", async () => {
+  const { MODULES } = await import("../web/assets/modules.js");
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const known = new Set();
+  for (const t of cat.tools) {
+    known.add(norm(t.name));
+    known.add(norm(t.name).replace(/\s+/g, ""));
+    if (t.repo) known.add(norm(t.repo.split("/")[1]));
+  }
+  const missing = [];
+  for (const [id, m] of Object.entries(MODULES)) {
+    for (const tool of m.tools || []) {
+      if (!known.has(norm(tool)) && !known.has(norm(tool).replace(/\s+/g, ""))) {
+        missing.push(`${id} recommends ${tool}, which the catalogue no longer holds`);
+      }
+    }
+  }
+  // A plan that names a tool the catalogue has dropped renders a dead chip, and
+  // tells the reader to use something this site will not describe.
+  assert.deepEqual(missing, []);
+});
+
+test("nothing curated was pruned, and the excluded list says why for each row", () => {
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const curated = cat.tools.filter((t) => t.curated).length;
+  assert.ok(curated >= 290, `curated entries fell to ${curated}`);
+
+  const path = new URL("../data/excluded.json", import.meta.url);
+  const dropped = JSON.parse(readFileSync(path));
+  assert.equal(dropped.count, dropped.entries.length);
+  for (const e of dropped.entries) {
+    assert.ok(e.reason?.trim(), `${e.name} was dropped with no reason recorded`);
+    assert.ok(e.name?.trim(), "an excluded row with no name cannot be reviewed");
+  }
+  // An exclusion rule that fires on nothing is a rule nobody can check.
+  const reasons = new Set(dropped.entries.map((e) => e.reason.replace(/ \(.*\)$/, "")));
+  assert.ok(reasons.size >= 4, `only ${reasons.size} distinct reasons fired`);
+});
+
+test("the stage a tool is filed under is one the catalogue lists", () => {
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const slugs = new Set(cat.stages.map((s) => s.slug));
+  const orphans = cat.tools.filter((t) => !slugs.has(t.stage)).map((t) => `${t.name} -> ${t.stage}`);
+  assert.deepEqual(orphans, []);
+  // "Unsorted" is gone by construction: the gate drops what it cannot place.
+  assert.ok(!slugs.has("other"), "the Unsorted bucket is back");
+});
+
+// Renders the real browse view over the real catalogue. The prune only pays off
+// if the page is honest about which layer you are looking at, and that is markup,
+// not data, so it needs rendering to check.
+
+async function browseView(query) {
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const nodes = new Map();
+  const get = (id) => {
+    if (!nodes.has(id)) {
+      const node = {
+        innerHTML: "", value: "", addEventListener() {}, focus() {},
+        setSelectionRange() {},
+        insertAdjacentHTML(_where, html) { node.innerHTML += html; },
+      };
+      nodes.set(id, node);
+    }
+    return nodes.get(id);
+  };
+  const context = vm.createContext({
+    document: {
+      getElementById: get,
+      querySelectorAll: () => [],
+      querySelector: () => null,
+      documentElement: { dataset: {} },
+      activeElement: { tagName: "BODY" },
+    },
+    window: {}, location: { hash: `#/browse?${query}` }, URLSearchParams,
+    addEventListener() {}, setTimeout, clearTimeout, console,
+    localStorage: { getItem: () => null, setItem() {} },
+    matchMedia: () => ({ matches: false }),
+    IntersectionObserver: class { observe() {} disconnect() {} },
+    scrollTo() {},
+    icon: () => "<svg></svg>",
+    matchesAccess,
+    PROTOCOL_LIST: () => [],
+    fetch: async () => ({ ok: true, json: async () => cat }),
+    AbortSignal,
+  });
+  vm.runInContext(source, context);
+  vm.runInContext("route = () => {};", context);
+  await context.boot();
+  vm.runInContext(`renderBrowse(new URLSearchParams(${JSON.stringify(query)}))`, context);
+  // The cards land in #grid, which renderBrowse fills after writing #app.
+  return { html: get("app").innerHTML + get("grid").innerHTML, cat };
+}
+
+test("browsing starts on the curated layer and says so", async () => {
+  const { html, cat } = await browseView("");
+  const curated = cat.tools.filter((t) => t.curated).length;
+  const num = (v) => Number(v).toLocaleString("en");
+  assert.match(html, new RegExp(`${num(curated)} chosen by hand`),
+               "the note must state how many entries a person actually chose");
+  assert.match(html, /Show all [\d,]+<\/a> to add the registry layer/);
+  // Nothing from the registry layer may appear before the reader asks for it.
+  const shownIds = [...html.matchAll(/data-id="([^"]+)"/g)].map((m) => m[1]);
+  const byId = new Map(cat.tools.map((t) => [t.id, t]));
+  const uncurated = shownIds.filter((id) => byId.get(id) && !byId.get(id).curated);
+  assert.deepEqual(uncurated, [], "a scraped entry rendered on the default view");
+  assert.ok(shownIds.length > 0);
+});
+
+test("the wider layer admits, in the page itself, that nobody read it", async () => {
+  const { html, cat } = await browseView("src=all");
+  assert.match(html, /filtered for relevance but not read by\s+anyone here/);
+  assert.match(html, /Treat them as leads, not recommendations/);
+  assert.match(html, new RegExp(`All ${Number(cat.tools.length).toLocaleString("en")} listed`));
+});
+
+test("a search that finds nothing curated points at the layer that has it", async () => {
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const scrapedOnly = cat.tools.find((t) => !t.curated && /^[A-Za-z][\w-]{5,}$/.test(t.name)
+                                            && !cat.tools.some((o) => o.curated && o.name === t.name));
+  assert.ok(scrapedOnly, "no registry-only tool to search for");
+  const { html } = await browseView(`q=${encodeURIComponent(scrapedOnly.name)}`);
+  assert.match(html, /Nothing curated matches that/);
+  assert.match(html, /Show [\d,]+ in the wider registry/);
+});
+
+test("a curated card is marked as curated, and not as a warning", async () => {
+  const { html } = await browseView("");
+  assert.match(html, /<span class="pill curated">curated<\/span>/);
+  assert.doesNotMatch(html, /pill star">standard/);
+});

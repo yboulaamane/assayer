@@ -134,7 +134,7 @@
     "tags": [
       "ppi"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "OmniPath",
@@ -240,7 +240,7 @@
     "tags": [
       "annotation"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "RCSB PDB",
@@ -1067,7 +1067,7 @@
       "admet",
       "open-data"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "PROTAC-DB",
@@ -1350,7 +1350,7 @@
       "building-blocks",
       "make-on-demand"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "canSAR",
@@ -1521,7 +1521,7 @@
       "off-target",
       "chemical-protein"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "Chemprop",
@@ -1759,7 +1759,7 @@
       "food-chemistry",
       "phytochemicals"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "Phenol-Explorer",
@@ -1788,7 +1788,7 @@
       "file-formats",
       "conversion"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "Datamol",
@@ -1898,7 +1898,7 @@
       "visualisation",
       "sar"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "CReM",
@@ -2026,7 +2026,7 @@
       "drugs",
       "database"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "BindingDB",
@@ -2232,7 +2232,7 @@
       "virtual-screening",
       "hpc"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "EasyDock",
@@ -2924,7 +2924,7 @@
       "dft",
       "python"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "ORCA",
@@ -3554,6 +3554,20 @@
     "url_status": 200
   },
   {
+    "name": "Protein-Sol",
+    "stage": "biologics",
+    "stage_label": "Antibodies & protein engineering",
+    "description": "Sequence-based prediction of heterologous expression solubility in E. coli, scaled against an experimental set; a cheap first read on whether a construct will express before anyone orders it.",
+    "url": "https://protein-sol.manchester.ac.uk",
+    "repo": null,
+    "access": "free-web",
+    "tags": [
+      "solubility",
+      "developability"
+    ],
+    "url_status": 200
+  },
+  {
     "name": "ANARCI",
     "stage": "biologics",
     "stage_label": "Antibodies & protein engineering",
@@ -3662,6 +3676,20 @@
     "tags": [
       "protein-language-model",
       "variant-effect"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "FireProt",
+    "stage": "biologics",
+    "stage_label": "Antibodies & protein engineering",
+    "description": "Automated design of thermostable variants, combining energy- and evolution-based predictions into a short list of mutations worth making rather than a ranked dump of all of them.",
+    "url": "https://loschmidt.chemi.muni.cz/fireprotweb",
+    "repo": null,
+    "access": "free-web",
+    "tags": [
+      "stability",
+      "protein-engineering"
     ],
     "url_status": 200
   },
@@ -3857,7 +3885,7 @@
       "literature",
       "api"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "PubMed / NCBI E-utilities",

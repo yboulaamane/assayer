@@ -16,6 +16,11 @@ WEB = os.path.join(ROOT, "web")
 html = open(os.path.join(WEB, "index.html")).read()
 css = open(os.path.join(WEB, "assets", "styles.css")).read()
 
+# The stylesheet is inlined at the artifact root, so its font URLs — written
+# relative to assets/styles.css — have to be rewritten to where the supporting
+# files actually land, or the page silently falls back to a system serif.
+css = css.replace('url("fonts/', 'url("assets/fonts/')
+
 body = re.search(r"<body>(.*)</body>", html, re.S).group(1).strip()
 title = re.search(r"<title>([^<]+)</title>", html).group(1).split("—")[0].strip()
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Mine GitHub for actively-maintained drug-discovery code, by topic.
 
+The topic list is deliberately narrow: medicinal and computational chemistry for
+drug design, and nothing else. See the note above TOPICS for what that costs.
+
 Repository facts — name, URL, stars, language, licence, last push — are just
 facts, and the selection here (which topics, what star floor, how recently
 pushed) is ours. This is the "is anyone still maintaining it" layer that a
@@ -22,22 +25,44 @@ from urllib.error import HTTPError
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 CACHE = os.path.join(OUT_DIR, ".cache", "github_topics")
 
-# The first block is the classical discovery stack. The second targets where a
-# registry of established software is structurally weak: the modern ML tooling,
-# which lives on GitHub long before it reaches any curated registry.
+# Strictly medicinal and computational chemistry for drug design and discovery.
+#
+# The list used to reach into structural biology and bioinformatics, and the
+# catalogue paid for it: measured against the relevance gate in
+# build_catalog.py, the survival rate of what each topic uniquely found tracked
+# exactly how domain-specific the topic was.
+#
+#   retrosynthesis, qsar, admet, virtual-screening   100%
+#   cheminformatics                                   87%
+#   molecular-docking                                 83%
+#   drug-discovery                                    69%
+#   protein-structure                                 51%
+#   molecular-dynamics                                43%
+#   protein-design                                    41%
+#   bioinformatics-tool                               31%
+#   structural-bioinformatics                         20%
+#
+# So the general-science topics are gone. Structure prediction and protein
+# engineering are real fields and a registry of them is someone else's job; the
+# handful this project actually needs (AlphaFold, ColabFold, Boltz, Foldseek)
+# are in the curated layer, where a person chose them.
+#
+# Dropped as zero-yield rather than off-topic: protein-ligand-interaction,
+# lead-optimization and fragment-based-drug-design return no repository above
+# the star floor.
 TOPICS = [
-    "drug-discovery", "cheminformatics", "computational-chemistry", "molecular-dynamics",
-    "molecular-docking", "virtual-screening", "protein-structure", "protein-design",
-    "molecular-modeling", "structural-bioinformatics", "qsar", "admet",
-    "protein-ligand-interaction", "retrosynthesis", "molecular-generation", "bioinformatics-tool",
+    # The discovery programme itself
+    "drug-discovery", "drug-design", "medicinal-chemistry", "structure-based-drug-design",
+    "de-novo-drug-design", "drug-repurposing", "drug-target-interaction",
 
-    "protein-language-model", "protein-folding", "protein-structure-prediction", "alphafold",
-    "protein-engineering", "antibody", "antibody-design", "single-cell", "scrna-seq",
-    "single-cell-rna-seq", "genomics", "computational-biology", "bioimage-analysis",
-    "cryo-em", "mass-spectrometry", "proteomics", "transcriptomics",
-    "molecular-property-prediction", "structure-based-drug-design", "de-novo-drug-design",
-    "drug-repurposing", "drug-target-interaction", "molecular-representation-learning",
-    "bioinformatics",
+    # The chemistry, and the methods a programme runs on
+    "cheminformatics", "computational-chemistry", "molecular-modeling", "molecular-dynamics",
+    "molecular-docking", "virtual-screening", "pharmacophore", "qsar", "admet", "adme",
+    "molecular-property-prediction", "retrosynthesis",
+
+    # Designing the molecule, small or large
+    "molecular-generation", "molecular-representation-learning",
+    "peptide-design", "antibody-design",
 ]
 MIN_STARS = 30
 PAGES = 2          # 100 per page; the long tail below 30 stars is mostly abandoned

@@ -9,6 +9,7 @@ let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const hue = (slug) => STAGE.get(slug)?.hue ?? 220;
+const num = (v) => Number(v).toLocaleString("en");
 
 /* ------------------------------------------------------------------- theme */
 const themeBtn = document.getElementById("theme");
@@ -96,24 +97,25 @@ function route() {
 
 /* -------------------------------------------------------------------- home */
 function renderHome() {
-  const curated = DATA.tools.filter((t) => t.curated).length;
+  const curated = DATA.curated ?? DATA.tools.filter((t) => t.curated).length;
   const repos = DATA.tools.filter((t) => t.repo).length;
   app.innerHTML = `
   <div class="wrap">
     <section class="hero">
       <h1>Every tool in the pipeline, and <em>the order to use them in</em>.</h1>
-      <p class="lede">${DATA.tools.length} tools for medicinal and computational chemistry, across
-      ${DATA.stages.length} stages from target to synthesis. Browse by stage, or describe what you are
-      trying to do and get a protocol with the receptor already chosen for you.</p>
+      <p class="lede">${num(curated)} tools chosen and written up by hand, across ${DATA.stages.length}
+      stages from target to synthesis, with ${num(DATA.tools.length - curated)} more listed from public
+      registries. Browse by stage, or describe what you are trying to do and get a protocol with the
+      receptor already chosen for you.</p>
       <div class="stat-row">
-        <div class="stat"><b>${DATA.tools.length}</b><span>tools</span></div>
+        <div class="stat"><b>${num(curated)}</b><span>curated</span></div>
         <div class="stat"><b>${DATA.stages.length}</b><span>stages</span></div>
-        <div class="stat"><b>${repos}</b><span>with code</span></div>
-        <div class="stat"><b>${curated}</b><span>curated standards</span></div>
+        <div class="stat"><b>${PROTOCOL_LIST().length}</b><span>protocols</span></div>
+        <div class="stat"><b>${num(DATA.tools.length)}</b><span>listed in all</span></div>
       </div>
       <div class="searchbar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="q" aria-label="Search tools" placeholder="Search ${DATA.tools.length} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
+        <input id="q" aria-label="Search tools" placeholder="Search ${num(DATA.tools.length)} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
         <kbd>/</kbd>
       </div>
     </section>
@@ -122,7 +124,8 @@ function renderHome() {
     <div class="stage-grid">
       ${DATA.stages.filter((s) => s.count).map((s) => `
         <a class="stage-card" href="#/stage/${s.slug}" style="--h:${s.hue}">
-          <div class="top-row"><span class="badge">${icon(s.slug)}</span><span class="n">${s.count}</span></div>
+          <div class="top-row"><span class="badge">${icon(s.slug)}</span>
+            <span class="n" title="${s.curated ?? 0} curated, ${s.count} listed in all">${s.curated ?? 0}</span></div>
           <h3>${esc(s.label)}</h3><p>${esc(s.blurb)}</p>
         </a>`).join("")}
     </div>
@@ -154,22 +157,55 @@ let browseState = { shown: 0, list: [], io: null };
 function renderBrowse(params) {
   const stage = params.get("stage") || "";
   const q = params.get("q") || "";
-  const src = params.get("src") || "";
+  // Two layers, two different promises: entries a person chose and wrote up,
+  // and entries that arrived from a registry and were only filtered. Browsing
+  // starts on the one we vouch for; the other is one click away and says so.
+  const src = params.get("src") || "curated";
   const acc = params.get("acc") || "";
 
-  const list = DATA.tools.filter((t) => {
+  const matches = (t, layerOnly) => {
     if (stage && t.stage !== stage) return false;
-    if (src === "curated" && !t.curated) return false;
-    if (src === "code" && !t.repo) return false;
+    if (layerOnly === "curated" && !t.curated) return false;
+    if (params.get("code") === "1" && !t.repo) return false;
     if (!matchesAccess(t.license, acc)) return false;
     if (q) {
       const hay = norm(`${t.name} ${t.description} ${(t.tags || []).join(" ")}`);
       if (!norm(q).split(" ").every((w) => hay.includes(w))) return false;
     }
     return true;
-  });
+  };
+  const list = DATA.tools.filter((t) => matches(t, src));
+  // Defaulting to the curated layer must not make a tool look absent when it is
+  // only one layer away. A search that finds nothing here says where it would.
+  const elsewhere = src === "curated" && !list.length
+    ? DATA.tools.filter((t) => matches(t, "all")).length : 0;
 
   const st = stage ? STAGE.get(stage) : null;
+  const inScope = DATA.tools.filter((t) => !stage || t.stage === stage);
+  const curatedHere = inScope.filter((t) => t.curated).length;
+  const allHere = inScope.length;
+
+  // Always sets the layer rather than toggling it: there is no state in which
+  // neither layer is chosen, so a toggle would have an empty third position.
+  const layer = (label, val, count) => {
+    const p = new URLSearchParams(params);
+    p.set("src", val);
+    p.delete("tool");
+    return `<a class="chip ${src === val ? "on" : ""}" href="#/browse?${p}">${esc(label)}<span class="cnt">${count}</span></a>`;
+  };
+  const widen = () => {
+    const p = new URLSearchParams(params);
+    p.set("src", "all");
+    p.delete("tool");
+    return `#/browse?${p}`;
+  };
+  const layerNote = () => (src === "curated"
+    ? `<p class="layer-note"><b>${num(curatedHere)} chosen by hand</b>, each one read and described for
+       this catalogue. <a href="${widen()}">Show all ${num(allHere)}</a> to add the registry layer.</p>`
+    : `<p class="layer-note"><b>All ${num(allHere)} listed.</b> Beyond the ${num(curatedHere)} curated entries,
+       these came from bio.tools and public GitHub metadata, filtered for relevance but not read by
+       anyone here. Treat them as leads, not recommendations.</p>`);
+
   const chip = (label, key, val, count) => {
     const p = new URLSearchParams(params);
     const on = (params.get(key) || "") === val;
@@ -196,18 +232,25 @@ function renderBrowse(params) {
       ${DATA.stages.filter((s) => s.count).map((s) => chip(s.label, "stage", s.slug, s.count)).join("")}
     </div>
     <div class="toolbar">
-      ${chip("Curated standards", "src", "curated")}
-      ${chip("Has code", "src", "code")}
+      ${layer("Curated", "curated", curatedHere)}
+      ${layer("Everything listed", "all", allHere)}
+      <span class="spacer"></span>
+      <span class="count-note">${num(list.length)} shown</span>
+    </div>
+    <div class="toolbar">
+      ${chip("Has code", "code", "1")}
       ${chip("Open source", "acc", "open-source")}
       ${chip("Free web", "acc", "free-web")}
       ${chip("Commercial", "acc", "commercial")}
-      <span class="spacer"></span>
-      <span class="count-note">${list.length} of ${DATA.tools.length}</span>
     </div>
+    ${layerNote()}
 
     <div class="tool-grid" id="grid"></div>
     <div class="sentinel" id="sentinel"></div>
-    ${list.length ? "" : `<div class="empty">Nothing matches that. Try a broader term.</div>`}
+    ${list.length ? "" : elsewhere
+      ? `<div class="empty"><p>Nothing curated matches that.</p>
+         <p><a class="btn" href="${widen()}">Show ${num(elsewhere)} in the wider registry</a></p></div>`
+      : `<div class="empty">Nothing matches that. Try a broader term.</div>`}
   </div>`;
 
   browseState.io?.disconnect();
@@ -255,7 +298,7 @@ function card(t) {
     </div>
     <p class="desc">${esc(t.description || "No description recorded in the source.")}</p>
     <div class="foot">
-      ${t.curated ? `<span class="pill star">standard</span>` : ""}
+      ${t.curated ? `<span class="pill curated">curated</span>` : ""}
       ${t.license ? `<span class="pill acc">${esc(t.license)}</span>` : ""}
       ${t.repo ? `<span class="pill">${esc(t.repo.split("/")[0])}</span>` : ""}
     </div>
