@@ -1,9 +1,11 @@
 {
   "opentargets/gentropy": {
-    "pypi": "gentropy"
+    "pypi": "gentropy",
+    "python": "<3.14,>=3.11"
   },
   "biopython/biopython": {
     "pypi": "biopython",
+    "python": ">=3.10",
     "conda": "biopython"
   },
   "jensengroup/propka": {
@@ -25,23 +27,28 @@
   },
   "williamgilpin/pypdb": {
     "pypi": "pypdb",
+    "python": ">=3.10",
     "conda": "pypdb"
   },
   "aqlaboratory/openfold": {
     "pypi": "openfold"
   },
   "sokrypton/colabfold": {
-    "pypi": "colabfold"
+    "pypi": "colabfold",
+    "python": ">=3.10"
   },
   "sacdallago/bio_embeddings": {
-    "pypi": "bio-embeddings"
+    "pypi": "bio-embeddings",
+    "python": ">=3.7.1,<3.10"
   },
   "project-gemmi/gemmi": {
     "pypi": "gemmi",
+    "python": ">=3.9",
     "conda": "gemmi"
   },
   "jonathanking/sidechainnet": {
-    "pypi": "sidechainnet"
+    "pypi": "sidechainnet",
+    "python": ">=3.5"
   },
   "lucidrains/ddpm-proteins": {
     "pypi": "ddpm-proteins"
@@ -56,10 +63,12 @@
     "pypi": "ssbio"
   },
   "litefold/litefold": {
-    "pypi": "litefold"
+    "pypi": "litefold",
+    "python": ">=3.8"
   },
   "althonos/mini3di": {
-    "pypi": "mini3di"
+    "pypi": "mini3di",
+    "python": ">=3.7"
   },
   "lucidrains/geometric-vector-perceptron": {
     "pypi": "geometric-vector-perceptron"
@@ -75,6 +84,7 @@
   },
   "chemosim-lab/prolif": {
     "pypi": "prolif",
+    "python": ">=3.10",
     "conda": "prolif"
   },
   "dptech-corp/uni-dock": {
@@ -82,6 +92,7 @@
   },
   "pharmai/plip": {
     "pypi": "plip",
+    "python": ">=3.6",
     "conda": "plip"
   },
   "oddt/oddt": {
@@ -100,23 +111,28 @@
     "conda": "deeppurpose"
   },
   "mqcomplab/bblean": {
-    "pypi": "bblean"
+    "pypi": "bblean",
+    "python": ">=3.11"
   },
   "bioinfomachinelearning/posebench": {
-    "pypi": "posebench"
+    "pypi": "posebench",
+    "python": ">=3.7"
   },
   "rmeli/spyrmsd": {
     "conda": "spyrmsd"
   },
   "coleygroup/pyscreener": {
     "pypi": "pyscreener",
+    "python": ">=3.8",
     "conda": "pyscreener"
   },
   "steshinss/lohi_splitter": {
-    "pypi": "lohi-splitter"
+    "pypi": "lohi-splitter",
+    "python": ">=3.7"
   },
   "mdanalysis/mdanalysis": {
     "pypi": "MDAnalysis",
+    "python": ">=3.11",
     "conda": "mdanalysis"
   },
   "mdtraj/mdtraj": {
@@ -124,14 +140,17 @@
   },
   "alanwilter/acpype": {
     "pypi": "acpype",
+    "python": ">=3.12",
     "conda": "acpype"
   },
   "valdes-tresanco-ms/gmx_mmpbsa": {
     "pypi": "gmx-MMPBSA",
+    "python": "<3.13,>=3.11",
     "conda": "gmx_mmpbsa"
   },
   "aiqm/torchani": {
     "pypi": "torchani",
+    "python": ">=3.10",
     "conda": "torchani"
   },
   "openmm/openmm": {
@@ -139,6 +158,7 @@
   },
   "openforcefield/openff-toolkit": {
     "pypi": "openff-toolkit",
+    "python": ">=3.11",
     "conda": "openff-toolkit"
   },
   "choderalab/openmmtools": {
@@ -149,17 +169,21 @@
   },
   "alchemistry/alchemlyb": {
     "pypi": "alchemlyb",
+    "python": ">=3.11",
     "conda": "alchemlyb"
   },
   "westpa/westpa": {
-    "pypi": "westpa"
+    "pypi": "westpa",
+    "python": ">=3.10"
   },
   "deeptime-ml/deeptime": {
     "pypi": "deeptime",
+    "python": ">=3.8",
     "conda": "deeptime"
   },
   "openpathsampling/openpathsampling": {
     "pypi": "openpathsampling",
+    "python": ">=3.10",
     "conda": "openpathsampling"
   },
   "choderalab/espaloma": {
@@ -171,6 +195,7 @@
   },
   "torchmd/torchmd": {
     "pypi": "torchmd",
+    "python": ">=3.9",
     "conda": "torchmd"
   },
   "theochem/iodata": {
@@ -181,13 +206,15 @@
     "conda": "msmbuilder"
   },
   "drorlab/pensa": {
-    "pypi": "pensa"
+    "pypi": "pensa",
+    "python": "==3.10.*"
   },
   "essex-lab/grand": {
     "conda": "grand"
   },
   "bio-phys/mdbenchmark": {
     "pypi": "mdbenchmark",
+    "python": ">=3.6,<4.0",
     "conda": "mdbenchmark"
   },
   "adicksonlab/wepy": {
@@ -195,17 +222,21 @@
   },
   "lammps/lammps": {
     "pypi": "lammps",
+    "python": ">=3.7",
     "conda": "lammps"
   },
   "bradyajohnston/molecularnodes": {
-    "pypi": "molecularnodes"
+    "pypi": "molecularnodes",
+    "python": "~=3.13.0"
   },
   "aai-research-lab/fastmdxplora": {
     "pypi": "fastmdxplora",
+    "python": "<3.14,>=3.9",
     "conda": "fastmdxplora"
   },
   "ci-lab-cz/streamd": {
-    "pypi": "streamd"
+    "pypi": "streamd",
+    "python": ">=3.6"
   },
   "qcxms/qcxms": {
     "conda": "qcxms"
@@ -215,13 +246,15 @@
   },
   "torchmd/torchmd-net": {
     "pypi": "torchmd-net",
+    "python": ">=3.10",
     "conda": "torchmd-net"
   },
   "pyiron/pyiron": {
     "pypi": "pyiron"
   },
   "m3g/packmol": {
-    "pypi": "packmol"
+    "pypi": "packmol",
+    "python": ">=3.10"
   },
   "glotzerlab/freud": {
     "conda": "freud"
@@ -231,7 +264,8 @@
     "conda": "moltemplate"
   },
   "acellera/htmd": {
-    "pypi": "acellera-htmd"
+    "pypi": "acellera-htmd",
+    "python": ">=3.11"
   },
   "jparkhill/tensormol": {
     "pypi": "TensorMol"
@@ -240,10 +274,12 @@
     "conda": "atomsk"
   },
   "acellera/moleculekit": {
-    "pypi": "moleculekit"
+    "pypi": "moleculekit",
+    "python": ">=3.11"
   },
   "lab-cosmo/upet": {
-    "pypi": "upet"
+    "pypi": "upet",
+    "python": ">=3.11"
   },
   "mosdef-hub/mbuild": {
     "pypi": "mbuild",
@@ -260,6 +296,7 @@
   },
   "becksteinlab/gromacswrapper": {
     "pypi": "GromacsWrapper",
+    "python": ">=3.9",
     "conda": "gromacswrapper"
   },
   "mosdef-hub/foyer": {
@@ -267,10 +304,12 @@
     "conda": "foyer"
   },
   "mqcomplab/mdance": {
-    "pypi": "MDANCE"
+    "pypi": "MDANCE",
+    "python": ">=3.8"
   },
   "abelcarreras/dynaphopy": {
     "pypi": "dynaphopy",
+    "python": ">=3.11",
     "conda": "dynaphopy"
   },
   "molmod/psiflow": {
@@ -283,13 +322,15 @@
     "conda": "architector"
   },
   "mushroomfire/mdapy": {
-    "pypi": "mdapy"
+    "pypi": "mdapy",
+    "python": ">=3.9"
   },
   "openmm/nnpops": {
     "conda": "nnpops"
   },
   "icams/calphy": {
     "pypi": "calphy",
+    "python": ">=3.10",
     "conda": "calphy"
   },
   "markovmodel/pyemma_tutorials": {
@@ -297,10 +338,12 @@
   },
   "lab-cosmo/torch-pme": {
     "pypi": "torch-pme",
+    "python": ">=3.10",
     "conda": "torch-pme"
   },
   "metatensor/metatrain": {
     "pypi": "metatrain",
+    "python": ">=3.10",
     "conda": "metatrain"
   },
   "openmm/openmm-setup": {
@@ -311,6 +354,7 @@
   },
   "jag1g13/pycgtool": {
     "pypi": "pycgtool",
+    "python": ">=3.6.2,<4.0.0",
     "conda": "pycgtool"
   },
   "uf3/uf3": {
@@ -322,6 +366,7 @@
   },
   "srnas/barnaba": {
     "pypi": "barnaba",
+    "python": ">=3.6",
     "conda": "barnaba"
   },
   "degiacomi-lab/molearn": {
@@ -336,6 +381,7 @@
   },
   "grimme-lab/xtb": {
     "pypi": "xtb",
+    "python": ">=3.7",
     "conda": "xtb"
   },
   "nwchemgit/nwchem": {
@@ -349,25 +395,31 @@
   },
   "pyscf/pyscf": {
     "pypi": "pyscf",
+    "python": ">=3.7",
     "conda": "pyscf"
   },
   "deepchem/deepchem": {
     "pypi": "deepchem",
+    "python": "<3.12,>=3.7",
     "conda": "deepchem"
   },
   "deepmodeling/deepmd-kit": {
     "pypi": "deepmd-kit",
+    "python": ">=3.10",
     "conda": "deepmd-kit"
   },
   "mir-group/nequip": {
     "pypi": "nequip",
+    "python": ">=3.10",
     "conda": "nequip"
   },
   "aligfellow/xyzrender": {
-    "pypi": "xyzrender"
+    "pypi": "xyzrender",
+    "python": ">=3.10"
   },
   "cclib/cclib": {
     "pypi": "cclib",
+    "python": ">=3.7",
     "conda": "cclib"
   },
   "jensengroup/xyz2mol": {
@@ -378,28 +430,35 @@
   },
   "lukasturcani/stk": {
     "pypi": "stk",
+    "python": ">=3.11",
     "conda": "stk"
   },
   "smtg-bham/doped": {
-    "pypi": "doped"
+    "pypi": "doped",
+    "python": ">=3.10"
   },
   "microsoft/skala": {
     "pypi": "skala",
+    "python": "<3.14,>=3.11",
     "conda": "skala"
   },
   "smtg-bham/sumo": {
-    "pypi": "sumo"
+    "pypi": "sumo",
+    "python": ">=3.10"
   },
   "dftd4/dftd4": {
     "pypi": "dftd4",
+    "python": ">=3.7",
     "conda": "dftd4"
   },
   "ecrl/padelpy": {
     "pypi": "padelpy",
+    "python": ">=3.10",
     "conda": "padelpy"
   },
   "molssi/qcengine": {
     "pypi": "qcengine",
+    "python": ">=3.10",
     "conda": "qcengine"
   },
   "chemfiles/chemfiles": {
@@ -408,6 +467,7 @@
   },
   "molssi/qcelemental": {
     "pypi": "qcelemental",
+    "python": ">=3.10",
     "conda": "qcelemental"
   },
   "hachmannlab/chemml": {
@@ -416,86 +476,108 @@
   },
   "zadorlab/sella": {
     "pypi": "sella",
+    "python": ">=3.9",
     "conda": "sella"
   },
   "molssi/qcfractal": {
     "pypi": "qcfractal",
+    "python": ">=3.10",
     "conda": "qcfractal"
   },
   "grimme-lab/dxtb": {
     "pypi": "dxtb",
+    "python": "<3.15,>=3.8",
     "conda": "dxtb"
   },
   "wmd-group/smact": {
     "pypi": "SMACT",
+    "python": "<3.14,>=3.11",
     "conda": "smact"
   },
   "doyle-lab-ucla/auto-qchem": {
-    "pypi": "auto-qchem"
+    "pypi": "auto-qchem",
+    "python": ">=3.8"
   },
   "grimme-lab/xtb-python": {
     "conda": "xtb-python"
   },
   "jageo/lobsterpy": {
     "pypi": "lobsterpy",
+    "python": "<3.15,>=3.11",
     "conda": "lobsterpy"
   },
   "jvalegre/aqme": {
     "pypi": "aqme",
+    "python": ">=3.11",
     "conda": "aqme"
   },
   "smtg-bham/shakenbreak": {
     "pypi": "shakenbreak",
+    "python": ">=3.10",
     "conda": "shakenbreak"
   },
   "diffqc/dqc": {
-    "pypi": "dqc"
+    "pypi": "dqc",
+    "python": ">=3.7"
   },
   "suncat-center/catlearn": {
     "pypi": "CatLearn",
+    "python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
     "conda": "catlearn"
   },
   "mishima-syk/psikit": {
     "pypi": "Psikit"
   },
   "suncat-center/catkit": {
-    "pypi": "CatKit"
+    "pypi": "CatKit",
+    "python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
   },
   "dftd3/simple-dftd3": {
     "conda": "simple-dftd3"
   },
   "zotko/xyz2graph": {
-    "pypi": "xyz2graph"
+    "pypi": "xyz2graph",
+    "python": ">=3.9"
   },
   "astrazeneca/kallisto": {
-    "pypi": "kallisto"
+    "pypi": "kallisto",
+    "python": ">=3.10,<3.13"
   },
   "akensert/molgraph": {
-    "pypi": "molgraph"
+    "pypi": "molgraph",
+    "python": ">=3.10"
   },
   "lipelopesoliveira/pycofbuilder": {
-    "pypi": "pycofbuilder"
+    "pypi": "pycofbuilder",
+    "python": ">=3.10"
   },
   "smtg-bham/easyunfold": {
-    "pypi": "easyunfold"
+    "pypi": "easyunfold",
+    "python": ">=3.7"
   },
   "tencent-quantum-lab/tencirchem": {
-    "pypi": "tencirchem"
+    "pypi": "tencirchem",
+    "python": ">=3.9"
   },
   "geem-lab/overreact": {
-    "pypi": "overreact"
+    "pypi": "overreact",
+    "python": ">=3.8,<3.11"
   },
   "ifilot/pyqint": {
-    "pypi": "pyqint"
+    "pypi": "pyqint",
+    "python": ">=3.9"
   },
   "wmd-group/pdyna": {
-    "pypi": "pdyna"
+    "pypi": "pdyna",
+    "python": ">=3.8"
   },
   "cyllab/ccinput": {
-    "pypi": "ccinput"
+    "pypi": "ccinput",
+    "python": ">=3.6"
   },
   "smtg-bham/thermoparser": {
-    "pypi": "thermoparser"
+    "pypi": "thermoparser",
+    "python": ">=3.9"
   },
   "wmd-group/elementembeddings": {
     "conda": "elementembeddings"
@@ -506,17 +588,21 @@
   },
   "openbabel/openbabel": {
     "pypi": "openbabel",
+    "python": ">=3.10",
     "conda": "openbabel"
   },
   "uclcheminformatics/scaffoldgraph": {
-    "pypi": "ScaffoldGraph"
+    "pypi": "ScaffoldGraph",
+    "python": ">=3.6"
   },
   "datamol-io/datamol": {
     "pypi": "datamol",
+    "python": ">=3.11",
     "conda": "datamol"
   },
   "isayevlab/auto3d_pkg": {
     "pypi": "Auto3D",
+    "python": ">=3.11",
     "conda": "auto3d"
   },
   "cdk/cdk": {
@@ -526,19 +612,23 @@
     "conda": "chembl_structure_pipeline"
   },
   "drrdom/crem": {
-    "pypi": "crem"
+    "pypi": "crem",
+    "python": ">=3.8"
   },
   "ianawatson/lilly-medchem-rules": {
     "conda": "lilly-medchem-rules"
   },
   "rdkit/mmpdb": {
-    "pypi": "mmpdb"
+    "pypi": "mmpdb",
+    "python": ">=3.10"
   },
   "cddleiden/qsprpred": {
-    "pypi": "qsprpred"
+    "pypi": "qsprpred",
+    "python": ">=3.10"
   },
   "experimental-design/bofire": {
     "pypi": "bofire",
+    "python": "<3.15,>=3.11.0",
     "conda": "bofire"
   },
   "samoturk/mol2vec": {
@@ -548,22 +638,27 @@
     "pypi": "molplotly"
   },
   "patwalters/useful_rdkit_utils": {
-    "pypi": "useful-rdkit-utils"
+    "pypi": "useful-rdkit-utils",
+    "python": ">=3.11"
   },
   "datamol-io/molfeat": {
     "pypi": "molfeat",
+    "python": ">=3.11",
     "conda": "molfeat"
   },
   "ebjerrum/scikit-mol": {
     "pypi": "scikit-mol",
+    "python": "<3.14,>=3.9",
     "conda": "scikit-mol"
   },
   "pckroon/pysmiles": {
     "pypi": "pysmiles",
+    "python": ">=3.10",
     "conda": "pysmiles"
   },
   "keiserlab/e3fp": {
     "pypi": "e3fp",
+    "python": "<3.14,>=3.9",
     "conda": "e3fp"
   },
   "kuelumbus/rdkit-pypi": {
@@ -571,79 +666,97 @@
   },
   "drrdom/pmapper": {
     "pypi": "pmapper",
+    "python": ">=3.6",
     "conda": "pmapper"
   },
   "tlint101/pharmacophore-toolkit": {
-    "pypi": "pharmacophore-toolkit"
+    "pypi": "pharmacophore-toolkit",
+    "python": ">=3.11"
   },
   "olivierbeq/papyrus-scripts": {
-    "pypi": "papyrus-scripts"
+    "pypi": "papyrus-scripts",
+    "python": ">=3.11"
   },
   "matteoferla/fragmenstein": {
     "pypi": "Fragmenstein",
+    "python": ">=3.9",
     "conda": "fragmenstein"
   },
   "benevolentai/guacamol": {
     "pypi": "guacamol",
+    "python": ">=3.6",
     "conda": "guacamol"
   },
   "dauparas/ligandmpnn": {
-    "pypi": "ligandmpnn"
+    "pypi": "ligandmpnn",
+    "python": "<3.12,>=3.11"
   },
   "noahhenrikkleinschmidt/buildamol": {
-    "pypi": "buildamol"
+    "pypi": "buildamol",
+    "python": ">=3.8"
   },
   "mims-harvard/txgnn": {
     "pypi": "TxGNN"
   },
   "ale94mleon/bindflow": {
-    "pypi": "bindflow"
+    "pypi": "bindflow",
+    "python": "<3.11,>=3.8"
   },
   "mqcomplab/isim": {
     "conda": "isim"
   },
   "chemprop/chemprop": {
     "pypi": "chemprop",
+    "python": "<3.15,>=3.11",
     "conda": "chemprop"
   },
   "optuna/optuna": {
     "pypi": "optuna",
+    "python": ">=3.9",
     "conda": "optuna"
   },
   "scikit-learn/scikit-learn": {
     "pypi": "scikit-learn",
+    "python": ">=3.11",
     "conda": "scikit-learn"
   },
   "dmlc/xgboost": {
     "pypi": "xgboost",
+    "python": ">=3.12",
     "conda": "xgboost"
   },
   "a-r-j/graphein": {
-    "pypi": "graphein"
+    "pypi": "graphein",
+    "python": ">=3.7"
   },
   "astrazeneca/chemicalx": {
     "pypi": "chemicalx"
   },
   "calebbell/thermo": {
     "pypi": "thermo",
+    "python": ">=3.9",
     "conda": "thermo"
   },
   "mcs07/pubchempy": {
     "pypi": "PubChemPy",
+    "python": ">=3.10",
     "conda": "pubchempy"
   },
   "chembl/chembl_webresource_client": {
     "conda": "chembl_webresource_client"
   },
   "liugangcode/torch-molecule": {
-    "pypi": "torch-molecule"
+    "pypi": "torch-molecule",
+    "python": ">=3.8"
   },
   "ersilia-os/ersilia": {
     "pypi": "ersilia",
+    "python": ">=3.10",
     "conda": "ersilia"
   },
   "atomflow-ai/molecode": {
-    "pypi": "molecode"
+    "pypi": "molecode",
+    "python": ">=3.9"
   },
   "mcs07/molvs": {
     "pypi": "MolVS",
@@ -651,10 +764,12 @@
   },
   "chembl/fpsim2": {
     "pypi": "FPSim2",
+    "python": ">=3.11",
     "conda": "fpsim2"
   },
   "sustainable-processes/summit": {
-    "pypi": "summit"
+    "pypi": "summit",
+    "python": ">=3.8,<3.11"
   },
   "mcs07/cirpy": {
     "pypi": "CIRpy",
@@ -662,6 +777,7 @@
   },
   "mcocdawc/chemcoord": {
     "pypi": "chemcoord",
+    "python": ">=3.10",
     "conda": "chemcoord"
   },
   "crcollins/molml": {
@@ -669,50 +785,63 @@
     "conda": "molml"
   },
   "jacksonburns/fastprop": {
-    "pypi": "fastprop"
+    "pypi": "fastprop",
+    "python": ">=3.8"
   },
   "asad/smsd": {
-    "pypi": "smsd"
+    "pypi": "smsd",
+    "python": ">=3.9"
   },
   "hzacode/cheminformant": {
     "pypi": "ChemInformant",
+    "python": ">=3.9",
     "conda": "cheminformant"
   },
   "swansonk14/admet_ai": {
-    "pypi": "admet-ai"
+    "pypi": "admet-ai",
+    "python": ">=3.11"
   },
   "cthoyt/chembl-downloader": {
-    "pypi": "chembl-downloader"
+    "pypi": "chembl-downloader",
+    "python": ">=3.10"
   },
   "molecularai/aizynthfinder": {
-    "pypi": "aizynthfinder"
+    "pypi": "aizynthfinder",
+    "python": "<3.13,>=3.10"
   },
   "reymond-group/drfp": {
     "pypi": "drfp",
+    "python": ">=3.10",
     "conda": "drfp"
   },
   "open-reaction-database/ord-schema": {
-    "pypi": "ord-schema"
+    "pypi": "ord-schema",
+    "python": ">=3.11"
   },
   "connorcoley/rdchiral": {
-    "pypi": "rdchiral"
+    "pypi": "rdchiral",
+    "python": ">=3.5"
   },
   "rxn4chemistry/rxnmapper": {
     "pypi": "rxnmapper",
+    "python": ">=3.6",
     "conda": "rxnmapper"
   },
   "microsoft/syntheseus": {
     "pypi": "syntheseus",
+    "python": ">=3.8",
     "conda": "syntheseus"
   },
   "mrodobbe/rxn-insight": {
-    "pypi": "rxn-insight"
+    "pypi": "rxn-insight",
+    "python": ">=3.10"
   },
   "oatml-markslab/proteingym": {
     "pypi": "proteingym"
   },
   "samsinai/flexs": {
-    "pypi": "flexs"
+    "pypi": "flexs",
+    "python": ">=3.5"
   },
   "oatml-markslab/proteinnpt": {
     "pypi": "proteinnpt"
@@ -721,7 +850,8 @@
     "pypi": "tr-rosetta-pytorch"
   },
   "jamieheather/stitchr": {
-    "pypi": "stitchr"
+    "pypi": "stitchr",
+    "python": ">=3.9"
   },
   "superzchen/ilearnplus": {
     "pypi": "ilearnplus"
@@ -731,27 +861,33 @@
   },
   "maabuu/posebusters": {
     "pypi": "posebusters",
+    "python": ">=3.9",
     "conda": "posebusters"
   },
   "a-r-j/proteinworkshop": {
-    "pypi": "proteinworkshop"
+    "pypi": "proteinworkshop",
+    "python": ">=3.9,<3.11"
   },
   "schrodinger/pymol-open-source": {
     "pypi": "pymol-open-source",
+    "python": ">=3.9",
     "conda": "pymol-open-source"
   },
   "mcsorkun/chemplot": {
     "pypi": "chemplot",
+    "python": ">=3.9",
     "conda": "chemplot"
   },
   "faridrashidi/cnsplots": {
     "pypi": "cnsplots"
   },
   "dewberryants/asciimol": {
-    "pypi": "AsciiMol"
+    "pypi": "AsciiMol",
+    "python": ">=3.9"
   },
   "cbouy/mols2grid": {
     "pypi": "mols2grid",
+    "python": ">=3.10",
     "conda": "mols2grid"
   },
   "shujiahuang/geneview": {
@@ -759,6 +895,7 @@
   },
   "dask/dask": {
     "pypi": "dask",
+    "python": ">=3.10",
     "conda": "dask"
   },
   "iterative/dvc": {
@@ -766,34 +903,42 @@
   },
   "mlflow/mlflow": {
     "pypi": "mlflow",
+    "python": ">=3.10",
     "conda": "mlflow"
   },
   "lightning-ai/pytorch-lightning": {
     "pypi": "pytorch-lightning",
+    "python": ">=3.10",
     "conda": "pytorch-lightning"
   },
   "ray-project/ray": {
-    "pypi": "ray"
+    "pypi": "ray",
+    "python": ">=3.10"
   },
   "snakemake/snakemake": {
-    "pypi": "snakemake"
+    "pypi": "snakemake",
+    "python": ">=3.11"
   },
   "volkamerlab/teachopencadd": {
     "pypi": "teachopencadd",
+    "python": ">=3.10",
     "conda": "teachopencadd"
   },
   "basf/molpipeline": {
     "conda": "molpipeline"
   },
   "guyteichman/rnalysis": {
-    "pypi": "RNAlysis"
+    "pypi": "RNAlysis",
+    "python": "<3.15,>=3.10"
   },
   "jvalegre/robert": {
     "pypi": "robert",
+    "python": ">=3.11",
     "conda": "robert"
   },
   "yaqiangcao/cloops2": {
-    "pypi": "cLoops2"
+    "pypi": "cLoops2",
+    "python": ">=3"
   },
   "yt-dlp/yt-dlp": {
     "pypi": "yt-dlp",
@@ -805,6 +950,32 @@
   },
   "marcello-sega/pytim": {
     "pypi": "pytim",
+    "python": ">=3.10",
     "conda": "pytim"
+  },
+  "xchem/fragalysis": {
+    "pypi": "fragalysis"
+  },
+  "haddocking/haddock3": {
+    "pypi": "haddock3",
+    "python": "<3.15,>=3.10"
+  },
+  "insilichem/ommprotocol": {
+    "pypi": "ommprotocol",
+    "conda": "ommprotocol"
+  },
+  "insilichem/esigen": {
+    "pypi": "esigen"
+  },
+  "eljost/pysisyphus": {
+    "pypi": "pysisyphus",
+    "python": ">=3.9"
+  },
+  "hjkgrp/molsimplify": {
+    "pypi": "molSimplify",
+    "conda": "molsimplify"
+  },
+  "insilichem/pychimera": {
+    "pypi": "pychimera"
   }
 }

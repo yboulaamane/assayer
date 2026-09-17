@@ -1,0 +1,150 @@
+{
+  "acesuit/mace": {
+    "code": "from mace.calculators import mace_mp\nfrom ase import build\n\natoms = build.molecule('H2O')\ncalc = mace_mp(model=\"medium\", dispersion=False, default_dtype=\"float32\", device='cuda')\natoms.calc = calc\nprint(atoms.get_potential_energy())",
+    "source": "https://raw.githubusercontent.com/acesuit/mace/HEAD/README.md"
+  },
+  "arneschneuing/diffsbdd": {
+    "code": "from analysis.metrics import MoleculeProperties\nmol_metrics = MoleculeProperties()\nall_qed, all_sa, all_logp, all_lipinski, per_pocket_diversity = \\\n    mol_metrics.evaluate(pocket_mols)",
+    "source": "https://raw.githubusercontent.com/arneschneuing/diffsbdd/HEAD/README.md"
+  },
+  "binghong-ml/retro_star": {
+    "code": "from retro_star.api import RSPlanner\n\nplanner = RSPlanner(\n    gpu=-1,\n    use_value_fn=True,\n    iterations=100,\n    expansion_topk=50\n)\n\nresult = planner.plan('CCCC[C@@H](C(=O)N1CCC[C@H]1C(=O)O)[C@@H](F)C(=O)OC')",
+    "source": "https://raw.githubusercontent.com/binghong-ml/retro_star/HEAD/README.md"
+  },
+  "boehringer-ingelheim/mol-jepa": {
+    "code": "from transformers import AutoModel\n\nmodel = AutoModel.from_pretrained(\"Flogrammer/Mol-JEPA\", trust_remote_code=True)\nmodel.eval()\n\nsmiles_list = [\"Cn1cnc2n(C)c(=O)n(C)c(=O)c12\", \"CC(=O)Oc1ccccc1C(=O)O\"]\nout = model(smiles_list)\n\nprint(\"Predicted embeddings shape:\", out.predictions.shape) # batch size, modalities, embedding dimension\n>>> Predicted embeddings shape: torch.Size([2, 12, 512])\n\nprint(\"CLS token shape:\", out.cls.shape) # batch size, embedding dimension\n>>> CLS token shape: torch.Size([2, 512])\n\nprint(\"Latent embeddings shape:\", out.embeddings.shape) # batch size, modalities (+ CLS), latent dimension\n>>> Latent embeddings shape: torch.Size([2, 13, 512])",
+    "source": "https://raw.githubusercontent.com/boehringer-ingelheim/mol-jepa/HEAD/README.md"
+  },
+  "cch1999/posecheck": {
+    "code": "from posecheck import PoseCheck\n\n# Initialize the PoseCheck object\npc = PoseCheck()\n\n# Load a protein from a PDB file (will run reduce in the background)\npc.load_protein_from_pdb(\"data/examples/1a2g.pdb\")\n\n# Load ligands from an SDF file\npc.load_ligands_from_sdf(\"data/examples/1a2g_ligand.sdf\")\n# Alternatively, load RDKit molecules directly\n# pc.load_ligands_from_mols([rdmol])\n\n# Check for clashes\nclashes = pc.calculate_clashes()\nprint(f\"Number of clashes in example molecule: {clashes[0]}\")\n\n# Check for strain\nstrain = pc.calculate_strain_energy()\nprint(f\"Strain energy of example molecule: {strain[0]}\")\n\n# Check for interactions\ninteractions = pc.calculate_interactions()\nprint(f\"Interactions of example molecule: {interactions}\")",
+    "source": "https://raw.githubusercontent.com/cch1999/posecheck/HEAD/README.md"
+  },
+  "chembl/chembl_structure_pipeline": {
+    "code": "from chembl_structure_pipeline import standardizer\n\no_molblock = \"\"\"\n  Mrv1810 07121910172D          \n\n  4  3  0  0  0  0            999 V2000\n   -2.5038    0.4060    0.0000 C   0  0  3  0  0  0  0  0  0  0  0  0\n   -2.5038    1.2310    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n   -3.2182   -0.0065    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0\n   -1.7893   -0.0065    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  1  3  1  0  0  0  0\n  1  4  1  4  0  0  0\nM  CHG  2   2  -1   3   1\nM  END\n\"\"\"\n\nstd_molblock = standardizer.standardize_molblock(o_molblock)",
+    "source": "https://raw.githubusercontent.com/chembl/chembl_structure_pipeline/HEAD/README.md"
+  },
+  "choderalab/espaloma": {
+    "code": "# imports\nimport os\nimport torch\nimport espaloma as esp\n\n# define or load a molecule of interest via the Open Force Field toolkit\nfrom openff.toolkit.topology import Molecule\nmolecule = Molecule.from_smiles(\"CN1C=NC2=C1C(=O)N(C(=O)N2C)C\")\n\n# create an Espaloma Graph object to represent the molecule of interest\nmolecule_graph = esp.Graph(molecule)\n\n# load pretrained model\nespaloma_model = esp.get_model(\"latest\")\n\n# apply a trained espaloma model to assign parameters\nespaloma_model(molecule_graph.heterograph)\n\n# create an OpenMM System for the specified molecule\nopenmm_system = esp.graphs.deploy.openmm_system_from_graph(molecule_graph)",
+    "source": "https://raw.githubusercontent.com/choderalab/espaloma/HEAD/README.md"
+  },
+  "datamol-io/safe": {
+    "code": "import safe\n\nibuprofen = \"CC(Cc1ccc(cc1)C(C(=O)O)C)C\"\n\n# SMILES -> SAFE -> SMILES translation\ntry:\n    ibuprofen_sf = safe.encode(ibuprofen)  # c12ccc3cc1.C3(C)C(=O)O.CC(C)C2\n    ibuprofen_smi = safe.decode(ibuprofen_sf, canonical=True)  # CC(C)Cc1ccc(C(C)C(=O)O)cc1\nexcept safe.SAFEEncodeError:\n    pass\nexcept safe.SAFEDecodeError:\n    pass\n\nibuprofen_tokens = list(safe.split(ibuprofen_sf))",
+    "source": "https://raw.githubusercontent.com/datamol-io/safe/HEAD/README.md"
+  },
+  "drrdom/crem": {
+    "code": "from rdkit import Chem\nfrom crem.crem import mutate_mol, grow_mol, link_mols, make_cycle\n\nm = Chem.MolFromSmiles('c1cc(OC)ccc1C')          # methoxytoluene\n\n# replace an existing fragment\nmutants = list(mutate_mol(m, db_name='fragments.db', max_size=1))\n\n# decorate by replacing a hydrogen\ngrown = list(grow_mol(m, db_name='fragments.db'))\n\n# link two molecules with a linker\nm2 = Chem.MolFromSmiles('NCC(=O)O')              # glycine\nlinked = list(link_mols(m, m2, db_name='fragments.db'))\n\n# form a new ring\ncyclic = list(make_cycle(m, db_name='fragments.db', ring_size=(5, 7)))",
+    "source": "https://raw.githubusercontent.com/drrdom/crem/HEAD/README.md"
+  },
+  "duartegroup/autode": {
+    "code": "import autode as ade\nade.Config.n_cores = 8\n\nr = ade.Reactant(name='reactant', smiles='CC[C]([H])[H]')\np = ade.Product(name='product', smiles='C[C]([H])C')\n\nreaction = ade.Reaction(r, p, name='1-2_shift')\nreaction.calculate_reaction_profile()  # creates 1-2_shift/ and saves profile",
+    "source": "https://raw.githubusercontent.com/duartegroup/autode/HEAD/README.md"
+  },
+  "facebookresearch/esm": {
+    "code": "import torch\nmodel, alphabet = torch.hub.load(\"facebookresearch/esm:main\", \"esm2_t33_650M_UR50D\")",
+    "source": "https://raw.githubusercontent.com/facebookresearch/esm/HEAD/README.md"
+  },
+  "isayevlab/auto3d_pkg": {
+    "code": "from Auto3D import Auto3DOptions, main\n\nconfig = Auto3DOptions(path=\"molecules.smi\", k=1)\noutput_path = main(config)",
+    "source": "https://raw.githubusercontent.com/isayevlab/auto3d_pkg/HEAD/README.md"
+  },
+  "lanl/architector": {
+    "code": "from architector import build_complex\nout = build_complex(inputDict)",
+    "source": "https://raw.githubusercontent.com/lanl/architector/HEAD/README.md"
+  },
+  "lich-uct/syba": {
+    "code": "from rdkit import Chem\nfrom syba.syba import SybaClassifier\n\nsyba = SybaClassifier()\nsyba.fitDefaultScore()\nsmi = \"O=C(C)Oc1ccccc1C(=O)O\"\nsyba.predict(smi)\n# syba works also with RDKit RDMol objects\nmol = Chem.MolFromSmiles(smi)\nsyba.predict(mol=mol)\n# syba.predict is actually method with two keyword parameters \"smi\" and \"mol\", if both provided score is calculated for compound defined in \"smi\" parameter has the priority\nsyba.predict(smi=smi, mol=mol)",
+    "source": "https://raw.githubusercontent.com/lich-uct/syba/HEAD/README.md"
+  },
+  "lightning-ai/pytorch-lightning": {
+    "code": "from lightning import loggers\n\n# litlogger\ntrainer = Trainer(logger=LitLogger())\n\n# tensorboard\ntrainer = Trainer(logger=TensorBoardLogger(\"logs/\"))\n\n# weights and biases\ntrainer = Trainer(logger=loggers.WandbLogger())\n\n# comet\ntrainer = Trainer(logger=loggers.CometLogger())\n\n# mlflow\ntrainer = Trainer(logger=loggers.MLFlowLogger())\n\n# ... and dozens more",
+    "source": "https://raw.githubusercontent.com/lightning-ai/pytorch-lightning/HEAD/README.md"
+  },
+  "maabuu/posebusters": {
+    "code": "from dockbusters import DockBuster\n\n# check re-docked ligand\nDockBuster().bust(ligand_pred_file, ligand_crystal_file, protein_crystal_file)\n\n# check docked ligand\nDockBuster().bust(ligand_pred_file, protein_crystal_file)\n\n# check molecule\nDockBuster().bust(ligand_pred_file, protein_crystal_file)",
+    "source": "https://raw.githubusercontent.com/maabuu/posebusters/HEAD/README.md"
+  },
+  "microsoft/molskill": {
+    "code": "from molskill.scorer import MolSkillScorer\n\nsmiles_strs = [\"CCO\", \"O=C(Oc1ccccc1C(=O)O)C\"] \n\nscorer = MolSkillScorer()\nscores = scorer.score(smiles_strs)",
+    "source": "https://raw.githubusercontent.com/microsoft/molskill/HEAD/README.md"
+  },
+  "mims-harvard/tdc": {
+    "code": "from tdc.single_pred import ADME\ndata = ADME(name = 'HIA_Hou')\n# split into train/val/test with scaffold split methods\nsplit = data.get_split(method = 'scaffold')\n# get the entire data in the various formats\ndata.get_data(format = 'df')",
+    "source": "https://raw.githubusercontent.com/mims-harvard/tdc/HEAD/README.md"
+  },
+  "mlflow/mlflow": {
+    "code": "import mlflow\n\nmlflow.set_tracking_uri(\"http://localhost:5000\")\nmlflow.openai.autolog()",
+    "source": "https://raw.githubusercontent.com/mlflow/mlflow/HEAD/README.md"
+  },
+  "molecularai/qsartuna": {
+    "code": "from qsartuna.descriptors import YourNewDescriptor\n\nconfig = OptimizationConfig(\n    data=Dataset(\n        input_column=\"canonical\",\n        response_column=\"molwt\",\n        training_dataset_file=\"tests/data/DRD2/subset-50/train.csv\",\n    ),\n    descriptors=[YourNewDescriptor.new()],\n    algorithms=[\n        SVR.new(),\n    ],\n    settings=OptimizationConfig.Settings(\n        mode=ModelMode.REGRESSION,\n        n_splits=3,\n        n_trials=100,\n        direction=OptimizationDirection.MAXIMIZATION,\n    ),\n)",
+    "source": "https://raw.githubusercontent.com/molecularai/qsartuna/HEAD/README.md"
+  },
+  "molecularsets/moses": {
+    "code": "import moses\n\ntrain = moses.get_dataset('train')\ntest = moses.get_dataset('test')\ntest_scaffolds = moses.get_dataset('test_scaffolds')",
+    "source": "https://raw.githubusercontent.com/molecularsets/moses/HEAD/README.md"
+  },
+  "olivierbeq/papyrus-scripts": {
+    "code": "from papyrus_scripts import PapyrusDataset\n\ndataset = PapyrusDataset(version='2024.09.2', plusplus=True)\n\nfiltered = (dataset\n            .keep_source(['chembl', 'sharma'])\n            .keep_quality('high'))\n\ndf = filtered.to_dataframe()\nproteins = filtered.proteins().to_dataframe()",
+    "source": "https://raw.githubusercontent.com/olivierbeq/papyrus-scripts/HEAD/README.md"
+  },
+  "open-reaction-database/ord-schema": {
+    "code": "from ord_schema import validations\n\noutput = validations.validate_message(reaction, raise_on_error=False)\nprint(output.errors)    # [] -- the reaction above is valid\nprint(output.warnings)  # advisory only; submissions are not blocked on these",
+    "source": "https://raw.githubusercontent.com/open-reaction-database/ord-schema/HEAD/README.md"
+  },
+  "openforcefield/openff-toolkit": {
+    "code": "# Load a molecule into the OpenFF Molecule object\nfrom openff.toolkit import Molecule\nfrom openff.toolkit.utils import get_data_file_path\nsdf_file_path = get_data_file_path('molecules/ethanol.sdf')\nmolecule = Molecule.from_file(sdf_file_path)\n\n# Create an OpenFF Topology object from the molecule\nfrom openff.toolkit import Topology\ntopology = Topology.from_molecules(molecule)\n\n# Load the latest OpenFF force field release: version 2.1.0, codename \"Sage\"\nfrom openff.toolkit import ForceField\nforcefield = ForceField('openff-2.3.0.offxml')\n\n\n# Create an Interchange object for representations in other formats\ninterchange = forcefield.create_interchange(topology)\n\n# Create an OpenMM system representing the molecule with SMIRNOFF-applied parameters\nopenmm_system = interchange.to_openmm(topology)",
+    "source": "https://raw.githubusercontent.com/openforcefield/openff-toolkit/HEAD/README.md"
+  },
+  "openmm/openmm-ml": {
+    "code": "from openmmml import MLPotential\npotential = MLPotential('ani2x')\nsystem = potential.createSystem(topology)",
+    "source": "https://raw.githubusercontent.com/openmm/openmm-ml/HEAD/README.md"
+  },
+  "optuna/optuna": {
+    "code": "import optuna\n\n\ndef objective(trial):\n    x1 = trial.suggest_float(\"x1\", -100, 100)\n    x2 = trial.suggest_float(\"x2\", -100, 100)\n    return x1**2 + 0.01 * x2**2\n\n\nstudy = optuna.create_study(storage=\"sqlite:///db.sqlite3\")  # Create a new study with database.\nstudy.optimize(objective, n_trials=100)",
+    "source": "https://raw.githubusercontent.com/optuna/optuna/HEAD/README.md"
+  },
+  "oxpig/immunebuilder": {
+    "code": "from ImmuneBuilder import ABodyBuilder2\npredictor = ABodyBuilder2()\n\noutput_file = \"my_antibody.pdb\"\nsequences = {\n  'H': 'EVQLVESGGGVVQPGGSLRLSCAASGFTFNSYGMHWVRQAPGKGLEWVAFIRYDGGNKYYADSVKGRFTISRDNSKNTLYLQMKSLRAEDTAVYYCANLKDSRYSGSYYDYWGQGTLVTVS',\n  'L': 'VIWMTQSPSSLSASVGDRVTITCQASQDIRFYLNWYQQKPGKAPKLLISDASNMETGVPSRFSGSGSGTDFTFTISSLQPEDIATYYCQQYDNLPFTFGPGTKVDFK'}\n\nantibody = predictor.predict(sequences)\nantibody.save(output_file)",
+    "source": "https://raw.githubusercontent.com/oxpig/immunebuilder/HEAD/README.md"
+  },
+  "parmed/parmed": {
+    "code": "import parmed as pmd\n\n# convert GROMACS topology to AMBER format\ngmx_top = pmd.load_file('pmaawaterFE20mer2.top', xyz='pmaawaterFE20mer2.gro')\ngmx_top.save('pmaa.top', format='amber')\ngmx_top.save('pmaa.crd', format='rst7')\n\n# convert AMBER topology to GROMACS, CHARMM formats\namber = pmd.load_file('prmtop', 'inpcrd')\n# Save a GROMACS topology and GRO files\namber.save('gromacs.top')\namber.save('gromacs.gro')\n\n# Save a CHARMM PSF and crd files\namber.save('charmm.psf')\namber.save('charmm.crd')\n\n# Save a DLPOLY FIELD and CONFIG files\namber.save('dlpoly.field')\namber.save('dlpoly.config')\n\n# convert mol2 to pdb file\nmol2_parm = pmd.load_file('my.mol2')\nmol2_parm.save('my.pdb')\n\n# and many more",
+    "source": "https://raw.githubusercontent.com/parmed/parmed/HEAD/README.md"
+  },
+  "pdb-redo/dssp": {
+    "code": "from mkdssp import dssp\nimport os\nimport gzip\n\nfile_path = os.path.join(\"..\", \"test\", \"1cbs.cif.gz\")\n\nwith gzip.open(file_path, \"rt\") as f:\n    file_content = f.read()\n \ndssp = dssp(file_content)\n \nprint(\"residues: \", dssp.statistics.residues)\n\nfor res in dssp:\n    print(res.asym_id, res.seq_id, res.compound_id, res.type)",
+    "source": "https://raw.githubusercontent.com/pdb-redo/dssp/HEAD/README.md"
+  },
+  "pharmai/plip": {
+    "code": "from plip.structure.preparation import PDBComplex\n\nmy_mol = PDBComplex()\nmy_mol.load_pdb('/tmp/1EVE.pdb') # Load the PDB file into PLIP class\nprint(my_mol) # Shows name of structure and ligand binding sites\nmy_bsid = 'E20:A:2001' # Unique binding site identifier (HetID:Chain:Position)\nmy_mol.analyze()\nmy_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction data\n\n# Now print numbers of all residues taking part in pi-stacking\nprint([pistack.resnr for pistack in my_interactions.pistacking]) # Prints [84, 129]",
+    "source": "https://raw.githubusercontent.com/pharmai/plip/HEAD/README.md"
+  },
+  "polaris-hub/polaris": {
+    "code": "import polaris as po\n\n# Load the benchmark from the Hub\nbenchmark = po.load_benchmark(\"polaris/hello-world-benchmark\")\n\n# Get the train and test data-loaders\ntrain, test = benchmark.get_train_test_split()\n\n# Use the training data to train your model\n# Get the input as an array with 'train.inputs' and 'train.targets'  \n# Or simply iterate over the train object.\nfor x, y in train:\n    ...\n\n# Work your magic to accurately predict the test set\npredictions = [0.0 for x in test]\n\n# Evaluate your predictions\nresults = benchmark.evaluate(predictions)\n\n# Submit your results\nresults.upload_to_hub(owner=\"dummy-user\")",
+    "source": "https://raw.githubusercontent.com/polaris-hub/polaris/HEAD/README.md"
+  },
+  "pschwllr/moleculartransformer": {
+    "code": "def smi_tokenizer(smi):\n    \"\"\"\n    Tokenize a SMILES molecule or reaction\n    \"\"\"\n    import re\n    pattern =  \"(\\[[^\\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\\(|\\)|\\.|=|#|-|\\+|\\\\\\\\|\\/|:|~|@|\\?|>|\\*|\\$|\\%[0-9]{2}|[0-9])\"\n    regex = re.compile(pattern)\n    tokens = [token for token in regex.findall(smi)]\n    assert smi == ''.join(tokens)\n    return ' '.join(tokens)",
+    "source": "https://raw.githubusercontent.com/pschwllr/moleculartransformer/HEAD/README.md"
+  },
+  "pyg-team/pytorch_geometric": {
+    "code": "import torch\nfrom torch import Tensor\nfrom torch_geometric.nn import GCNConv\nfrom torch_geometric.datasets import Planetoid\n\ndataset = Planetoid(root='.', name='Cora')\n\nclass GCN(torch.nn.Module):\n    def __init__(self, in_channels, hidden_channels, out_channels):\n        super().__init__()\n        self.conv1 = GCNConv(in_channels, hidden_channels)\n        self.conv2 = GCNConv(hidden_channels, out_channels)\n\n    def forward(self, x: Tensor, edge_index: Tensor) -> Tensor:\n        # x: Node feature matrix of shape [num_nodes, in_channels]\n        # edge_index: Graph connectivity matrix of shape [2, num_edges]\n        x = self.conv1(x, edge_index).relu()\n        x = self.conv2(x, edge_index)\n        return x\n\nmodel = GCN(dataset.num_features, 16, dataset.num_classes)",
+    "source": "https://raw.githubusercontent.com/pyg-team/pytorch_geometric/HEAD/README.md"
+  },
+  "reymond-group/drfp": {
+    "code": "from drfp import DrfpEncoder\n\nrxn_smiles = [\n    \"CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1\",\n    \"CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1\",\n]\n\nfps = DrfpEncoder.encode(rxn_smiles)",
+    "source": "https://raw.githubusercontent.com/reymond-group/drfp/HEAD/README.md"
+  },
+  "rxn4chemistry/rxnmapper": {
+    "code": "from rxnmapper import RXNMapper\nrxn_mapper = RXNMapper()\nrxns = ['CC(C)S.CN(C)C=O.Fc1cccnc1F.O=C([O-])[O-].[K+].[K+]>>CC(C)Sc1ncccc1F', 'C1COCCO1.CC(C)(C)OC(=O)CONC(=O)NCc1cccc2ccccc12.Cl>>O=C(O)CONC(=O)NCc1cccc2ccccc12']\nresults = rxn_mapper.get_attention_guided_atom_maps(rxns)",
+    "source": "https://raw.githubusercontent.com/rxn4chemistry/rxnmapper/HEAD/README.md"
+  },
+  "swansonk14/admet_ai": {
+    "code": "from admet_ai import ADMETModel\n\nmodel = ADMETModel()\npreds = model.predict(smiles=\"O(c1ccc(cc1)CCOC)CC(O)CNC(C)C\")",
+    "source": "https://raw.githubusercontent.com/swansonk14/admet_ai/HEAD/README.md"
+  },
+  "uclcheminformatics/scaffoldgraph": {
+    "code": "import scaffoldgraph as sg\n\n# construct a scaffold network from an SDF file\nnetwork = sg.ScaffoldNetwork.from_sdf('my_sdf_file.sdf')\n\n# construct a scaffold tree from a SMILES file\ntree = sg.ScaffoldTree.from_smiles('my_smiles_file.smi')\n\n# construct a scaffold tree from a pandas dataframe\nimport pandas as pd\ndf = pd.read_csv('activity_data.csv')\nnetwork = sg.ScaffoldTree.from_dataframe(\n    df, smiles_column='Smiles', name_column='MolID',\n    data_columns=['pIC50', 'MolWt'], progress=True,\n)",
+    "source": "https://raw.githubusercontent.com/uclcheminformatics/scaffoldgraph/HEAD/README.md"
+  }
+}

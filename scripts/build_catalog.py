@@ -385,9 +385,16 @@ def pick(*vals):
 
 
 def load_extras():
-    """Install commands (resolved from PyPI/conda-forge) and hand-written usage."""
+    """Install commands, declared Python versions, and usage examples.
+
+    Two kinds of example, kept apart deliberately: `snippet` is hand-written for
+    this catalogue, `quickstart` is quoted from the project's own README and
+    carries the URL it came from. Neither is generated.
+    """
     pkg_path = os.path.join(DATA, "packages.json")
     packages = json.load(open(pkg_path)) if os.path.exists(pkg_path) else {}
+    qs_path = os.path.join(DATA, "quickstarts.json")
+    quickstarts = json.load(open(qs_path)) if os.path.exists(qs_path) else {}
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from snippets import SNIPPETS
@@ -399,11 +406,11 @@ def load_extras():
         key = norm(name)
         snips[key] = {"lang": lang, "code": code}
         snips[key.replace(" ", "")] = {"lang": lang, "code": code}
-    return packages, snips
+    return packages, snips, quickstarts
 
 
 def main():
-    packages, snips = load_extras()
+    packages, snips, quickstarts = load_extras()
     rows = json.load(open(os.path.join(DATA, "tools_index.json")))
     groups = {}
     for row in rows:
@@ -521,12 +528,20 @@ def main():
         if pkg:
             entry["pypi"] = pkg.get("pypi")
             entry["conda"] = pkg.get("conda")
+            # The author's own declared floor, straight from the package metadata.
+            entry["python"] = pkg.get("python")
         # Name only: two tools can ship from one repository (fpocket/mdpocket),
         # and a repo-name fallback hands the wrong example to the second one.
         for k in (norm(entry["name"]), norm(entry["name"]).replace(" ", "")):
             if k in snips:
                 entry["snippet"] = snips[k]
                 break
+        # Only where no hand-written example exists: ours is the better one when
+        # we have it, and showing both would just be noise.
+        if "snippet" not in entry:
+            qs = quickstarts.get(entry.get("repo") or "")
+            if qs:
+                entry["quickstart"] = qs
         if entry["description"] and len(entry["description"]) > 300:
             entry["description"] = entry["description"][:297].rstrip() + "…"
         entry = {k: v for k, v in entry.items() if v not in (None, [], False) or k == "curated"}

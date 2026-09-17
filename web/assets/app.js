@@ -298,12 +298,27 @@ function codeBlock(label, code, lang) {
 
 function installBlock(t) {
   const lines = [];
+  // The declared floor from the package metadata, not a guess. Shown as a
+  // comment so the whole block stays copy-and-pasteable.
+  if (t.python) lines.push(`# requires Python ${t.python}`);
   if (t.pypi) lines.push(`pip install ${t.pypi}`);
   if (t.conda) lines.push(`conda install -c conda-forge ${t.conda}`);
-  if (!lines.length && t.repo) lines.push(`git clone https://github.com/${t.repo}.git`);
+  if (!t.pypi && !t.conda && t.repo) {
+    lines.push(`git clone https://github.com/${t.repo}.git`,
+               "# no published package, build from source, see the repo");
+  }
   if (!lines.length) return "";
-  const note = t.pypi || t.conda ? "" : "\n# no published package, build from source, see the repo";
-  return codeBlock("Install", lines.join("\n") + note, "bash");
+  return codeBlock("Install", lines.join("\n"), "bash");
+}
+
+/** An example the project's own README carries, quoted rather than written. */
+function quickstartBlock(t) {
+  if (!t.quickstart?.code) return "";
+  return codeBlock("Getting started", t.quickstart.code, "python") +
+    `<p class="quoted">Quoted from the project's
+      <a href="${esc(t.quickstart.source)}" target="_blank" rel="noopener">README</a>,
+      unedited. It shows how the authors introduce the tool, not how to use it for
+      any particular task.</p>`;
 }
 
 function openDrawer(id) {
@@ -332,7 +347,7 @@ function openDrawer(id) {
         ${t.paper_url && !sameUrl(t.paper_url, t.url) ? link(t.paper_url, "Paper") : ""}
       </div>
       ${installBlock(t)}
-      ${t.snippet ? codeBlock("Minimal example", t.snippet.code, t.snippet.lang) : ""}
+      ${t.snippet ? codeBlock("Minimal example", t.snippet.code, t.snippet.lang) : quickstartBlock(t)}
       <div style="height:22px"></div>
       <dl class="kv">
         ${t.license ? `<dt>Access</dt><dd>${esc(t.license)}</dd>` : ""}
@@ -340,6 +355,7 @@ function openDrawer(id) {
         ${t.year ? `<dt>Year</dt><dd>${esc(t.year)}</dd>` : ""}
         ${t.pypi || t.conda ? `<dt>Package</dt><dd style="font-family:var(--mono);font-size:12.5px">${
           [t.pypi ? "pypi: " + esc(t.pypi) : "", t.conda ? "conda-forge: " + esc(t.conda) : ""].filter(Boolean).join("<br>")}</dd>` : ""}
+        ${t.python ? `<dt>Python</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.python)}</dd>` : ""}
         <dt>Listed in</dt><dd>${t.sources.map((x) => esc({
           "biotools": "bio.tools (ELIXIR, CC-BY 4.0)", "github-topics": "GitHub topic search",
           "curated": "our curated stack",

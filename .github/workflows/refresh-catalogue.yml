@@ -69,6 +69,7 @@ jobs:
       - name: Rebuild
         run: |
           python3 scripts/enrich_packages.py
+          python3 scripts/fetch_quickstarts.py
           python3 scripts/build_index.py
           python3 scripts/build_catalog.py
           python3 scripts/build_artifact.py

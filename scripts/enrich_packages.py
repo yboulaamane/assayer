@@ -58,7 +58,11 @@ def pypi_match(name, repo):
     blob += " " + str(info.get("home_page") or "") + " " + str(info.get("package_url") or "")
     # Only trust it when the package points back at the same repository.
     if repo and repo.lower() in blob.lower():
-        return {"name": info.get("name") or name, "summary": (info.get("summary") or "")[:120]}
+        # requires_python is the author's own declared floor, so it is worth
+        # showing verbatim rather than guessing a version from anything else.
+        return {"name": info.get("name") or name,
+                "python": (info.get("requires_python") or "").strip() or None,
+                "summary": (info.get("summary") or "")[:120]}
     return None
 
 
@@ -82,6 +86,8 @@ def resolve(tool):
             m = pypi_match(c, repo)
             if m:
                 found["pypi"] = m["name"]
+                if m.get("python"):
+                    found["python"] = m["python"]
         if "conda" not in found:
             m = conda_match(c, repo)
             if m:
@@ -95,7 +101,8 @@ def main():
     tools = json.load(open(os.path.join(ROOT, "web", "catalog.json")))["tools"]
     worth = [t for t in tools if (t.get("curated") or (t.get("stars") or 0) >= 50) and t.get("repo")]
     cached = json.load(open(CACHE)) if os.path.exists(CACHE) else {}
-    todo = [t for t in worth if t["repo"] not in cached]
+    stale = {r for r, v in cached.items() if v and v.get("pypi") and "python" not in v}
+    todo = [t for t in worth if t["repo"] not in cached or t["repo"] in stale]
     print(f"{len(worth)} tools worth resolving, {len(todo)} not yet cached", flush=True)
 
     done = 0
@@ -113,7 +120,8 @@ def main():
     json.dump(hits, open(os.path.join(DATA, "packages.json"), "w"), indent=2)
     print(f"\n{len(hits)} tools have a verified package "
           f"({sum(1 for v in hits.values() if v.get('pypi'))} pypi, "
-          f"{sum(1 for v in hits.values() if v.get('conda'))} conda-forge)")
+          f"{sum(1 for v in hits.values() if v.get('conda'))} conda-forge, "
+          f"{sum(1 for v in hits.values() if v.get('python'))} with a declared Python version)")
 
 
 if __name__ == "__main__":
