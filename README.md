@@ -1,4 +1,5 @@
 # Assayer
+<img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
 A catalogue of 3,973 tools for medicinal and computational chemistry, plus 27
 protocols that lay out how to actually run a piece of work.
