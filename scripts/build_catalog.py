@@ -743,6 +743,12 @@ def main():
     print(f"wrote {os.path.join(WEB, 'catalog.json')} "
           f"({os.path.getsize(os.path.join(WEB, 'catalog.json'))/1024:.0f} KB)")
 
+    # The README quotes figures from what was just built. Rewriting them here is
+    # what stops the monthly refresh leaving "3,973 tools" in its first line.
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import readme_counts  # noqa: E402
+    readme_counts.update()
+
 
 if __name__ == "__main__":
     main()
