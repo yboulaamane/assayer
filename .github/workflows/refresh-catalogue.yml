@@ -109,6 +109,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # The label must exist before the PR asks for it, and before anything is
+          # pushed: gh pr create fails on a missing label, and failing after the
+          # push leaves a stray branch with no pull request.
+          gh label create catalogue --description "Automated catalogue refresh" --color C2E0C6 2>/dev/null || true
           BRANCH="refresh/catalogue-$(date -u '+%Y-%m-%d')"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
