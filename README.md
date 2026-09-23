@@ -1,8 +1,8 @@
 # Assayer
 <img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
-A catalogue of medicinal and computational chemistry tools (296 chosen and
-written up by hand, 2,381 listed in all), plus 27 protocols that lay out how to
+A catalogue of medicinal and computational chemistry tools (<!--n:curated-->296<!--/n--> chosen and
+written up by hand, <!--n:tools-->2,381<!--/n--> listed in all), plus <!--n:protocols-->27<!--/n--> protocols that lay out how to
 actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -29,6 +29,7 @@ cross-origin requests, so the browser talks to them directly.
 
 ## What's in the catalogue
 
+<!--block:stages-->
 | Stage | Curated | Listed | | Stage | Curated | Listed |
 |---|--:|--:|---|---|--:|--:|
 | Docking & virtual screening | 28 | 576 | | Quantum chemistry | 12 | 88 |
@@ -42,15 +43,16 @@ cross-origin requests, so the browser talks to them directly.
 | Visualisation | 9 | 100 | | | | |
 
 296 of the 2,381 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 190 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 31 quote one from the project's own README. No example is generated.
+<!--/block:stages-->
 
 ## Where the data comes from
 
 | Source | Rows | Licence |
 |---|--:|---|
-| [bio.tools](https://bio.tools), 10 drug-discovery EDAM topics | 2,746 | CC BY 4.0 |
-| GitHub repos with 30+ stars across 23 topics | 713 | public metadata |
-| Written for this project | 296 | ours |
-| My own starred repos, filtered | 130 | ours |
+| [bio.tools](https://bio.tools), <!--n:biotools_topics-->10<!--/n--> drug-discovery EDAM topics | <!--n:biotools_rows-->2,746<!--/n--> | CC BY 4.0 |
+| GitHub repos with 30+ stars across <!--n:github_topics-->23<!--/n--> topics | <!--n:github_rows-->713<!--/n--> | public metadata |
+| Written for this project | <!--n:curated_rows-->296<!--/n--> | ours |
+| My own starred repos, filtered | <!--n:stars_rows-->130<!--/n--> | ours |
 
 Both topic lists are deliberately narrow: **medicinal and computational chemistry
 for drug design, and nothing else.** They used to reach into structural biology,
@@ -60,11 +62,11 @@ cone-beam CT backprojection, MRI browsers and image-registration toolboxes. Real
 software, correctly labelled, and nothing to do with designing a drug.
 
 bio.tools gives breadth within that scope. The GitHub layer answers a question
-registries can't: is anyone still maintaining this. The 296 curated
+registries can't: is anyone still maintaining this. The <!--n:curated-->296<!--/n--> curated
 entries cover what a project actually runs on, which both other sources are
 patchy about.
 
-326 of 3,885 rows appear in more than one source. They get merged into one
+<!--n:multi_source-->326<!--/n--> of <!--n:index_rows-->3,885<!--/n--> rows appear in more than one source. They get merged into one
 entry that remembers where it came from.
 
 ### What gets thrown away, and why
@@ -88,7 +90,7 @@ once mention this field:
 
 Nobody docks for a reason unrelated to drug discovery, so those stages need no
 gate. The five on the left do. `excluded_because()` in `scripts/build_catalog.py`
-drops 1,144 rows, in this order: no description, a paper's code drop,
+drops <!--n:excluded-->1,144<!--/n--> rows, in this order: no description, a paper's code drop,
 courseware, a list of other people's work, and — only in the five stages where the
 topic cannot carry the purpose — anything that never mentions the field.
 
@@ -118,7 +120,7 @@ caught by the gate is a tool to curate by hand, not a reason to widen the rule.
 
 ### Two layers, said out loud
 
-The catalogue is 296 entries someone chose and wrote up, and 2,085 that arrived
+The catalogue is <!--n:curated-->296<!--/n--> entries someone chose and wrote up, and <!--n:listed-->2,085<!--/n--> that arrived
 from a registry and were only filtered. Those are different promises, so the site
 does not render them identically: browsing opens on the curated layer, the wider
 one is one click away and says on the page that nobody here has read it.
@@ -154,7 +156,7 @@ prints too many.
 complete, always valid, and what you get with no key configured. On top of it,
 `web/api/plan.js` hands a model the whole registry and asks which modules *this*
 request needs, in what order, and why each one. That is the difference between
-choosing one of 27 pre-written documents and composing from 173 parts.
+choosing one of <!--n:protocols-->27<!--/n--> pre-written documents and composing from <!--n:modules-->173<!--/n--> parts.
 
 The model returns ids and nothing else. It never writes a step, a gate, a
 threshold or a tool name — those come from the registry, which lives on the
@@ -220,20 +222,20 @@ and correctly transcribed; it cannot check that the work supports the threshold
 it is attached to, which needs a reader. A test enforces the rule that a numeric
 gate either cites something or admits it has no source.
 
-`evals/` is the evaluation set: 53 reviewed fixtures that say what a correct
+`evals/` is the evaluation set: <!--n:eval_cases-->53<!--/n--> fixtures that say what a correct
 plan must *do* — which protocol, which constraints it must extract, which steps
 it cannot omit, what must precede what — rather than which exact steps it must
 contain, so it survives registry changes. `node evals/run.mjs` scores it and
 `tests/evals.test.mjs` fails if the score drops below `evals/baseline.json`.
 
-The score is currently 245/245 expectations, and **0 of 53 cases are
+The score is currently <!--n:eval_passed-->245<!--/n-->/<!--n:eval_checks-->245<!--/n--> expectations, and **<!--n:eval_reviewed-->0<!--/n--> of <!--n:eval_cases-->53<!--/n--> cases are
 domain-reviewed**: the expectations are mine, not verified science. A case
 becomes evidence when someone who does this work has agreed that a plan failing
 it would be wrong. `evals/README.md` explains how to review one.
 
 `tests/coverage-sweep.test.mjs` is combinatorial rather than example-based: every
 metal in the periodic table across every task that mentions one, several
-phrasings for each of the 27 protocols, and a set of phrases that must never
+phrasings for each of the <!--n:protocols-->27<!--/n--> protocols, and a set of phrases that must never
 read as coordination chemistry ("the gold standard for docking"). It asserts on
 the composed plan rather than the keyword guess, and it fails on a route that is
 locked in without a model call rather than on one the model would correct. A new
@@ -257,9 +259,9 @@ or verify the live deployment's layout.
 
 ## The protocols
 
-18 of them, 117 modules. Each protocol says what decision it supports and when to
+<!--n:protocols-->27<!--/n--> of them, <!--n:modules-->173<!--/n--> modules. Each protocol says what decision it supports and when to
 walk away. Each step says what to do, why, which tools, and the gate it has to
-pass. 35 steps also name the specific way that step usually goes wrong.
+pass. <!--n:pitfalls-->128<!--/n--> steps also name the specific way that step usually goes wrong.
 
 Some examples of what that looks like in practice:
 
@@ -368,7 +370,7 @@ deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
 **Selection costs tokens, and free tiers meter them per minute.** The registry
-goes in every selection prompt, which is about 5,400 tokens for all 173 modules.
+goes in every selection prompt, which is about 5,800 tokens for all <!--n:modules-->173<!--/n--> modules.
 Gemini's free tier meters requests long before tokens and takes that happily.
 Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
 digest buys one call a minute and a rate-limit after it — which is how it
@@ -417,17 +419,17 @@ Install, and where the data allows it, a Python version and a usage example.
 
 `scripts/enrich_packages.py` only accepts a package whose metadata points back
 at the same GitHub repository, so "boltz" cannot resolve to an unrelated
-package of the same name. That strictness is why coverage is what it is: **190
-of 2,381** tools have a verified package, **118** carry the Python version the
+package of the same name. That strictness is why coverage is what it is: **<!--n:packages-->190<!--/n-->
+of <!--n:tools-->2,381<!--/n-->** tools have a verified package, **<!--n:python-->118<!--/n-->** carry the Python version the
 authors declared in `requires_python`. Everything else with a repository gets a
-`git clone` and an honest note that there is no published package; the 1,142
+`git clone` and an honest note that there is no published package; the <!--n:no_install-->1,142<!--/n-->
 web servers, databases and commercial tools get nothing, because there is nothing
 to install.
 
 Usage examples come in two kinds and are never generated. A **snippet** is
-hand-written for this catalogue (34 tools). A **quickstart** is the first real
+hand-written for this catalogue (<!--n:snippets-->34<!--/n--> tools). A **quickstart** is the first real
 Python block from the project's own README, quoted unedited and shown with a
-link to the file it came from (31 tools). Writing usage prose for three
+link to the file it came from (<!--n:quickstarts-->31<!--/n--> tools). Writing usage prose for three
 thousand tools nobody here has run would be fabrication at scale, which is the
 thing the rest of this project exists to avoid — so the site says plainly that a
 quoted example is how the authors introduce the tool, not how to use it for any
@@ -486,11 +488,22 @@ rules have misfired before in ways nothing caught until someone looked, and a
 catalogue people take scientific advice from should not absorb that
 automatically. The curated entries are not touched — those are the judgement.
 
-`web/catalog.json` is two megabytes on one line, so its git diff is one insertion
+`web/catalog.json` is over a megabyte on one line, so its git diff is one insertion
 and one deletion. `scripts/catalog_diff.py` turns a rebuild into something
 reviewable — what was added, what was removed, what changed stage, what changed
 licence — and that summary is the body of the pull request. A stage disappearing
 is treated as a bug rather than a data change and says so in the PR.
+
+The figures quoted in this README are written by the build, not by hand. Each one
+sits inside an HTML comment marker that GitHub does not render, and
+`scripts/readme_counts.py` fills them from the data at the end of every
+`build_catalog.py` run, so a refresh that moves the counts carries the README with
+it. The marker syntax is documented at the top of that script. To quote a new
+figure, add it to `figures()` there and to `truth()` in `tests/readme.test.mjs`,
+which recomputes every figure independently and fails on any that disagree. A
+typo'd key or a marker broken across a line stops the build rather than freezing
+a number. Figures that record history rather than state ("346 rows turned out
+to be CT scanners") are prose on purpose.
 
 Both use first-party actions only. A scheduled job with write access is a
 supply-chain surface, and that is not worth the convenience of a third-party
@@ -503,7 +516,7 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The 296 curated tools carry their
+- **Stage assignment is keyword-driven.** The <!--n:curated-->296<!--/n--> curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).
@@ -525,7 +538,7 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
   GitHub long before it reaches any registry. The GitHub and curated layers are
   what fill that gap.
 - **My starred repos are a reading list**, so `build_index.py` filters them.
-  18 are excluded as off-domain (video downloaders, image generators, awesome
+  <!--n:stars_dropped-->18<!--/n--> are excluded as off-domain (video downloaders, image generators, awesome
   lists). The filter denies the recognisable rather than demanding proof of
   relevance, because several real tools carry no description or topics at all
   and would fail any positive test. Those few are named in `KEEP_ANYWAY`.
