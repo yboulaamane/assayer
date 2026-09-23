@@ -1,8 +1,9 @@
 # Assayer
 <img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
-A catalogue of 3,973 tools for medicinal and computational chemistry, plus 27
-protocols that lay out how to actually run a piece of work.
+A catalogue of medicinal and computational chemistry tools (296 chosen and
+written up by hand, 2,381 listed in all), plus 27 protocols that lay out how to
+actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
 
@@ -37,10 +38,10 @@ cross-origin requests, so the browser talks to them directly.
 | Binding sites & pockets | 18 | 166 | | Peptides & protein design | 16 | 51 |
 | Generative & de novo design | 11 | 157 | | Clinical & competitive | 10 | 34 |
 | Compounds & bioactivity | 21 | 111 | | Synthesis & retrosynthesis | 22 | 28 |
-| QSAR & property models | 16 | 104 | | Benchmarks & datasets | 7 | 14 |
+| QSAR & property models | 17 | 105 | | Benchmarks & datasets | 7 | 14 |
 | Visualisation | 9 | 100 | | | | |
 
-295 of the 2,380 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 189 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 31 quote one from the project's own README. No example is generated.
+296 of the 2,381 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 190 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 31 quote one from the project's own README. No example is generated.
 
 ## Where the data comes from
 
@@ -48,7 +49,7 @@ cross-origin requests, so the browser talks to them directly.
 |---|--:|---|
 | [bio.tools](https://bio.tools), 10 drug-discovery EDAM topics | 2,746 | CC BY 4.0 |
 | GitHub repos with 30+ stars across 23 topics | 713 | public metadata |
-| Written for this project | 295 | ours |
+| Written for this project | 296 | ours |
 | My own starred repos, filtered | 130 | ours |
 
 Both topic lists are deliberately narrow: **medicinal and computational chemistry
@@ -59,11 +60,11 @@ cone-beam CT backprojection, MRI browsers and image-registration toolboxes. Real
 software, correctly labelled, and nothing to do with designing a drug.
 
 bio.tools gives breadth within that scope. The GitHub layer answers a question
-registries can't: is anyone still maintaining this. The 295 curated
+registries can't: is anyone still maintaining this. The 296 curated
 entries cover what a project actually runs on, which both other sources are
 patchy about.
 
-326 of 3,884 rows appear in more than one source. They get merged into one
+326 of 3,885 rows appear in more than one source. They get merged into one
 entry that remembers where it came from.
 
 ### What gets thrown away, and why
@@ -117,7 +118,7 @@ caught by the gate is a tool to curate by hand, not a reason to widen the rule.
 
 ### Two layers, said out loud
 
-The catalogue is 295 entries someone chose and wrote up, and 2,085 that arrived
+The catalogue is 296 entries someone chose and wrote up, and 2,085 that arrived
 from a registry and were only filtered. Those are different promises, so the site
 does not render them identically: browsing opens on the curated layer, the wider
 one is one click away and says on the page that nobody here has read it.
@@ -416,11 +417,12 @@ Install, and where the data allows it, a Python version and a usage example.
 
 `scripts/enrich_packages.py` only accepts a package whose metadata points back
 at the same GitHub repository, so "boltz" cannot resolve to an unrelated
-package of the same name. That strictness is why coverage is what it is: **243
-of 3,973** tools have a verified package, **148** carry the Python version the
+package of the same name. That strictness is why coverage is what it is: **190
+of 2,381** tools have a verified package, **118** carry the Python version the
 authors declared in `requires_python`. Everything else with a repository gets a
-`git clone` and an honest note that there is no published package; the ~2,000
-web servers and databases get nothing, because there is nothing to install.
+`git clone` and an honest note that there is no published package; the 1,142
+web servers, databases and commercial tools get nothing, because there is nothing
+to install.
 
 Usage examples come in two kinds and are never generated. A **snippet** is
 hand-written for this catalogue (34 tools). A **quickstart** is the first real
@@ -501,13 +503,13 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The 293 curated tools carry their
+- **Stage assignment is keyword-driven.** The 296 curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).
-  17 tools still land in "Unsorted", under half a percent. Nine of those have
-  no description at all, which is the real floor: nothing can be inferred from
-  an empty record.
+  Nothing is filed under "Unsorted" any more: a row no rule can place is
+  dropped by the relevance gate rather than shown under a label that tells the
+  reader nothing (see *What gets thrown away, and why*).
   To fix a misplaced tool, add its label to `CATEGORY_MAP` in
   `scripts/build_catalog.py`.
 - **Some bio.tools records are real science from another field.** They arrive
