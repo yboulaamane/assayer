@@ -38,7 +38,7 @@
     "tags": [
       "druggability"
     ],
-    "url_status": 200
+    "url_status": "error: TimeoutError"
   },
   {
     "name": "UniProt",
@@ -240,7 +240,7 @@
     "tags": [
       "annotation"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "RCSB PDB",
@@ -707,7 +707,7 @@
       "docking",
       "baseline"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "OpenMM",
@@ -1350,7 +1350,7 @@
       "building-blocks",
       "make-on-demand"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "canSAR",
@@ -1898,7 +1898,7 @@
       "visualisation",
       "sar"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "CReM",
@@ -2232,7 +2232,7 @@
       "virtual-screening",
       "hpc"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "EasyDock",
@@ -2400,7 +2400,7 @@
       "docking",
       "scoring"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "gnina",
@@ -3133,6 +3133,21 @@
     "tags": [
       "protein-design",
       "sequence-design"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "DEL-iver",
+    "stage": "qsar-ml",
+    "stage_label": "QSAR / property-prediction ML",
+    "description": "Processes DNA-encoded library selections: building-block and disynthon enrichment, binding models on building-block or full-molecule inputs, and analog picking from make-on-demand space. Early research code from a 2026 preprint. The default split is random, which leaks building blocks between train and test, so re-split by building block before trusting the AUROC.",
+    "url": "https://github.com/SztainLab/DEL-iver",
+    "repo": "sztainlab/del-iver",
+    "access": "open-source",
+    "tags": [
+      "dna-encoded-library",
+      "hit-finding",
+      "enrichment"
     ],
     "url_status": 200
   },
@@ -3885,7 +3900,7 @@
       "literature",
       "api"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "PubMed / NCBI E-utilities",
@@ -3927,7 +3942,7 @@
       "patents",
       "freedom-to-operate"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "Nextflow",

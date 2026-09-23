@@ -4176,6 +4176,25 @@
     "source": "curated",
     "stars": null,
     "stage": "qsar-ml",
+    "name": "DEL-iver",
+    "description": "Processes DNA-encoded library selections: building-block and disynthon enrichment, binding models on building-block or full-molecule inputs, and analog picking from make-on-demand space. Early research code from a 2026 preprint. The default split is random, which leaks building blocks between train and test, so re-split by building block before trusting the AUROC.",
+    "url": "https://github.com/SztainLab/DEL-iver",
+    "code_url": "https://github.com/sztainlab/del-iver",
+    "paper_url": null,
+    "categories": [
+      "dna-encoded-library",
+      "hit-finding",
+      "enrichment"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "sztainlab/del-iver",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "qsar-ml",
     "name": "scikit-mol",
     "description": "RDKit featurisation wrapped as scikit-learn transformers, so fingerprints and descriptors live inside a Pipeline and cannot leak across a split.",
     "url": "https://github.com/EBjerrum/scikit-mol",
