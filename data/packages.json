@@ -977,5 +977,8 @@
   },
   "insilichem/pychimera": {
     "pypi": "pychimera"
+  },
+  "oxpig/antifold": {
+    "pypi": "antifold"
   }
 }
