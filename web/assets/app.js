@@ -424,11 +424,36 @@ function openDrawer(id) {
     };
   });
   drawer.hidden = false; scrim.hidden = false;
-  requestAnimationFrame(() => { drawer.classList.add("show"); scrim.classList.add("show"); });
+  if (!drawer.contains(document.activeElement)) returnFocusTo = document.activeElement;
+  requestAnimationFrame(() => {
+    drawer.classList.add("show"); scrim.classList.add("show");
+    (drawer.querySelector(".close") || drawer).focus({ preventScroll: true });
+  });
 }
+
+// Where focus was when the drawer opened, so closing it puts the reader back on
+// the card they came from rather than at the top of the document.
+let returnFocusTo = null;
+
+// Tab must not walk the grid behind an open panel. Kept as a listener rather
+// than the inert attribute, which Safari was late to support.
+const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+addEventListener("keydown", (e) => {
+  if (e.key !== "Tab" || drawer.hidden) return;
+  const items = [...drawer.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (!drawer.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
 function closeDrawer() {
+  const wasOpen = !drawer.hidden;
   drawer.classList.remove("show"); scrim.classList.remove("show");
   setTimeout(() => { if (!drawer.classList.contains("show")) { drawer.hidden = true; scrim.hidden = true; } }, 240);
+  if (wasOpen && returnFocusTo?.isConnected) returnFocusTo.focus({ preventScroll: true });
+  returnFocusTo = null;
 }
 
 /* ---------------------------------------------------------------- workflow */
@@ -792,9 +817,19 @@ async function tailorPlan(plan, parsed, target, structures) {
     <p id="tailor-text"></p></div>`;
   const para = () => document.getElementById("tailor-text");
 
+  // A stall timer rather than one deadline for the whole request: this is a
+  // token stream, so a fixed timeout would cut a working answer off mid-sentence.
+  // What must not happen is waiting forever on a stream that has stopped
+  // arriving, which left the caret blinking under a half-written paragraph.
+  const STALL_MS = 20000;
+  const abort = new AbortController();
+  let stall = setTimeout(() => abort.abort(), STALL_MS);
+  const keepAlive = () => { clearTimeout(stall); stall = setTimeout(() => abort.abort(), STALL_MS); };
+
   let res;
   try {
     res = await fetch("api/tailor", {
+      signal: abort.signal,
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -809,6 +844,7 @@ async function tailorPlan(plan, parsed, target, structures) {
     });
     if (!res.ok || !res.body) throw new Error(String(res.status));
   } catch {
+    clearTimeout(stall);
     slot.innerHTML = "";   // no key, no function, offline, just omit the section
     return;
   }
@@ -817,11 +853,19 @@ async function tailorPlan(plan, parsed, target, structures) {
   const dec = new TextDecoder();
   let text = "";
   slot.querySelector(".count-note")?.remove();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    text += dec.decode(value, { stream: true });
-    para().innerHTML = paragraphs(text) + `<span class="caret"></span>`;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      keepAlive();
+      text += dec.decode(value, { stream: true });
+      para().innerHTML = paragraphs(text) + `<span class="caret"></span>`;
+    }
+  } catch {
+    // Stalled or aborted. Whatever arrived is still worth showing, but it is a
+    // fragment, so it must not end in a caret that implies more is coming.
+  } finally {
+    clearTimeout(stall);
   }
   if (!text.trim()) { slot.innerHTML = ""; return; }
 

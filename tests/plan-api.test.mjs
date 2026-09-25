@@ -257,3 +257,30 @@ test("the whole model call is bounded, not just each attempt", async () => {
   assert.ok(perAttempt < deadline,
             "one attempt must not be able to consume the entire deadline");
 });
+
+test("no endpoint can spend longer hunting for a model than the gateway allows", () => {
+  // The edge gateway hangs up at 25s. Every endpoint that walks a provider list
+  // must be bounded below that, or the caller gets a 504 instead of a fallback.
+  const GATEWAY_MS = 25000;
+  const slow = [];
+  for (const f of ["plan.js", "route.js", "tailor.js"]) {
+    const src = readFileSync(new URL(`../web/api/${f}`, import.meta.url), "utf8");
+    const perAttempt = [...src.matchAll(/AbortSignal\.timeout\((\d+)\)/g)].map((m) => Number(m[1]));
+    const deadline = Number(src.match(/(?:deadline|CONNECT_DEADLINE)[:\s=]+(\d{4,})/)?.[1]);
+    // Two providers, each with a model ladder, is the realistic worst case.
+    const worst = deadline || Math.max(0, ...perAttempt) * 2;
+    if (worst >= GATEWAY_MS) slow.push(`${f}: worst case ${worst}ms vs a ${GATEWAY_MS}ms gateway`);
+  }
+  assert.deepEqual(slow, [], "bound the whole provider hunt, not just each attempt");
+});
+
+test("the streamed brief gives up on a stream that has stopped arriving", () => {
+  const app = readFileSync(new URL("../web/assets/app.js", import.meta.url), "utf8");
+  const call = app.slice(app.indexOf('fetch("api/tailor"'), app.indexOf('fetch("api/tailor"') + 2600);
+  assert.match(call, /signal: abort\.signal/, "the streaming fetch must be abortable");
+  // A whole-request timeout would truncate a working answer, so it has to be a
+  // stall timer that each arriving chunk resets.
+  assert.match(app, /keepAlive\s*=\s*\(\)\s*=>/, "expected a per-chunk stall timer");
+  assert.match(call, /keepAlive\(\);/, "each chunk must reset the timer");
+  assert.match(call, /finally\s*\{\s*clearTimeout\(stall\)/, "the timer must be cleared when done");
+});

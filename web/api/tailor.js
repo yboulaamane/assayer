@@ -169,18 +169,29 @@ export default async function handler(req) {
   const prompt = buildPrompt(input);
   let upstream, winner = null, detail = "";
 
+  // Bound the whole hunt for a provider, not just each attempt. This is an SSE
+  // response, so the timeout below is time-to-first-byte: at 30s each, two
+  // providers with a model ladder behind them could spend well over a minute
+  // before a single byte, behind a gateway that hangs up at 25s. The caller
+  // then sees a 504 instead of a page that simply omits the section.
+  const CONNECT_DEADLINE = 20000;
+  const startedAt = Date.now();
+  const remaining = () => CONNECT_DEADLINE - (Date.now() - startedAt);
+
   for (const { p, key, model } of providers) {
     const queue = process.env.LLM_MODEL ? [model] : [model, ...(p.fallbacks || [])];
     let asked = false;
 
     while (queue.length) {
       const candidate = queue.shift();
+      const slice = Math.min(12000, remaining());
+      if (slice < 1500) { detail = detail || "deadline reached before a model answered"; break; }
       try {
         upstream = await fetch(p.url(candidate, key), {
           method: "POST",
           headers: p.headers(key),
           body: JSON.stringify(p.body(candidate, prompt)),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(slice),
         });
       } catch (e) {
         detail = `unreachable: ${e.name}`;
@@ -191,7 +202,7 @@ export default async function handler(req) {
       if (upstream.status === 429) break;          // tier spent; next provider
       if (upstream.status !== 404) break;
       // every name we knew is retired: read the list and try again
-      if (!queue.length && !asked) {
+      if (!queue.length && !asked && remaining() > 4000) {
         asked = true;
         queue.push(...(await discover(p, key)).slice(0, 3));
       }
