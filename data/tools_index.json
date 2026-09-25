@@ -1224,8 +1224,8 @@
     "stage": "qm",
     "name": "AIMNet2",
     "description": "Neural network potential covering neutral, charged and open-shell organic molecules across most of the periodic table — QM-quality energies at force-field cost.",
-    "url": "https://github.com/isayevlab/AIMNet2",
-    "code_url": "https://github.com/isayevlab/aimnet2",
+    "url": "https://github.com/isayevlab/aimnetcentral",
+    "code_url": "https://github.com/isayevlab/aimnetcentral",
     "paper_url": null,
     "categories": [
       "mlip",
@@ -1233,7 +1233,7 @@
     ],
     "year": null,
     "license": "open-source",
-    "repo": "isayevlab/aimnet2",
+    "repo": "isayevlab/aimnetcentral",
     "also_in": []
   },
   {
@@ -1377,9 +1377,9 @@
     "stars": null,
     "stage": "synthesis",
     "name": "Chemformer",
-    "description": "Sequence-to-sequence transformer for reaction prediction and retrosynthesis, pretrained on SMILES and fine-tuned per task.",
-    "url": "https://github.com/MolecularAI/Chemformer",
-    "code_url": "https://github.com/molecularai/chemformer",
+    "description": "Sequence-to-sequence transformer for reaction prediction and retrosynthesis, pretrained on SMILES and fine-tuned per task. Now maintained inside AiZynthModels; the standalone repository is archived.",
+    "url": "https://github.com/MolecularAI/aizynthmodels",
+    "code_url": "https://github.com/molecularai/aizynthmodels",
     "paper_url": null,
     "categories": [
       "retrosynthesis",
@@ -1387,7 +1387,7 @@
     ],
     "year": null,
     "license": "open-source",
-    "repo": "molecularai/chemformer",
+    "repo": "molecularai/aizynthmodels",
     "also_in": []
   },
   {
@@ -1657,10 +1657,10 @@
     "source": "curated",
     "stars": null,
     "stage": "synthesis",
-    "name": "AiZynthTrain",
-    "description": "Reproducible pipelines for training AiZynthFinder's models on your own reaction data, so in-house chemistry and stock are reflected in the routes.",
-    "url": "https://github.com/MolecularAI/aizynthtrain",
-    "code_url": "https://github.com/molecularai/aizynthtrain",
+    "name": "AiZynthModels",
+    "description": "AstraZeneca's repository for training, evaluating and using synthesis prediction models, and the replacement for AiZynthTrain. Train AiZynthFinder's models on your own reaction data so in-house chemistry and stock are reflected in the routes.",
+    "url": "https://github.com/MolecularAI/aizynthmodels",
+    "code_url": "https://github.com/molecularai/aizynthmodels",
     "paper_url": null,
     "categories": [
       "retrosynthesis",
@@ -1669,7 +1669,7 @@
     ],
     "year": null,
     "license": "open-source",
-    "repo": "molecularai/aizynthtrain",
+    "repo": "molecularai/aizynthmodels",
     "also_in": []
   },
   {
@@ -3048,11 +3048,12 @@
     "stars": null,
     "stage": "docking",
     "name": "DockStream",
-    "description": "AstraZeneca's docking wrapper exposing several backends to generative loops such as REINVENT.",
+    "description": "AstraZeneca's docking wrapper exposing several backends to generative loops such as REINVENT. Archived and unmaintained since 2023: usable as a reference, but plan to pin its dependencies.",
     "url": "https://github.com/MolecularAI/DockStream",
     "code_url": "https://github.com/molecularai/dockstream",
     "paper_url": null,
     "categories": [
+      "archived",
       "docking",
       "generative-loop"
     ],
@@ -4975,11 +4976,12 @@
     "stars": null,
     "stage": "biologics",
     "name": "ESM",
-    "description": "Evolutionary-scale protein language models, used for embeddings, variant effect scores and as the front end of structure prediction without an MSA.",
+    "description": "Evolutionary-scale protein language models (ESM-2, ESMFold), used for embeddings, variant effect scores and as the front end of structure prediction without an MSA. This repository is archived; the newer models in the line (ESM C, ESMFold2, ESM3) are developed at Biohub/esm under their own licence.",
     "url": "https://github.com/facebookresearch/esm",
     "code_url": "https://github.com/facebookresearch/esm",
     "paper_url": null,
     "categories": [
+      "archived",
       "protein-language-model",
       "variant-effect"
     ],

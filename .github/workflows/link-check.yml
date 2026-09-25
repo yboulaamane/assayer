@@ -69,9 +69,25 @@ jobs:
             gh issue create --title "$TITLE" --label rot --body-file body.md
           fi
 
-      - name: Say so when nothing is broken
+      - name: Say so when nothing is broken, and close the issue that said otherwise
         if: steps.check.outputs.problems == '0'
-        run: echo "Every curated URL resolves and no repository has vanished."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "Every curated URL resolves and no repository has vanished."
+          # An issue left open after the rot is fixed reads as rot that is still
+          # there. Close it with the clean report, so the record says what cleared it.
+          NUMBER=$(gh issue list --state open --label rot --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$NUMBER" ]; then
+            {
+              echo "_Checked $(date -u '+%Y-%m-%d %H:%M UTC'): nothing needs attention, closing._"
+              echo
+              cat report.md
+            } > body.md
+            gh issue close "$NUMBER" --comment "$(cat body.md)"
+            echo "closed #$NUMBER"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()

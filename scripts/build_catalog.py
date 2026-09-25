@@ -631,6 +631,10 @@ def main():
                     tags.append(t)
         stars = max([m.get("stars") or 0 for m in members] + [0])
         curated = any(m["source"] == "curated" for m in members)
+        # Set explicitly rather than read from tags: tags are merged across
+        # sources and capped at four, so an "archived" tag can be cut off.
+        archived = any(m["source"] == "curated" and "archived" in (m.get("categories") or [])
+                       for m in members)
         # Ranks what a person should look at first: our own picks, then the
         # code people actually use, then anything with a paper behind it.
         rank = (1000 if curated else 0) + min(stars, 20000) / 100 \
@@ -650,6 +654,7 @@ def main():
             "tags": tags[:4],
             "sources": sorted({m["source"] for m in members}),
             "curated": curated,
+            "archived": archived,
             "stars": stars or None,
             "rank": round(rank, 1),
         }

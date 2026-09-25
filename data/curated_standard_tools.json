@@ -929,8 +929,8 @@
     "stage": "qm",
     "stage_label": "Quantum chemistry",
     "description": "Neural network potential covering neutral, charged and open-shell organic molecules across most of the periodic table — QM-quality energies at force-field cost.",
-    "url": "https://github.com/isayevlab/AIMNet2",
-    "repo": "isayevlab/aimnet2",
+    "url": "https://github.com/isayevlab/aimnetcentral",
+    "repo": "isayevlab/aimnetcentral",
     "access": "open-source",
     "tags": [
       "mlip",
@@ -1045,9 +1045,9 @@
     "name": "Chemformer",
     "stage": "synthesis",
     "stage_label": "Retrosynthesis & synthetic accessibility",
-    "description": "Sequence-to-sequence transformer for reaction prediction and retrosynthesis, pretrained on SMILES and fine-tuned per task.",
-    "url": "https://github.com/MolecularAI/Chemformer",
-    "repo": "molecularai/chemformer",
+    "description": "Sequence-to-sequence transformer for reaction prediction and retrosynthesis, pretrained on SMILES and fine-tuned per task. Now maintained inside AiZynthModels; the standalone repository is archived.",
+    "url": "https://github.com/MolecularAI/aizynthmodels",
+    "repo": "molecularai/aizynthmodels",
     "access": "open-source",
     "tags": [
       "retrosynthesis",
@@ -1259,12 +1259,12 @@
     "url_status": 200
   },
   {
-    "name": "AiZynthTrain",
+    "name": "AiZynthModels",
     "stage": "synthesis",
     "stage_label": "Retrosynthesis & synthetic accessibility",
-    "description": "Reproducible pipelines for training AiZynthFinder's models on your own reaction data, so in-house chemistry and stock are reflected in the routes.",
-    "url": "https://github.com/MolecularAI/aizynthtrain",
-    "repo": "molecularai/aizynthtrain",
+    "description": "AstraZeneca's repository for training, evaluating and using synthesis prediction models, and the replacement for AiZynthTrain. Train AiZynthFinder's models on your own reaction data so in-house chemistry and stock are reflected in the routes.",
+    "url": "https://github.com/MolecularAI/aizynthmodels",
+    "repo": "molecularai/aizynthmodels",
     "access": "open-source",
     "tags": [
       "retrosynthesis",
@@ -1730,7 +1730,7 @@
       "gsea",
       "r"
     ],
-    "url_status": "error: TimeoutError"
+    "url_status": 200
   },
   {
     "name": "CTD",
@@ -2312,11 +2312,12 @@
     "name": "DockStream",
     "stage": "docking",
     "stage_label": "Docking & virtual screening",
-    "description": "AstraZeneca's docking wrapper exposing several backends to generative loops such as REINVENT.",
+    "description": "AstraZeneca's docking wrapper exposing several backends to generative loops such as REINVENT. Archived and unmaintained since 2023: usable as a reference, but plan to pin its dependencies.",
     "url": "https://github.com/MolecularAI/DockStream",
     "repo": "molecularai/dockstream",
     "access": "open-source",
     "tags": [
+      "archived",
       "docking",
       "generative-loop"
     ],
@@ -2781,7 +2782,7 @@
       "accelerated-md",
       "conformational-sampling"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "gamd-openmm",
@@ -3744,11 +3745,12 @@
     "name": "ESM",
     "stage": "biologics",
     "stage_label": "Antibodies & protein engineering",
-    "description": "Evolutionary-scale protein language models, used for embeddings, variant effect scores and as the front end of structure prediction without an MSA.",
+    "description": "Evolutionary-scale protein language models (ESM-2, ESMFold), used for embeddings, variant effect scores and as the front end of structure prediction without an MSA. This repository is archived; the newer models in the line (ESM C, ESMFold2, ESM3) are developed at Biohub/esm under their own licence.",
     "url": "https://github.com/facebookresearch/esm",
     "repo": "facebookresearch/esm",
     "access": "open-source",
     "tags": [
+      "archived",
       "protein-language-model",
       "variant-effect"
     ],
