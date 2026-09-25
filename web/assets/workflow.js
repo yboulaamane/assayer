@@ -5,13 +5,28 @@
 /* ------------------------------------------------------------------ intent */
 // The protocol texts live in the module registry now; this file routes a
 // question to one and resolves what it is about.
-export { RECIPES as PROTOCOLS } from "./modules.js?v=dc14e373f6";
-import { REFERENCES } from "./modules.js?v=dc14e373f6";
-import { RECIPES, FAMILY_TERMS } from "./modules.js?v=dc14e373f6";
+export { RECIPES as PROTOCOLS } from "./modules.js?v=4e59b677ca";
+import { REFERENCES } from "./modules.js?v=4e59b677ca";
+import { RECIPES, FAMILY_TERMS } from "./modules.js?v=4e59b677ca";
 
 const INTENTS = [
   ["network-pharmacology", ["network pharmacology", "network-pharmacology", "systems pharmacology",
     "compound-target-disease", "compound target disease"]],
+  // Ahead of qm-mechanism and hit-discovery deliberately. Its phrases are
+  // longer and more specific than the single words those match, but the
+  // scorer breaks ties by position, so "reverse screening" lost to
+  // "screening" and "mechanism of action of" to "mechanism of".
+  ["target-prediction", ["target prediction", "target deconvolution", "deconvolute",
+    "deconvolution", "target fishing", "target identification for a compound",
+    "reverse screening", "reverse docking", "inverse screening", "inverse docking",
+    "targets of my compound", "targets of this compound", "targets for my compound",
+    "what does my compound bind", "what does this compound bind",
+    "what protein does", "what proteins does", "which protein does", "which proteins does",
+    "mechanism of action of", "moa of", "polypharmacology", "off-target prediction",
+    "predict targets", "predict the targets", "predicted targets", "target profile",
+    "phenotypic hit", "phenotypic screen hit", "phenotypic", "unknown target",
+    "know what it binds", "know what it hits", "know its target",
+    "know the target", "target is unknown", "no known target"]],
   ["qm-geometry", ["geometry optimisation", "geometry optimization", "optimise geometry",
     "optimize geometry", "optimise the geometry", "optimize the geometry", "geometry of",
     "dft", "b3lyp", "wb97", "def2", "basis set", "effective core potential", "ecp",
@@ -174,6 +189,7 @@ const STOP = new Set(["I", "A", "THE", "FOR", "AND", "OF", "TO", "IN", "ON", "WI
 // Questions where the noun is a disease, an endpoint or a molecule, not a
 // protein to look up. Guessing one produces confident nonsense.
 const NO_PROTEIN = new Set(["admet", "retrosynthesis", "target-triage", "network-pharmacology",
+  "target-prediction",
   "qm-geometry", "qm-mechanism", "qm-properties", "library-design", "benchmarking",
   "parameterisation"]);
 export const intentUsesProtein = (intent) => !NO_PROTEIN.has(intent);

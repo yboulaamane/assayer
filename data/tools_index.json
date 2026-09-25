@@ -1431,6 +1431,84 @@
     "source": "curated",
     "stars": null,
     "stage": "target-id",
+    "name": "SwissTargetPrediction",
+    "description": "Predicts a small molecule's likely protein targets by combining 2D and 3D similarity to compounds with measured activity. The web standard for a first pass, with the caveat that it can only propose targets that already have ligands.",
+    "url": "https://www.swisstargetprediction.ch",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "off-target",
+      "polypharmacology",
+      "ligand-based"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": [
+      "biotools"
+    ]
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "PPB2",
+    "description": "Polypharmacology Browser 2: nearest-neighbour search over ChEMBL by ECfp4, Xfp shape-pharmacophore or MQN fingerprints, optionally combined with a naive Bayes model fitted on the fly. Useful because you can compare what different descriptors nominate.",
+    "url": "https://ppb2.gdb.tools",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "off-target",
+      "polypharmacology",
+      "fingerprints"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "TargetNet",
+    "description": "Runs a per-target QSAR model across 623 human proteins and returns a predicted activity profile rather than a ranked shortlist. Each target carries its own model, so applicability varies target by target.",
+    "url": "http://targetnet.scbdd.com",
+    "code_url": null,
+    "paper_url": null,
+    "categories": [
+      "off-target",
+      "qsar",
+      "profiling"
+    ],
+    "year": null,
+    "license": "free-web",
+    "repo": null,
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
+    "name": "ChEMBL multitask target prediction",
+    "description": "ChEMBL's own multitask neural network for target prediction, shipped as a model you run locally instead of a web form. Trained on ChEMBL activities, with runnable examples in Python, C++, Julia and JavaScript.",
+    "url": "https://github.com/chembl/chembl_multitask_model",
+    "code_url": "https://github.com/chembl/chembl_multitask_model",
+    "paper_url": null,
+    "categories": [
+      "off-target",
+      "neural-network",
+      "local"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "chembl/chembl_multitask_model",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "target-id",
     "name": "SEA",
     "description": "Similarity Ensemble Approach: relates targets by the chemistry of their ligands, so a compound's likely off-targets fall out of its structure. Long-standing polypharmacology check.",
     "url": "https://sea.bkslab.org",
@@ -57972,7 +58050,9 @@
     "license": null,
     "repo": null,
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",
