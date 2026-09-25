@@ -88,21 +88,35 @@ def main():
         (blocked if status == 403 and host in BOT_PROTECTED else dead).append(
             {"name": row["name"], "url": row["url"], "status": str(status)})
 
-    archived = [{"name": r["name"], "repo": r["repo"]} for r in rows
-                if r.get("repo") and states.get(r["repo"]) == "archived"]
+    # A curated entry tagged "archived" has been looked at and its description
+    # says so. Reporting it every week is how a scheduled check gets muted, so
+    # those are listed as acknowledged. Only a repository archived since the
+    # last look is a finding.
+    acknowledged_repos = {r["repo"] for r in rows
+                          if r.get("repo") and "archived" in (r.get("tags") or [])}
+    archived_all = [{"name": r["name"], "repo": r["repo"]} for r in rows
+                    if r.get("repo") and states.get(r["repo"]) == "archived"]
+    archived = [x for x in archived_all if x["repo"] not in acknowledged_repos]
+    acknowledged = [x for x in archived_all if x["repo"] in acknowledged_repos]
+    # The reverse is also worth knowing: tagged archived, but live again.
+    revived = [{"name": r["name"], "repo": r["repo"]} for r in rows
+               if r.get("repo") in acknowledged_repos and states.get(r["repo"]) == "ok"]
     vanished = [{"name": r["name"], "repo": r["repo"]} for r in rows
                 if r.get("repo") and states.get(r["repo"]) == "gone"]
     # De-duplicate: several curated entries can share one repository.
     archived = list({x["repo"]: x for x in archived}.values())
+    acknowledged = list({x["repo"]: x for x in acknowledged}.values())
+    revived = list({x["repo"]: x for x in revived}.values())
     vanished = list({x["repo"]: x for x in vanished}.values())
 
     findings = {"checked_urls": len(urls), "checked_repos": len(repos),
                 "dead": dead, "archived": archived, "vanished": vanished,
+                "acknowledged_archived": acknowledged, "revived": revived,
                 "bot_protected": blocked}
     if args.json:
         json.dump(findings, open(args.json, "w"), indent=2)
 
-    problems = len(dead) + len(archived) + len(vanished)
+    problems = len(dead) + len(archived) + len(vanished) + len(revived)
     if args.markdown:
         print(f"Checked **{len(urls)} curated URLs** and **{len(repos)} repositories**.\n")
         if not problems:
@@ -111,11 +125,19 @@ def main():
             ("Unreachable", dead, lambda x: f"- [ ] **{x['name']}** — `{x['status']}` — {x['url']}"),
             ("Repositories now archived", archived, lambda x: f"- [ ] **{x['name']}** — `{x['repo']}`"),
             ("Repositories gone", vanished, lambda x: f"- [ ] **{x['name']}** — `{x['repo']}`"),
+            ("Tagged archived, but live again", revived,
+             lambda x: f"- [ ] **{x['name']}** — `{x['repo']}` — remove the tag and the note"),
         ]:
             if items:
                 print(f"\n### {title} ({len(items)})\n")
                 for x in items:
                     print(fmt(x))
+        if acknowledged:
+            print(f"\n<details><summary>{len(acknowledged)} archived and already flagged "
+                  f"(expected, not new)</summary>\n")
+            for x in acknowledged:
+                print(f"- {x['name']} — `{x['repo']}`")
+            print("\n</details>")
         if blocked:
             print(f"\n<details><summary>{len(blocked)} behind bot protection "
                   f"(expected, not broken)</summary>\n")
@@ -130,7 +152,8 @@ def main():
     else:
         print(f"{len(urls)} URLs, {len(repos)} repositories checked")
         print(f"  unreachable     {len(dead)}  (checked twice)")
-        print(f"  archived repos  {len(archived)}")
+        print(f"  archived repos  {len(archived)} new, {len(acknowledged)} already flagged")
+        print(f"  revived         {len(revived)}")
         print(f"  vanished repos  {len(vanished)}")
         print(f"  bot-protected   {len(blocked)} (expected)")
         for x in dead:

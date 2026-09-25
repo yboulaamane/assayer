@@ -146,5 +146,9 @@
   "uclcheminformatics/scaffoldgraph": {
     "code": "import scaffoldgraph as sg\n\n# construct a scaffold network from an SDF file\nnetwork = sg.ScaffoldNetwork.from_sdf('my_sdf_file.sdf')\n\n# construct a scaffold tree from a SMILES file\ntree = sg.ScaffoldTree.from_smiles('my_smiles_file.smi')\n\n# construct a scaffold tree from a pandas dataframe\nimport pandas as pd\ndf = pd.read_csv('activity_data.csv')\nnetwork = sg.ScaffoldTree.from_dataframe(\n    df, smiles_column='Smiles', name_column='MolID',\n    data_columns=['pIC50', 'MolWt'], progress=True,\n)",
     "source": "https://raw.githubusercontent.com/uclcheminformatics/scaffoldgraph/HEAD/README.md"
+  },
+  "isayevlab/aimnetcentral": {
+    "code": "from aimnet.calculators import AIMNet2Calculator\n\ncalc = AIMNet2Calculator(\"aimnet2\")\n\nresult = calc(\n    {\"coord\": coordinates, \"numbers\": atomic_numbers, \"charge\": 0.0},\n    forces=True,\n)\n\nprint(result[\"energy\"])   # eV\nprint(result[\"forces\"])   # eV/Angstrom\nprint(result[\"charges\"])  # e",
+    "source": "https://raw.githubusercontent.com/isayevlab/aimnetcentral/HEAD/README.md"
   }
 }

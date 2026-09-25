@@ -304,6 +304,7 @@ function card(t) {
     <p class="desc">${esc(t.description || "No description recorded in the source.")}</p>
     <div class="foot">
       ${t.curated ? `<span class="pill curated">curated</span>` : ""}
+      ${t.archived ? `<span class="pill archived">archived</span>` : ""}
       ${t.license ? `<span class="pill acc">${esc(t.license)}</span>` : ""}
       ${t.repo ? `<span class="pill">${esc(t.repo.split("/")[0])}</span>` : ""}
     </div>

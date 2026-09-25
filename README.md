@@ -42,7 +42,7 @@ cross-origin requests, so the browser talks to them directly.
 | QSAR & property models | 17 | 105 | | Benchmarks & datasets | 7 | 14 |
 | Visualisation | 9 | 100 | | | | |
 
-300 of the 2,384 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 190 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 31 quote one from the project's own README. No example is generated.
+300 of the 2,384 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 190 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 32 quote one from the project's own README. No example is generated.
 <!--/block:stages-->
 
 ## Where the data comes from
@@ -429,7 +429,7 @@ to install.
 Usage examples come in two kinds and are never generated. A **snippet** is
 hand-written for this catalogue (<!--n:snippets-->34<!--/n--> tools). A **quickstart** is the first real
 Python block from the project's own README, quoted unedited and shown with a
-link to the file it came from (<!--n:quickstarts-->31<!--/n--> tools). Writing usage prose for three
+link to the file it came from (<!--n:quickstarts-->32<!--/n--> tools). Writing usage prose for three
 thousand tools nobody here has run would be fabrication at scale, which is the
 thing the rest of this project exists to avoid — so the site says plainly that a
 quoted example is how the authors introduce the tool, not how to use it for any

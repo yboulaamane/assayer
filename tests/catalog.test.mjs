@@ -234,3 +234,25 @@ test("a stage chip counts the layer the page is actually showing", async () => {
   assert.equal(Number(a[label]), curatedDocking);
   assert.equal(Number(b[label]), cur.cat.tools.filter((t) => t.stage === "docking").length);
 });
+
+// An archived entry is kept on purpose, and the page is honest about it only if
+// the flag, the description and the card all agree.
+
+test("an archived tool says so in its description and on its card", async () => {
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const flagged = cat.tools.filter((t) => t.archived);
+  assert.ok(flagged.length >= 1, "no archived entries: the flag is not reaching the catalogue");
+  const silent = flagged.filter((t) => !/archived/i.test(t.description || "")).map((t) => t.name);
+  assert.deepEqual(silent, [], "flagged archived, but the description never tells the reader");
+  // Only the curated layer is judged, so only it can carry the flag.
+  assert.deepEqual(flagged.filter((t) => !t.curated).map((t) => t.name), []);
+
+  // Search for each one: browse renders 60 cards and loads the rest on scroll,
+  // which this harness never does.
+  for (const t of flagged) {
+    const { html } = await browseView(`q=${encodeURIComponent(t.name)}`);
+    const card = html.split(`data-id="${t.id}"`)[1]?.split("</button>")[0] || "";
+    assert.ok(card, `${t.name} did not render at all`);
+    assert.match(card, /pill archived">archived/, `${t.name} is archived but its card does not say so`);
+  }
+});
