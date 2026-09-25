@@ -5,7 +5,7 @@
 // inside a recipe is kept — that sequence is judgement — but modules are
 // dropped, skipped and borrowed from other recipes as the request requires.
 
-import { MODULES, RECIPES, FAMILY_TERMS } from "./modules.js?v=dc14e373f6";
+import { MODULES, RECIPES, FAMILY_TERMS } from "./modules.js?v=4e59b677ca";
 
 /** Phrases people use for an asset, mapped to the capability it satisfies. */
 const ASSET_TERMS = [

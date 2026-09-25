@@ -43,6 +43,7 @@ export const INTENTS = [
   ["conformational-sampling", "sample the conformational landscape: enhanced sampling, accelerated MD, metadynamics, replica exchange, weighted ensemble, cryptic pockets, ensemble generation"],
   ["md-stability", "run or analyse a plain MD simulation: is a complex stable, RMSD/RMSF, trajectory analysis"],
   ["retrosynthesis", "how to synthesise a molecule, routes, building blocks"],
+  ["target-prediction", "a compound whose protein target is unknown: target prediction, deconvolution, target fishing, reverse screening, mechanism of action, polypharmacology profile for a given molecule"],
   ["target-triage", "which target to pick for a disease; target identification and validation"],
   ["structure", "get or model the structure of a protein; pick the best PDB entry"],
   ["qm-geometry", "optimise or minimise the geometry of a molecule or metal complex; DFT or semi-empirical calculation; conformer or spin-state energies; frequencies and orbitals"],

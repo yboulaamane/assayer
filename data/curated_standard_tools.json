@@ -38,7 +38,7 @@
     "tags": [
       "druggability"
     ],
-    "url_status": "error: TimeoutError"
+    "url_status": 200
   },
   {
     "name": "UniProt",
@@ -240,7 +240,7 @@
     "tags": [
       "annotation"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "RCSB PDB",
@@ -1085,6 +1085,66 @@
     "url_status": 200
   },
   {
+    "name": "SwissTargetPrediction",
+    "stage": "target-id",
+    "stage_label": "Target identification & validation",
+    "description": "Predicts a small molecule's likely protein targets by combining 2D and 3D similarity to compounds with measured activity. The web standard for a first pass, with the caveat that it can only propose targets that already have ligands.",
+    "url": "https://www.swisstargetprediction.ch",
+    "repo": null,
+    "access": "free-web",
+    "tags": [
+      "off-target",
+      "polypharmacology",
+      "ligand-based"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "PPB2",
+    "stage": "target-id",
+    "stage_label": "Target identification & validation",
+    "description": "Polypharmacology Browser 2: nearest-neighbour search over ChEMBL by ECfp4, Xfp shape-pharmacophore or MQN fingerprints, optionally combined with a naive Bayes model fitted on the fly. Useful because you can compare what different descriptors nominate.",
+    "url": "https://ppb2.gdb.tools",
+    "repo": null,
+    "access": "free-web",
+    "tags": [
+      "off-target",
+      "polypharmacology",
+      "fingerprints"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "TargetNet",
+    "stage": "target-id",
+    "stage_label": "Target identification & validation",
+    "description": "Runs a per-target QSAR model across 623 human proteins and returns a predicted activity profile rather than a ranked shortlist. Each target carries its own model, so applicability varies target by target.",
+    "url": "http://targetnet.scbdd.com",
+    "repo": null,
+    "access": "free-web",
+    "tags": [
+      "off-target",
+      "qsar",
+      "profiling"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "ChEMBL multitask target prediction",
+    "stage": "target-id",
+    "stage_label": "Target identification & validation",
+    "description": "ChEMBL's own multitask neural network for target prediction, shipped as a model you run locally instead of a web form. Trained on ChEMBL activities, with runnable examples in Python, C++, Julia and JavaScript.",
+    "url": "https://github.com/chembl/chembl_multitask_model",
+    "repo": "chembl/chembl_multitask_model",
+    "access": "open-source",
+    "tags": [
+      "off-target",
+      "neural-network",
+      "local"
+    ],
+    "url_status": 200
+  },
+  {
     "name": "SEA",
     "stage": "target-id",
     "stage_label": "Target identification & validation",
@@ -1350,7 +1410,7 @@
       "building-blocks",
       "make-on-demand"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "canSAR",
@@ -1670,7 +1730,7 @@
       "gsea",
       "r"
     ],
-    "url_status": 200
+    "url_status": "error: TimeoutError"
   },
   {
     "name": "CTD",
@@ -1759,7 +1819,7 @@
       "food-chemistry",
       "phytochemicals"
     ],
-    "url_status": 200
+    "url_status": 403
   },
   {
     "name": "Phenol-Explorer",
@@ -2232,7 +2292,7 @@
       "virtual-screening",
       "hpc"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "EasyDock",
@@ -2721,7 +2781,7 @@
       "accelerated-md",
       "conformational-sampling"
     ],
-    "url_status": 200
+    "url_status": "error: URLError"
   },
   {
     "name": "gamd-openmm",
@@ -3900,7 +3960,7 @@
       "literature",
       "api"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "PubMed / NCBI E-utilities",
