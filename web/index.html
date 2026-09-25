@@ -43,7 +43,7 @@
       </span>
       <span>Assayer</span>
     </a>
-    <nav class="main">
+    <nav class="main" aria-label="Primary">
       <a href="#/" data-route="home">Stages</a>
       <a href="#/browse" data-route="browse">All tools</a>
       <a href="#/workflow" data-route="workflow">Plan a workflow</a>
@@ -60,7 +60,7 @@
 <noscript><div class="wrap"><p>Enable JavaScript to browse tools and plan workflows.</p></div></noscript>
 
 <div class="scrim" id="scrim" hidden></div>
-<aside class="drawer" id="drawer" hidden aria-label="Tool detail"></aside>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="Tool detail" tabindex="-1"></aside>
 
 <footer>
   <div class="wrap">
@@ -76,6 +76,6 @@
   </div>
 </footer>
 
-<script type="module" src="assets/app.js?v=a166175224"></script>
+<script type="module" src="assets/app.js?v=1c4680505a"></script>
 </body>
 </html>

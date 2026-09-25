@@ -256,3 +256,19 @@ test("an archived tool says so in its description and on its card", async () => 
     assert.match(card, /pill archived">archived/, `${t.name} is archived but its card does not say so`);
   }
 });
+
+test("the tool drawer behaves as a dialog", () => {
+  const html = readFileSync(new URL("../web/index.html", import.meta.url), "utf8");
+  const drawer = html.match(/<aside[^>]*id="drawer"[^>]*>/)[0];
+  for (const attr of ['role="dialog"', 'aria-modal="true"', "aria-label", 'tabindex="-1"']) {
+    assert.ok(drawer.includes(attr), `the drawer needs ${attr}`);
+  }
+  const app = readFileSync(new URL("../web/assets/app.js", import.meta.url), "utf8");
+  // Opening a panel without moving focus strands a keyboard user behind it.
+  assert.match(app, /\(drawer\.querySelector\("\.close"\) \|\| drawer\)\.focus/,
+               "opening the drawer must move focus into it");
+  assert.match(app, /returnFocusTo\?\.isConnected/,
+               "closing must return focus to whatever opened it");
+  assert.match(app, /e\.key !== "Tab" \|\| drawer\.hidden/,
+               "Tab must be trapped while the drawer is open");
+});
