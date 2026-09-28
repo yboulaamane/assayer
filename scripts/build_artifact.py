@@ -33,7 +33,7 @@ out = f"""<title>{title}</title>
 """
 path = os.path.join(WEB, "artifact.html")
 open(path, "w").write(out)
-print(f"wrote {path} ({len(out)/1024:.0f} KB) — publish with assets/*.js + catalog.json")
+print(f"wrote {path} ({len(out)/1024:.0f} KB) — publish with assets/*.js, catalog-core.json, catalog-registry.json and details/")
 
 # Asset URLs carry a content hash; re-stamp after writing, so a rebuild can
 # never leave the page pointing at a URL that no longer matches its contents.

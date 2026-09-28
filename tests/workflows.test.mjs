@@ -33,3 +33,13 @@ test("a label is created before anything is pushed", () => {
     assert.ok(create < push, `${name} pushes before creating its label`);
   }
 });
+
+test("the refresh proposes every file the page loads", () => {
+  // The page reads the split files, not catalog.json. A refresh that commits
+  // only catalog.json would leave the site serving last month's catalogue.
+  const src = workflows.find((w) => w.name === "refresh-catalogue.yml").src;
+  const add = src.match(/git add ([^\n]+)/)[1];
+  for (const f of ["web/catalog-core.json", "web/catalog-registry.json", "web/details", "README.md"]) {
+    assert.ok(add.includes(f), `the refresh PR would leave ${f} behind`);
+  }
+});

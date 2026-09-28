@@ -980,6 +980,386 @@
       "expect": {
         "route": "target-triage"
       }
+    },
+    {
+      "id": "network-pharmacology-second-phrasing",
+      "question": "network pharmacology of this plant against diabetes",
+      "why": "A second phrasing for network-pharmacology, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "network-pharmacology",
+        "must_include": [
+          "network.define_scope",
+          "network.validation_plan"
+        ],
+        "order": [
+          [
+            "network.define_scope",
+            "network.validation_plan"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "selectivity-second-phrasing",
+      "question": "why is my series hitting the wrong kinase",
+      "why": "A second phrasing for selectivity, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "selectivity",
+        "must_include": [
+          "structure.write_down_what_selectivity",
+          "admet.counter_screen_against_reality"
+        ],
+        "order": [
+          [
+            "structure.write_down_what_selectivity",
+            "admet.counter_screen_against_reality"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "fep-second-phrasing",
+      "question": "rank these analogues with FEP",
+      "why": "A second phrasing for fep, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "fep",
+        "must_include": [
+          "fep.check_the_series_is",
+          "general.act_on_differences_bigger"
+        ],
+        "order": [
+          [
+            "fep.check_the_series_is",
+            "general.act_on_differences_bigger"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "degrader-second-phrasing",
+      "question": "design a PROTAC for BRD4",
+      "why": "A second phrasing for degrader, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "degrader",
+        "must_include": [
+          "identity.choose_the_e3_for",
+          "generative.accept_the_property_penalty"
+        ],
+        "order": [
+          [
+            "identity.choose_the_e3_for",
+            "generative.accept_the_property_penalty"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qsar-second-phrasing",
+      "question": "build a QSAR model for solubility",
+      "why": "A second phrasing for qsar, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "qsar",
+        "must_include": [
+          "qsar.say_what_the_model",
+          "qsar.keep_it_reproducible_and"
+        ],
+        "order": [
+          [
+            "qsar.say_what_the_model",
+            "qsar.keep_it_reproducible_and"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "resistance-second-phrasing",
+      "question": "how does this mutation affect binding",
+      "why": "A second phrasing for resistance, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "resistance",
+        "must_include": [
+          "variants.find_the_mutations_that",
+          "assay.measure_against_both"
+        ],
+        "order": [
+          [
+            "variants.find_the_mutations_that",
+            "assay.measure_against_both"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "antibody-second-phrasing",
+      "question": "antibody developability assessment",
+      "why": "A second phrasing for antibody, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "antibody",
+        "must_include": [
+          "identity.define_the_antigen_and",
+          "admet.screen_for_developability_early"
+        ],
+        "order": [
+          [
+            "identity.define_the_antigen_and",
+            "admet.screen_for_developability_early"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "admet-second-phrasing",
+      "question": "ADMET and hERG risk for my compounds",
+      "why": "A second phrasing for admet, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "admet",
+        "must_include": [
+          "qsar.standardise_the_structures",
+          "admet.model_exposure_if_the"
+        ],
+        "order": [
+          [
+            "qsar.standardise_the_structures",
+            "admet.model_exposure_if_the"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "conformational-sampling-second-phrasing",
+      "question": "conformational sampling of CYP3A4",
+      "why": "A second phrasing for conformational-sampling, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "conformational-sampling",
+        "must_include": [
+          "docking.name_the_observable_first",
+          "docking.use_the_ensemble"
+        ],
+        "order": [
+          [
+            "docking.name_the_observable_first",
+            "docking.use_the_ensemble"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "retrosynthesis-second-phrasing",
+      "question": "how do I make this compound",
+      "why": "A second phrasing for retrosynthesis, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "retrosynthesis",
+        "must_include": [
+          "synthesis.clean_and_canonicalise_the",
+          "synthesis.have_a_chemist_review"
+        ],
+        "order": [
+          [
+            "synthesis.clean_and_canonicalise_the",
+            "synthesis.have_a_chemist_review"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qm-geometry-second-phrasing",
+      "question": "optimise the geometry of this molecule",
+      "why": "A second phrasing for qm-geometry, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-geometry",
+        "must_include": [
+          "qm.fix_the_electronic_state",
+          "qm.report_it_so_someone_can_repeat_it"
+        ],
+        "order": [
+          [
+            "qm.fix_the_electronic_state",
+            "qm.report_it_so_someone_can_repeat_it"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qm-mechanism-second-phrasing",
+      "question": "work out the reaction mechanism",
+      "why": "A second phrasing for qm-mechanism, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-mechanism",
+        "must_include": [
+          "qm.fix_the_electronic_state",
+          "qm.report_it_so_someone_can_repeat_it"
+        ],
+        "order": [
+          [
+            "qm.fix_the_electronic_state",
+            "qm.report_it_so_someone_can_repeat_it"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "qm-properties-second-phrasing",
+      "question": "predict the pKa",
+      "why": "A second phrasing for qm-properties, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-properties",
+        "must_include": [
+          "qm.decide_which_species_exists",
+          "qm.report_it_so_someone_can_repeat_it"
+        ],
+        "order": [
+          [
+            "qm.decide_which_species_exists",
+            "qm.report_it_so_someone_can_repeat_it"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "protein-engineering-second-phrasing",
+      "question": "engineer this enzyme for thermostability",
+      "why": "A second phrasing for protein-engineering, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "protein-engineering",
+        "must_include": [
+          "protein.state_the_property_and_the_assay",
+          "protein.build_a_library_you_can_actually_screen"
+        ],
+        "order": [
+          [
+            "protein.state_the_property_and_the_assay",
+            "protein.build_a_library_you_can_actually_screen"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "peptide-design-second-phrasing",
+      "question": "design a cyclic peptide binder",
+      "why": "A second phrasing for peptide-design, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "peptide-design",
+        "must_include": [
+          "peptide.define_the_surface_and_the_modality",
+          "synthesis.check_you_can_make"
+        ],
+        "order": [
+          [
+            "peptide.define_the_surface_and_the_modality",
+            "synthesis.check_you_can_make"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "landscape-second-phrasing",
+      "question": "competitive landscape for this target",
+      "why": "A second phrasing for landscape, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "landscape",
+        "must_include": [
+          "landscape.frame_the_question",
+          "landscape.find_the_gap_and_say_what_you_missed"
+        ],
+        "order": [
+          [
+            "landscape.frame_the_question",
+            "landscape.find_the_gap_and_say_what_you_missed"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "library-design-second-phrasing",
+      "question": "build a focused screening library",
+      "why": "A second phrasing for library-design, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "library-design",
+        "must_include": [
+          "library.state_what_it_is_for",
+          "library.check_you_got_what_you_asked_for"
+        ],
+        "order": [
+          [
+            "library.state_what_it_is_for",
+            "library.check_you_got_what_you_asked_for"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "benchmarking-second-phrasing",
+      "question": "benchmark my scoring function",
+      "why": "A second phrasing for benchmarking, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "benchmarking",
+        "must_include": [
+          "bench.state_the_claim",
+          "bench.report_with_uncertainty"
+        ],
+        "order": [
+          [
+            "bench.state_the_claim",
+            "bench.report_with_uncertainty"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "parameterisation-second-phrasing",
+      "question": "parametrise this ligand",
+      "why": "A second phrasing for parameterisation, so the protocol is held by more than the one case that proves it is reachable. Checks it still opens with its framing step and closes with its final check, in that order.",
+      "source": "coverage-sweep phrasing; expectations are the first and last steps of the curated recipe",
+      "reviewed": false,
+      "expect": {
+        "route": "parameterisation",
+        "must_include": [
+          "param.decide_what_needs_parameters",
+          "param.publish_the_parameter_set"
+        ],
+        "order": [
+          [
+            "param.decide_what_needs_parameters",
+            "param.publish_the_parameter_set"
+          ]
+        ]
+      }
     }
   ]
 }

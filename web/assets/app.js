@@ -1,7 +1,7 @@
 import { icon } from "./icons.js?v=6212755783";
-import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js?v=dd64e0004d";
-import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=36969e67a7";
-import { REFERENCES } from "./modules.js?v=4e59b677ca";
+import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js?v=3260b4322a";
+import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=8840b1ab92";
+import { REFERENCES } from "./modules.js?v=525fe6686f";
 import { matchesAccess } from "./catalog.js?v=d3a394a1b9";
 
 const app = document.getElementById("app");
@@ -30,10 +30,44 @@ themeBtn.onclick = () => {
 };
 
 /* -------------------------------------------------------------------- data */
+// The page loads the catalogue in layers (see write_split in build_catalog.py):
+// the curated core first, because it is all the home page and the default
+// browse view show; the registry layer straight after, without holding up the
+// first paint; and a tool's panel details only when that panel opens.
+let registryReady = Promise.resolve();
+const shards = new Map();
+
+function addTools(tools) {
+  const alias = (k, t) => { if (k && !BY_NAME.has(k)) BY_NAME.set(k, t); };
+  for (const t of tools) {
+    BY_ID.set(t.id, t);
+    alias(norm(t.name), t);
+    alias(norm(t.name).replace(/\s+/g, ""), t);          // "Target Diff" -> targetdiff
+    if (t.repo) alias(norm(t.repo.split("/")[1]), t);     // "gnina/gnina" -> gnina
+  }
+}
+
+async function loadRegistry() {
+  try {
+    const r = await fetch(`catalog-registry.json?v=${DATA.build}`, { signal: AbortSignal.timeout(30000) });
+    if (!r.ok) throw new Error(String(r.status));
+    const d = await r.json();
+    if (!Array.isArray(d.tools)) throw new Error("Invalid registry");
+    // Merged back into catalogue order, so a stage still lists its curated
+    // entries first and the rest by rank, exactly as before the split.
+    DATA.tools = [...DATA.tools, ...d.tools].sort((a, b) => (a.o ?? 0) - (b.o ?? 0));
+    addTools(d.tools);
+    DATA.complete = true;
+  } catch {
+    // The curated layer still works; only the wider registry is missing.
+    DATA.registryFailed = true;
+  }
+}
+
 async function boot() {
   app.innerHTML = `<div class="wrap"><div class="empty" role="status">Loading the atlas…</div></div>`;
   try {
-    const r = await fetch("catalog.json", { signal: AbortSignal.timeout(15000) });
+    const r = await fetch("catalog-core.json", { signal: AbortSignal.timeout(15000) });
     if (!r.ok) throw new Error(`Catalogue request failed: ${r.status}`);
     const data = await r.json();
     if (!Array.isArray(data.tools) || !Array.isArray(data.stages)) throw new Error("Invalid catalogue");
@@ -48,16 +82,14 @@ async function boot() {
     return;
   }
   for (const s of DATA.stages) STAGE.set(s.slug, s);
-  const alias = (k, t) => { if (k && !BY_NAME.has(k)) BY_NAME.set(k, t); };
-  for (const t of DATA.tools) {
-    BY_ID.set(t.id, t);
-    alias(norm(t.name), t);
-    alias(norm(t.name).replace(/\s+/g, ""), t);          // "Target Diff" -> targetdiff
-    if (t.repo) alias(norm(t.repo.split("/")[1]), t);     // "gnina/gnina" -> gnina
-  }
+  addTools(DATA.tools);
+  registryReady = loadRegistry();
   addEventListener("hashchange", route);
   route();
 }
+
+// Totals come from the core, not from counting what has loaded so far.
+const totalTools = () => DATA.total ?? DATA.tools.length;
 
 /* ------------------------------------------------------------------ router */
 function parseHash() {
@@ -102,24 +134,23 @@ function route() {
 /* -------------------------------------------------------------------- home */
 function renderHome() {
   const curated = DATA.curated ?? DATA.tools.filter((t) => t.curated).length;
-  const repos = DATA.tools.filter((t) => t.repo).length;
   app.innerHTML = `
   <div class="wrap">
     <section class="hero">
       <h1>Every tool in the pipeline, and <em>the order to use them in</em>.</h1>
       <p class="lede">${num(curated)} tools chosen and written up by hand, across ${DATA.stages.length}
-      stages from target to synthesis, with ${num(DATA.tools.length - curated)} more listed from public
+      stages from target to synthesis, with ${num(totalTools() - curated)} more listed from public
       registries. Browse by stage, or describe what you are trying to do and get a protocol with the
       receptor already chosen for you.</p>
       <div class="stat-row">
         <div class="stat"><b>${num(curated)}</b><span>curated</span></div>
         <div class="stat"><b>${DATA.stages.length}</b><span>stages</span></div>
         <div class="stat"><b>${PROTOCOL_LIST().length}</b><span>protocols</span></div>
-        <div class="stat"><b>${num(DATA.tools.length)}</b><span>listed in all</span></div>
+        <div class="stat"><b>${num(totalTools())}</b><span>listed in all</span></div>
       </div>
       <div class="searchbar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-        <input id="q" aria-label="Search tools" placeholder="Search ${num(DATA.tools.length)} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
+        <input id="q" aria-label="Search tools" placeholder="Search ${num(totalTools())} tools, docking, single cell, ADMET, foldseek…" autocomplete="off">
         <kbd>/</kbd>
       </div>
     </section>
@@ -167,6 +198,21 @@ function renderBrowse(params) {
   const src = params.get("src") || "curated";
   const acc = params.get("acc") || "";
 
+  // The curated view renders from the core alone. The wider layer, and any
+  // search (which also counts matches in the wider layer), wait for the
+  // registry, which normally arrived before anyone could click.
+  if ((src !== "curated" || q) && !DATA.complete && !DATA.registryFailed) {
+    app.innerHTML = `<div class="wrap"><div class="empty" role="status">Loading the wider registry…</div></div>`;
+    const view = lastView;
+    registryReady.then(() => {
+      if (lastView !== view) return;
+      renderBrowse(params);
+      const n = document.getElementById("q");
+      if (q && n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+    });
+    return;
+  }
+
   const matches = (t, layerOnly) => {
     if (stage && t.stage !== stage) return false;
     if (layerOnly === "curated" && !t.curated) return false;
@@ -187,7 +233,7 @@ function renderBrowse(params) {
   const st = stage ? STAGE.get(stage) : null;
   const inScope = DATA.tools.filter((t) => !stage || t.stage === stage);
   const curatedHere = inScope.filter((t) => t.curated).length;
-  const allHere = inScope.length;
+  const allHere = st ? listedIn(st) : totalTools();
 
   // Always sets the layer rather than toggling it: there is no state in which
   // neither layer is chosen, so a toggle would have an empty third position.
@@ -286,7 +332,7 @@ function renderBrowse(params) {
       lastView = `browse?${k}`;
       renderBrowse(p);
       const n = document.getElementById("q");
-      n.focus(); n.setSelectionRange(n.value.length, n.value.length);
+      n?.focus(); n?.setSelectionRange(n.value.length, n.value.length);
     }, 180);
   });
 }
@@ -370,9 +416,32 @@ function quickstartBlock(t) {
       any particular task.</p>`;
 }
 
-function openDrawer(id) {
-  const t = BY_ID.get(id);
+// A tool's install lines, links and examples live in its stage's shard, fetched
+// once when the first panel in that stage opens.
+function withDetails(t) {
+  if (t._full) return Promise.resolve(t);
+  if (!shards.has(t.stage)) {
+    const p = fetch(`details/${t.stage}.json?v=${DATA.build}`, { signal: AbortSignal.timeout(15000) })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        for (const [id, extra] of Object.entries(d.tools || {})) {
+          const x = BY_ID.get(id);
+          if (x) Object.assign(x, extra, { _full: true });
+        }
+      });
+    p.catch(() => shards.delete(t.stage));   // a failed shard is retried next time
+    shards.set(t.stage, p);
+  }
+  return shards.get(t.stage).then(() => t, () => t);
+}
+
+async function openDrawer(id) {
+  let t = BY_ID.get(id);
+  // A link straight to a registry tool can arrive before the registry has.
+  if (!t && !DATA.complete) { await registryReady; t = BY_ID.get(id); }
   if (!t) return;
+  await withDetails(t);
+  if (parseHash().params.get("tool") !== id) return;   // closed or changed while loading
   const s = STAGE.get(t.stage);
   const link = (href, label, primary) => href
     ? `<a class="btn ${primary ? "primary" : ""}" href="${esc(href)}" target="_blank" rel="noopener">${esc(label)}
@@ -405,7 +474,7 @@ function openDrawer(id) {
         ${t.pypi || t.conda ? `<dt>Package</dt><dd style="font-family:var(--mono);font-size:12.5px">${
           [t.pypi ? "pypi: " + esc(t.pypi) : "", t.conda ? "conda-forge: " + esc(t.conda) : ""].filter(Boolean).join("<br>")}</dd>` : ""}
         ${t.python ? `<dt>Python</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.python)}</dd>` : ""}
-        <dt>Listed in</dt><dd>${t.sources.map((x) => esc({
+        <dt>Listed in</dt><dd>${(t.sources || []).map((x) => esc({
           "biotools": "bio.tools (ELIXIR, CC-BY 4.0)", "github-topics": "GitHub topic search",
           "curated": "our curated stack",
         }[x] || x.replace("github-stars:", "GitHub reading list: "))).join("<br>")}</dd>
@@ -649,6 +718,8 @@ async function drawPlan(q, forcedIntent = "") {
   host.innerHTML = workflowLoading(["route", "target", "structures", "select"], 0);
 
   let parsed = await resolveQuery(q);
+  // Tool chips link to catalogue entries, some of which are in the registry layer.
+  await registryReady;
   if (revision !== planRevision) return;
   if (forcedIntent && PROTOCOL_LIST().some((p) => p.id === forcedIntent)) {
     parsed = {

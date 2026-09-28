@@ -486,6 +486,72 @@ def excluded_because(entry):
         return f"real science, different field ({entry.get('stage')})"
     return None
 
+# ------------------------------------------------------------ the split
+#
+# catalog.json is the whole catalogue and stays the reference every script and
+# test reads. The page no longer downloads it. Measured over the wire (gzip):
+#
+#   everything                297 KB   what every visit used to fetch first
+#   curated, card fields only  25 KB   all the home page and default browse need
+#
+# Slimming every tool only saved 27%: descriptions and tags are most of the
+# weight, and cards and search need both. The large saving is loading the
+# layer people see first, first. So the page gets three things:
+#
+#   catalog-core.json      stages, totals, and the curated tools' card fields
+#   catalog-registry.json  the registry tools' card fields, fetched after paint
+#   details/<stage>.json   everything a tool's panel shows, fetched on opening
+#
+# Each carries a hash of this build, and the page requests the later files with
+# it, so a cached shard from an older build can never be paired with a newer
+# core and leave a panel without its install line.
+CARD_FIELDS = ("id", "name", "stage", "description", "curated", "archived",
+               "license", "repo", "tags")
+
+
+def write_split(payload):
+    import hashlib
+    blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode()
+    build = hashlib.sha256(blob).hexdigest()[:10]
+
+    def card(t, order):
+        c = {k: t[k] for k in CARD_FIELDS if k in t}
+        c["o"] = order          # catalogue order, so the two layers merge back in place
+        return c
+
+    tools = payload["tools"]
+    cards = [card(t, i) for i, t in enumerate(tools)]
+    dump = lambda path, obj: open(path, "w").write(  # noqa: E731
+        json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
+
+    dump(os.path.join(WEB, "catalog-core.json"), {
+        "build": build,
+        "curated": payload["curated"], "excluded": payload["excluded"],
+        "total": len(tools),
+        "stages": payload["stages"],
+        "tools": [c for c in cards if c.get("curated")],
+    })
+    dump(os.path.join(WEB, "catalog-registry.json"), {
+        "build": build,
+        "tools": [c for c in cards if not c.get("curated")],
+    })
+
+    details = os.path.join(WEB, "details")
+    os.makedirs(details, exist_ok=True)
+    for old in os.listdir(details):          # a stage that disappeared must not linger
+        if old.endswith(".json"):
+            os.remove(os.path.join(details, old))
+    by_stage = {}
+    for t in tools:
+        by_stage.setdefault(t["stage"], {})[t["id"]] = {
+            k: v for k, v in t.items() if k not in CARD_FIELDS}
+    for stage, rows in by_stage.items():
+        dump(os.path.join(details, f"{stage}.json"), {"build": build, "tools": rows})
+    print(f"split: core {sum(1 for c in cards if c.get('curated'))} curated, "
+          f"registry {sum(1 for c in cards if not c.get('curated'))}, "
+          f"{len(by_stage)} detail shards, build {build}")
+
+
 def merge_key(row):
     if row.get("repo"):
         # Curated entries are deliberately distinct even when they ship from one
@@ -715,6 +781,7 @@ def main():
     os.makedirs(WEB, exist_ok=True)
     with open(os.path.join(WEB, "catalog.json"), "w") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+    write_split(payload)
 
     # keep the static <meta> description honest about the counts
     idx = os.path.join(WEB, "index.html")
