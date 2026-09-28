@@ -1230,6 +1230,21 @@
     "url_status": 200
   },
   {
+    "name": "RetroChimera",
+    "stage": "synthesis",
+    "stage_label": "Retrosynthesis & synthetic accessibility",
+    "description": "Microsoft Research's single-step retrosynthesis model: an ensemble of models with different inductive biases, template-based and template-free, whose proposals are reranked together. Built to be more accurate than either kind of model alone.",
+    "url": "https://github.com/microsoft/retrochimera",
+    "repo": "microsoft/retrochimera",
+    "access": "open-source",
+    "tags": [
+      "retrosynthesis",
+      "ensemble",
+      "single-step"
+    ],
+    "url_status": 200
+  },
+  {
     "name": "RetroSim",
     "stage": "synthesis",
     "stage_label": "Retrosynthesis & synthetic accessibility",
@@ -1805,7 +1820,7 @@
       "phytochemicals",
       "ethnopharmacology"
     ],
-    "url_status": 200
+    "url_status": 503
   },
   {
     "name": "FooDB",
@@ -4004,7 +4019,7 @@
       "patents",
       "freedom-to-operate"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "Nextflow",

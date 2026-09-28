@@ -1620,6 +1620,25 @@
     "source": "curated",
     "stars": null,
     "stage": "synthesis",
+    "name": "RetroChimera",
+    "description": "Microsoft Research's single-step retrosynthesis model: an ensemble of models with different inductive biases, template-based and template-free, whose proposals are reranked together. Built to be more accurate than either kind of model alone.",
+    "url": "https://github.com/microsoft/retrochimera",
+    "code_url": "https://github.com/microsoft/retrochimera",
+    "paper_url": null,
+    "categories": [
+      "retrosynthesis",
+      "ensemble",
+      "single-step"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "microsoft/retrochimera",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "synthesis",
     "name": "RetroSim",
     "description": "Similarity-based retrosynthesis: find precedent reactions for similar molecules and transfer the disconnection. The baseline every neural planner should beat, and often does not.",
     "url": "https://github.com/connorcoley/retrosim",

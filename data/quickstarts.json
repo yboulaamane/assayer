@@ -150,5 +150,9 @@
   "isayevlab/aimnetcentral": {
     "code": "from aimnet.calculators import AIMNet2Calculator\n\ncalc = AIMNet2Calculator(\"aimnet2\")\n\nresult = calc(\n    {\"coord\": coordinates, \"numbers\": atomic_numbers, \"charge\": 0.0},\n    forces=True,\n)\n\nprint(result[\"energy\"])   # eV\nprint(result[\"forces\"])   # eV/Angstrom\nprint(result[\"charges\"])  # e",
     "source": "https://raw.githubusercontent.com/isayevlab/aimnetcentral/HEAD/README.md"
+  },
+  "microsoft/retrochimera": {
+    "code": "from retrochimera import RetroChimeraModel\nfrom syntheseus import Molecule\n\nmodel = RetroChimeraModel(model_dir=\"/model/checkpoint/dir/\")\nmol = Molecule(\"Oc1ccc(OCc2ccccc2)c(Br)c1\")\n\npredictions = model([mol], num_results=3)\n\nfor p in predictions[0]:\n    print(p, f\"({100. * p.metadata['probability']:.2f}%)\")",
+    "source": "https://raw.githubusercontent.com/microsoft/retrochimera/HEAD/README.md"
   }
 }

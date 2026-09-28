@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import { matchesAccess } from "../web/assets/catalog.js";
 
@@ -117,8 +117,19 @@ test("the stage a tool is filed under is one the catalogue lists", () => {
 // not data, so it needs rendering to check.
 
 async function browseView(query, mangle) {
+  // The full catalogue, which the assertions read, and the files the page
+  // actually fetches, served by path as the static host would.
   const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
-  if (mangle) mangle(cat);
+  const served = new Map();
+  const serve = (url) => {
+    const path = String(url).split("?")[0];
+    if (!served.has(path)) {
+      const body = JSON.parse(readFileSync(new URL(`../web/${path}`, import.meta.url)));
+      if (mangle && path === "catalog-core.json") mangle(body);
+      served.set(path, body);
+    }
+    return served.get(path);
+  };
   const nodes = new Map();
   const get = (id) => {
     if (!nodes.has(id)) {
@@ -148,12 +159,13 @@ async function browseView(query, mangle) {
     icon: () => "<svg></svg>",
     matchesAccess,
     PROTOCOL_LIST: () => [],
-    fetch: async () => ({ ok: true, json: async () => cat }),
+    fetch: async (url) => ({ ok: true, json: async () => serve(url) }),
     AbortSignal,
   });
   vm.runInContext(source, context);
   vm.runInContext("route = () => {};", context);
   await context.boot();
+  await vm.runInContext("registryReady", context);
   vm.runInContext(query === "HOME"
     ? "renderHome()"
     : `renderBrowse(new URLSearchParams(${JSON.stringify(query)}))`, context);
@@ -271,4 +283,81 @@ test("the tool drawer behaves as a dialog", () => {
                "closing must return focus to whatever opened it");
   assert.match(app, /e\.key !== "Tab" \|\| drawer\.hidden/,
                "Tab must be trapped while the drawer is open");
+});
+
+// The page loads the catalogue in layers (write_split in build_catalog.py).
+// These hold the layers to the full catalogue they were cut from.
+
+test("the split files add up to exactly the full catalogue", () => {
+  const web = (p) => JSON.parse(readFileSync(new URL(`../web/${p}`, import.meta.url)));
+  const full = web("catalog.json");
+  const core = web("catalog-core.json");
+  const registry = web("catalog-registry.json");
+  const shards = readdirSync(new URL("../web/details/", import.meta.url))
+    .filter((f) => f.endsWith(".json")).map((f) => [f.slice(0, -5), web(`details/${f}`)]);
+
+  // One build, stamped on every file, or a cached shard could pair with a newer core.
+  const builds = new Set([core.build, registry.build, ...shards.map(([, d]) => d.build)]);
+  assert.equal(builds.size, 1, `the split files come from ${builds.size} different builds`);
+
+  assert.equal(core.total, full.tools.length);
+  assert.deepEqual(core.tools.map((t) => t.id), full.tools.filter((t) => t.curated).map((t) => t.id),
+                   "the core must hold exactly the curated tools, in order");
+  assert.deepEqual(registry.tools.map((t) => t.id), full.tools.filter((t) => !t.curated).map((t) => t.id));
+
+  // Card fields plus the tool's shard must rebuild the full entry, field for field.
+  const detail = new Map();
+  for (const [stage, d] of shards) for (const [id, extra] of Object.entries(d.tools)) detail.set(id, [stage, extra]);
+  const wrong = [];
+  for (const [i, t] of full.tools.entries()) {
+    const card = [...core.tools, ...registry.tools].find((c) => c.id === t.id);
+    const [stage, extra] = detail.get(t.id) || [];
+    if (stage !== t.stage) { wrong.push(`${t.name}: not in the ${t.stage} shard`); continue; }
+    const { o, ...cardFields } = card;
+    if (o !== i) wrong.push(`${t.name}: order ${o}, expected ${i}`);
+    const rebuilt = { ...cardFields, ...extra };
+    if (JSON.stringify(Object.keys(rebuilt).sort().map((k) => [k, rebuilt[k]]))
+        !== JSON.stringify(Object.keys(t).sort().map((k) => [k, t[k]]))) wrong.push(`${t.name}: fields differ`);
+    if (wrong.length > 5) break;
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test("the curated layer works even if the registry never arrives", async () => {
+  // The registry is fetched after first paint. If it fails, the home page and
+  // the curated browse view must still be right, not wait or show partial counts.
+  const cat = JSON.parse(readFileSync(new URL("../web/catalog.json", import.meta.url)));
+  const core = JSON.parse(readFileSync(new URL("../web/catalog-core.json", import.meta.url)));
+  const nodes = new Map();
+  const get = (id) => {
+    if (!nodes.has(id)) {
+      const node = { innerHTML: "", value: "", addEventListener() {}, focus() {}, setSelectionRange() {},
+                     insertAdjacentHTML(_w, h) { node.innerHTML += h; } };
+      nodes.set(id, node);
+    }
+    return nodes.get(id);
+  };
+  const context = vm.createContext({
+    document: { getElementById: get, querySelectorAll: () => [], querySelector: () => null,
+                documentElement: { dataset: {} }, activeElement: { tagName: "BODY" } },
+    window: {}, location: { hash: "#/" }, URLSearchParams, addEventListener() {}, setTimeout, clearTimeout,
+    console, localStorage: { getItem: () => null, setItem() {} }, matchMedia: () => ({ matches: false }),
+    IntersectionObserver: class { observe() {} disconnect() {} }, scrollTo() {},
+    icon: () => "", matchesAccess, PROTOCOL_LIST: () => [], AbortSignal,
+    fetch: async (url) => String(url).startsWith("catalog-core.json")
+      ? { ok: true, json: async () => core }
+      : { ok: false, status: 503, json: async () => ({}) },
+  });
+  vm.runInContext(source, context);
+  vm.runInContext("route = () => {};", context);
+  await context.boot();
+  await vm.runInContext("registryReady", context);
+  vm.runInContext("renderHome()", context);
+  const home = get("app").innerHTML;
+  const fmt = (v) => Number(v).toLocaleString("en");
+  assert.match(home, new RegExp(`${fmt(cat.tools.length)}</b><span>listed in all`),
+               "the total comes from the core, not from what happened to load");
+  vm.runInContext('renderBrowse(new URLSearchParams(""))', context);
+  const curatedCards = (get("app").innerHTML + get("grid").innerHTML).match(/data-id="/g) || [];
+  assert.ok(curatedCards.length > 0, "the curated view rendered nothing without the registry");
 });
