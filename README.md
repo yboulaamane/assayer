@@ -1,7 +1,7 @@
 # Assayer
 <img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
-A catalogue of medicinal and computational chemistry tools (<!--n:curated-->301<!--/n--> chosen and
+A catalogue of medicinal and computational chemistry tools (<!--n:curated-->302<!--/n--> chosen and
 written up by hand, <!--n:tools-->2,385<!--/n--> listed in all), plus <!--n:protocols-->28<!--/n--> protocols that lay out how to
 actually run a piece of work.
 
@@ -32,17 +32,17 @@ cross-origin requests, so the browser talks to them directly.
 <!--block:stages-->
 | Stage | Curated | Listed | | Stage | Curated | Listed |
 |---|--:|--:|---|---|--:|--:|
-| Docking & virtual screening | 28 | 576 | | Quantum chemistry | 12 | 88 |
+| Docking & virtual screening | 28 | 575 | | Quantum chemistry | 12 | 88 |
 | ADMET, PK & toxicity | 11 | 324 | | Protein structures | 19 | 67 |
 | Cheminformatics | 19 | 250 | | Target & druggability | 40 | 62 |
 | Dynamics & free energy | 32 | 195 | | Workflow & infrastructure | 8 | 56 |
 | Binding sites & pockets | 18 | 166 | | Peptides & protein design | 16 | 51 |
 | Generative & de novo design | 11 | 157 | | Clinical & competitive | 10 | 34 |
 | Compounds & bioactivity | 21 | 111 | | Synthesis & retrosynthesis | 23 | 29 |
-| QSAR & property models | 17 | 105 | | Benchmarks & datasets | 7 | 14 |
+| QSAR & property models | 17 | 105 | | Benchmarks & datasets | 8 | 15 |
 | Visualisation | 9 | 100 | | | | |
 
-301 of the 2,385 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 190 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 33 quote one from the project's own README. No example is generated.
+302 of the 2,385 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 191 carry a verified `pip` or `conda` command and 119 a Python version the authors declared. 34 have a hand-written example and 34 quote one from the project's own README. No example is generated.
 <!--/block:stages-->
 
 ## Where the data comes from
@@ -51,7 +51,7 @@ cross-origin requests, so the browser talks to them directly.
 |---|--:|---|
 | [bio.tools](https://bio.tools), <!--n:biotools_topics-->10<!--/n--> drug-discovery EDAM topics | <!--n:biotools_rows-->2,746<!--/n--> | CC BY 4.0 |
 | GitHub repos with 30+ stars across <!--n:github_topics-->23<!--/n--> topics | <!--n:github_rows-->713<!--/n--> | public metadata |
-| Written for this project | <!--n:curated_rows-->301<!--/n--> | ours |
+| Written for this project | <!--n:curated_rows-->302<!--/n--> | ours |
 | My own starred repos, filtered | <!--n:stars_rows-->130<!--/n--> | ours |
 
 Both topic lists are deliberately narrow: **medicinal and computational chemistry
@@ -62,11 +62,11 @@ cone-beam CT backprojection, MRI browsers and image-registration toolboxes. Real
 software, correctly labelled, and nothing to do with designing a drug.
 
 bio.tools gives breadth within that scope. The GitHub layer answers a question
-registries can't: is anyone still maintaining this. The <!--n:curated-->301<!--/n--> curated
+registries can't: is anyone still maintaining this. The <!--n:curated-->302<!--/n--> curated
 entries cover what a project actually runs on, which both other sources are
 patchy about.
 
-<!--n:multi_source-->328<!--/n--> of <!--n:index_rows-->3,890<!--/n--> rows appear in more than one source. They get merged into one
+<!--n:multi_source-->330<!--/n--> of <!--n:index_rows-->3,891<!--/n--> rows appear in more than one source. They get merged into one
 entry that remembers where it came from.
 
 ### What gets thrown away, and why
@@ -120,7 +120,7 @@ caught by the gate is a tool to curate by hand, not a reason to widen the rule.
 
 ### Two layers, said out loud
 
-The catalogue is <!--n:curated-->301<!--/n--> entries someone chose and wrote up, and <!--n:listed-->2,084<!--/n--> that arrived
+The catalogue is <!--n:curated-->302<!--/n--> entries someone chose and wrote up, and <!--n:listed-->2,083<!--/n--> that arrived
 from a registry and were only filtered. Those are different promises, so the site
 does not render them identically: browsing opens on the curated layer, the wider
 one is one click away and says on the page that nobody here has read it.
@@ -419,8 +419,8 @@ Install, and where the data allows it, a Python version and a usage example.
 
 `scripts/enrich_packages.py` only accepts a package whose metadata points back
 at the same GitHub repository, so "boltz" cannot resolve to an unrelated
-package of the same name. That strictness is why coverage is what it is: **<!--n:packages-->190<!--/n-->
-of <!--n:tools-->2,385<!--/n-->** tools have a verified package, **<!--n:python-->118<!--/n-->** carry the Python version the
+package of the same name. That strictness is why coverage is what it is: **<!--n:packages-->191<!--/n-->
+of <!--n:tools-->2,385<!--/n-->** tools have a verified package, **<!--n:python-->119<!--/n-->** carry the Python version the
 authors declared in `requires_python`. Everything else with a repository gets a
 `git clone` and an honest note that there is no published package; the <!--n:no_install-->1,144<!--/n-->
 web servers, databases and commercial tools get nothing, because there is nothing
@@ -429,7 +429,7 @@ to install.
 Usage examples come in two kinds and are never generated. A **snippet** is
 hand-written for this catalogue (<!--n:snippets-->34<!--/n--> tools). A **quickstart** is the first real
 Python block from the project's own README, quoted unedited and shown with a
-link to the file it came from (<!--n:quickstarts-->33<!--/n--> tools). Writing usage prose for three
+link to the file it came from (<!--n:quickstarts-->34<!--/n--> tools). Writing usage prose for three
 thousand tools nobody here has run would be fabrication at scale, which is the
 thing the rest of this project exists to avoid — so the site says plainly that a
 quoted example is how the authors introduce the tool, not how to use it for any
@@ -535,7 +535,7 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The <!--n:curated-->301<!--/n--> curated tools carry their
+- **Stage assignment is keyword-driven.** The <!--n:curated-->302<!--/n--> curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).

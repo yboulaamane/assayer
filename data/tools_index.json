@@ -1621,7 +1621,7 @@
     "stars": null,
     "stage": "synthesis",
     "name": "RetroChimera",
-    "description": "Microsoft Research's single-step retrosynthesis model: an ensemble of models with different inductive biases, template-based and template-free, whose proposals are reranked together. Built to be more accurate than either kind of model alone.",
+    "description": "Microsoft Research's single-step retrosynthesis model, built by ensembling two components with complementary inductive biases. Learns from very few examples per reaction class, and its predictions were preferred by industrial chemists in blind tests. Built on Syntheseus; installable from PyPI.",
     "url": "https://github.com/microsoft/retrochimera",
     "code_url": "https://github.com/microsoft/retrochimera",
     "paper_url": null,
@@ -1653,6 +1653,27 @@
     "license": "open-source",
     "repo": "connorcoley/retrosim",
     "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "benchmarks",
+    "name": "MoleculeACE",
+    "description": "Activity-cliff benchmark: curated bioactivity data on 30 targets, with the tooling to score how a QSAR model does on near-identical molecules whose potency differs sharply. The test a model's headline accuracy hides. Supports Python 3.8 only, and some deep-learning dependencies are installed separately.",
+    "url": "https://github.com/molML/MoleculeACE",
+    "code_url": "https://github.com/molml/moleculeace",
+    "paper_url": null,
+    "categories": [
+      "activity-cliffs",
+      "qsar",
+      "benchmark"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "molml/moleculeace",
+    "also_in": [
+      "biotools"
+    ]
   },
   {
     "source": "curated",
@@ -38250,7 +38271,9 @@
     "license": "MIT",
     "repo": "molml/moleculeace",
     "has_paper": true,
-    "also_in": []
+    "also_in": [
+      "curated"
+    ]
   },
   {
     "source": "biotools",

@@ -980,5 +980,9 @@
   },
   "oxpig/antifold": {
     "pypi": "antifold"
+  },
+  "microsoft/retrochimera": {
+    "pypi": "retrochimera",
+    "python": ">=3.9"
   }
 }

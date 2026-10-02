@@ -707,7 +707,7 @@
       "docking",
       "baseline"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "OpenMM",
@@ -1233,7 +1233,7 @@
     "name": "RetroChimera",
     "stage": "synthesis",
     "stage_label": "Retrosynthesis & synthetic accessibility",
-    "description": "Microsoft Research's single-step retrosynthesis model: an ensemble of models with different inductive biases, template-based and template-free, whose proposals are reranked together. Built to be more accurate than either kind of model alone.",
+    "description": "Microsoft Research's single-step retrosynthesis model, built by ensembling two components with complementary inductive biases. Learns from very few examples per reaction class, and its predictions were preferred by industrial chemists in blind tests. Built on Syntheseus; installable from PyPI.",
     "url": "https://github.com/microsoft/retrochimera",
     "repo": "microsoft/retrochimera",
     "access": "open-source",
@@ -1256,6 +1256,21 @@
       "retrosynthesis",
       "baseline",
       "precedent"
+    ],
+    "url_status": 200
+  },
+  {
+    "name": "MoleculeACE",
+    "stage": "benchmarks",
+    "stage_label": "Benchmarks & reference datasets",
+    "description": "Activity-cliff benchmark: curated bioactivity data on 30 targets, with the tooling to score how a QSAR model does on near-identical molecules whose potency differs sharply. The test a model's headline accuracy hides. Supports Python 3.8 only, and some deep-learning dependencies are installed separately.",
+    "url": "https://github.com/molML/MoleculeACE",
+    "repo": "molml/moleculeace",
+    "access": "open-source",
+    "tags": [
+      "activity-cliffs",
+      "qsar",
+      "benchmark"
     ],
     "url_status": 200
   },
@@ -1453,7 +1468,7 @@
       "chemical-probes",
       "tool-compounds"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "FTMap",
@@ -1820,7 +1835,7 @@
       "phytochemicals",
       "ethnopharmacology"
     ],
-    "url_status": 503
+    "url_status": 200
   },
   {
     "name": "FooDB",
@@ -2101,7 +2116,7 @@
       "drugs",
       "database"
     ],
-    "url_status": "403 (bot-protected, live)"
+    "url_status": 200
   },
   {
     "name": "BindingDB",
@@ -2476,7 +2491,7 @@
       "docking",
       "scoring"
     ],
-    "url_status": "error: URLError"
+    "url_status": 200
   },
   {
     "name": "gnina",
@@ -4019,7 +4034,7 @@
       "patents",
       "freedom-to-operate"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "Nextflow",
