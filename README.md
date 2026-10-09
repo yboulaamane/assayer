@@ -2,7 +2,7 @@
 <img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
 A catalogue of medicinal and computational chemistry tools (<!--n:curated-->302<!--/n--> chosen and
-written up by hand, <!--n:tools-->2,385<!--/n--> listed in all), plus <!--n:protocols-->28<!--/n--> protocols that lay out how to
+written up by hand, <!--n:tools-->2,385<!--/n--> listed in all), plus <!--n:protocols-->29<!--/n--> protocols that lay out how to
 actually run a piece of work.
 
 Live at **https://assayer.vercel.app**
@@ -156,7 +156,7 @@ prints too many.
 complete, always valid, and what you get with no key configured. On top of it,
 `web/api/plan.js` hands a model the whole registry and asks which modules *this*
 request needs, in what order, and why each one. That is the difference between
-choosing one of <!--n:protocols-->28<!--/n--> pre-written documents and composing from <!--n:modules-->178<!--/n--> parts.
+choosing one of <!--n:protocols-->29<!--/n--> pre-written documents and composing from <!--n:modules-->184<!--/n--> parts.
 
 The model returns ids and nothing else. It never writes a step, a gate, a
 threshold or a tool name — those come from the registry, which lives on the
@@ -222,20 +222,20 @@ and correctly transcribed; it cannot check that the work supports the threshold
 it is attached to, which needs a reader. A test enforces the rule that a numeric
 gate either cites something or admits it has no source.
 
-`evals/` is the evaluation set: <!--n:eval_cases-->75<!--/n--> fixtures that say what a correct
+`evals/` is the evaluation set: <!--n:eval_cases-->80<!--/n--> fixtures that say what a correct
 plan must *do* — which protocol, which constraints it must extract, which steps
 it cannot omit, what must precede what — rather than which exact steps it must
 contain, so it survives registry changes. `node evals/run.mjs` scores it and
 `tests/evals.test.mjs` fails if the score drops below `evals/baseline.json`.
 
-The score is currently <!--n:eval_passed-->351<!--/n-->/<!--n:eval_checks-->351<!--/n--> expectations, and **<!--n:eval_reviewed-->0<!--/n--> of <!--n:eval_cases-->75<!--/n--> cases are
+The score is currently <!--n:eval_passed-->366<!--/n-->/<!--n:eval_checks-->366<!--/n--> expectations, and **<!--n:eval_reviewed-->0<!--/n--> of <!--n:eval_cases-->80<!--/n--> cases are
 domain-reviewed**: the expectations are mine, not verified science. A case
 becomes evidence when someone who does this work has agreed that a plan failing
 it would be wrong. `evals/README.md` explains how to review one.
 
 `tests/coverage-sweep.test.mjs` is combinatorial rather than example-based: every
 metal in the periodic table across every task that mentions one, several
-phrasings for each of the <!--n:protocols-->28<!--/n--> protocols, and a set of phrases that must never
+phrasings for each of the <!--n:protocols-->29<!--/n--> protocols, and a set of phrases that must never
 read as coordination chemistry ("the gold standard for docking"). It asserts on
 the composed plan rather than the keyword guess, and it fails on a route that is
 locked in without a model call rather than on one the model would correct. A new
@@ -259,9 +259,9 @@ or verify the live deployment's layout.
 
 ## The protocols
 
-<!--n:protocols-->28<!--/n--> of them, <!--n:modules-->178<!--/n--> modules. Each protocol says what decision it supports and when to
+<!--n:protocols-->29<!--/n--> of them, <!--n:modules-->184<!--/n--> modules. Each protocol says what decision it supports and when to
 walk away. Each step says what to do, why, which tools, and the gate it has to
-pass. <!--n:pitfalls-->133<!--/n--> steps also name the specific way that step usually goes wrong.
+pass. <!--n:pitfalls-->139<!--/n--> steps also name the specific way that step usually goes wrong.
 
 Some examples of what that looks like in practice:
 
@@ -370,7 +370,7 @@ deployment can see, which is the quickest way to tell whether the function
 actually deployed.
 
 **Selection costs tokens, and free tiers meter them per minute.** The registry
-goes in every selection prompt, which is about 5,800 tokens for all <!--n:modules-->178<!--/n--> modules.
+goes in every selection prompt, which is about 5,800 tokens for all <!--n:modules-->184<!--/n--> modules.
 Gemini's free tier meters requests long before tokens and takes that happily.
 Groq's meters 8,000 tokens a minute across prompt *and* completion, so the full
 digest buys one call a minute and a rate-limit after it — which is how it

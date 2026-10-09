@@ -146,6 +146,12 @@ function brief(input) {
     lines.push(`Resolved target: ${e.target.name}${e.target.gene ? ` (${e.target.gene})` : ""}, ` +
       `${e.target.organism}, ${e.target.length} aa, UniProt ${e.target.accession}.`);
   }
+  // What has already been measured against this target, which decides whether a
+  // ligand-based baseline is available at all.
+  if (e.measured?.chembl) {
+    lines.push(`Measured activity in ChEMBL (${e.measured.chembl}): ${e.measured.values} IC50/Ki/Kd values, `
+      + `${e.measured.potent} at 1 uM or better. ${e.measured.reading || ""}`);
+  }
   if (Array.isArray(e.structures) && e.structures.length) {
     lines.push(`Experimental structures available (${e.total ?? e.structures.length} total), best few:`);
     for (const s of e.structures.slice(0, 4)) {

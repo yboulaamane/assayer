@@ -80,6 +80,7 @@ const PHRASINGS = {
   "landscape": ["competitive landscape for this target", "what is in the clinic", "patent position on this scaffold"],
   "library-design": ["build a focused screening library", "standardise and deduplicate my compounds", "select a diverse subset"],
   "benchmarking": ["benchmark my scoring function", "validate the method on a reference set", "compare these methods"],
+  "metal-design": ["design an artificial metalloenzyme", "metal site design", "artificial metallopeptide", "predict the metal binding site", "second sphere redesign"],
   "target-prediction": ["target prediction", "predict the targets of my compound", "target deconvolution", "what protein does this compound bind", "target fishing for a phenotypic hit"],
 };
 
