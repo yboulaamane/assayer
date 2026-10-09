@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
-from curated_standard_tools import BOT_PROTECTED, check  # noqa: E402
+from curated_standard_tools import check, is_protected  # noqa: E402
 
 DATA = os.path.join(ROOT, "data", "curated_standard_tools.json")
 UA = {"User-Agent": "assayer-link-check/1.0 (https://assayer.vercel.app)"}
@@ -85,7 +85,7 @@ def main():
         if status == 200:
             continue
         host = urlparse(row["url"]).hostname or ""
-        (blocked if status == 403 and host in BOT_PROTECTED else dead).append(
+        (blocked if is_protected(row["url"], status) else dead).append(
             {"name": row["name"], "url": row["url"], "status": str(status)})
 
     # A curated entry tagged "archived" has been looked at and its description
