@@ -415,6 +415,20 @@ BOT_PROTECTED = {
     "spaya.ai", "www.reaxys.com",
 }
 
+# Hosts seen answering with a bot challenge rather than an error. Cloudflare
+# marks these with `cf-mitigated: challenge`: the site is up, it just will not
+# serve a script. Detected rather than listed, so the next site to add a
+# challenge is not reported as dead every week until someone notices. FooDB
+# was, for two weeks.
+CHALLENGED = set()
+
+
+def is_protected(url, status):
+    """A 403 or 503 that is a bot challenge, not a missing site."""
+    host = urlparse(url).hostname or ""
+    return status in (403, 503) and (host in BOT_PROTECTED or host in CHALLENGED)
+
+
 FIELDS = ["name", "stage", "stage_label", "description", "url", "repo", "access", "tags", "url_status"]
 STAGE_LABELS = dict(STAGES)
 
@@ -431,6 +445,8 @@ def check(url):
                 # a redirect is a live site, not a dead link
                 return 200 if 200 <= r.status < 400 else r.status
         except HTTPError as e:
+            if (e.headers or {}).get("cf-mitigated", "").lower() == "challenge":
+                CHALLENGED.add(urlparse(url).hostname or "")
             if method == "HEAD":
                 continue  # plenty of servers mishandle HEAD; retry with GET
             return 200 if 300 <= e.code < 400 else e.code
@@ -454,7 +470,7 @@ def build(do_check=True):
         with ThreadPoolExecutor(max_workers=8) as ex:
             for row, status in zip(rows, ex.map(lambda x: check(x["url"]), rows)):
                 host = urlparse(row["url"]).hostname or ""
-                if status == 403 and host in BOT_PROTECTED:
+                if is_protected(row["url"], status):
                     status = "403 (bot-protected, live)"
                 row["url_status"] = status
     return rows
