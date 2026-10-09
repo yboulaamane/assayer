@@ -1370,7 +1370,7 @@
     "tags": [
       "retrosynthesis"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "Synthia",
@@ -1398,7 +1398,7 @@
       "reaction-database",
       "precedent"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "eMolecules",
@@ -1468,7 +1468,7 @@
       "chemical-probes",
       "tool-compounds"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "FTMap",
@@ -1849,7 +1849,7 @@
       "food-chemistry",
       "phytochemicals"
     ],
-    "url_status": 403
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "Phenol-Explorer",
@@ -2116,7 +2116,7 @@
       "drugs",
       "database"
     ],
-    "url_status": 200
+    "url_status": "403 (bot-protected, live)"
   },
   {
     "name": "BindingDB",

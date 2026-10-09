@@ -43,6 +43,10 @@
     "code": "import torch\nmodel, alphabet = torch.hub.load(\"facebookresearch/esm:main\", \"esm2_t33_650M_UR50D\")",
     "source": "https://raw.githubusercontent.com/facebookresearch/esm/HEAD/README.md"
   },
+  "isayevlab/aimnetcentral": {
+    "code": "from aimnet.calculators import AIMNet2Calculator\n\ncalc = AIMNet2Calculator(\"aimnet2\")\n\nresult = calc(\n    {\"coord\": coordinates, \"numbers\": atomic_numbers, \"charge\": 0.0},\n    forces=True,\n)\n\nprint(result[\"energy\"])   # eV\nprint(result[\"forces\"])   # eV/Angstrom\nprint(result[\"charges\"])  # e",
+    "source": "https://raw.githubusercontent.com/isayevlab/aimnetcentral/HEAD/README.md"
+  },
   "isayevlab/auto3d_pkg": {
     "code": "from Auto3D import Auto3DOptions, main\n\nconfig = Auto3DOptions(path=\"molecules.smi\", k=1)\noutput_path = main(config)",
     "source": "https://raw.githubusercontent.com/isayevlab/auto3d_pkg/HEAD/README.md"
@@ -67,6 +71,10 @@
     "code": "from molskill.scorer import MolSkillScorer\n\nsmiles_strs = [\"CCO\", \"O=C(Oc1ccccc1C(=O)O)C\"] \n\nscorer = MolSkillScorer()\nscores = scorer.score(smiles_strs)",
     "source": "https://raw.githubusercontent.com/microsoft/molskill/HEAD/README.md"
   },
+  "microsoft/retrochimera": {
+    "code": "from retrochimera import RetroChimeraModel\nfrom syntheseus import Molecule\n\nmodel = RetroChimeraModel(model_dir=\"/model/checkpoint/dir/\")\nmol = Molecule(\"Oc1ccc(OCc2ccccc2)c(Br)c1\")\n\npredictions = model([mol], num_results=3)\n\nfor p in predictions[0]:\n    print(p, f\"({100. * p.metadata['probability']:.2f}%)\")",
+    "source": "https://raw.githubusercontent.com/microsoft/retrochimera/HEAD/README.md"
+  },
   "mims-harvard/tdc": {
     "code": "from tdc.single_pred import ADME\ndata = ADME(name = 'HIA_Hou')\n# split into train/val/test with scaffold split methods\nsplit = data.get_split(method = 'scaffold')\n# get the entire data in the various formats\ndata.get_data(format = 'df')",
     "source": "https://raw.githubusercontent.com/mims-harvard/tdc/HEAD/README.md"
@@ -82,6 +90,10 @@
   "molecularsets/moses": {
     "code": "import moses\n\ntrain = moses.get_dataset('train')\ntest = moses.get_dataset('test')\ntest_scaffolds = moses.get_dataset('test_scaffolds')",
     "source": "https://raw.githubusercontent.com/molecularsets/moses/HEAD/README.md"
+  },
+  "molml/moleculeace": {
+    "code": "from MoleculeACE import MPNN, Data, Descriptors, calc_rmse, calc_cliff_rmse, get_benchmark_config\n\ndataset = 'CHEMBL2034_Ki'\ndescriptor = Descriptors.GRAPH\nalgorithm = MPNN\n\n# Load data\ndata = Data(dataset)\n\n# Get the already optimized hyperparameters\nhyperparameters = get_benchmark_config(dataset, algorithm, descriptor)\n\n# Featurize SMILES strings with a specific method\ndata(descriptor)\n\n# Train and a model\nmodel = algorithm(**hyperparameters)\nmodel.train(data.x_train, data.y_train)\ny_hat = model.predict(data.x_test)\n\n# Evaluate your model on activity cliff compounds\nrmse = calc_rmse(data.y_test, y_hat)\nrmse_cliff = calc_cliff_rmse(y_test_pred=y_hat, y_test=data.y_test, cliff_mols_test=data.cliff_mols_test)\n\nprint(f\"rmse: {rmse}\")\nprint(f\"rmse_cliff: {rmse_cliff}\")",
+    "source": "https://raw.githubusercontent.com/molml/moleculeace/HEAD/README.md"
   },
   "olivierbeq/papyrus-scripts": {
     "code": "from papyrus_scripts import PapyrusDataset\n\ndataset = PapyrusDataset(version='2024.09.2', plusplus=True)\n\nfiltered = (dataset\n            .keep_source(['chembl', 'sharma'])\n            .keep_quality('high'))\n\ndf = filtered.to_dataframe()\nproteins = filtered.proteins().to_dataframe()",
@@ -146,17 +158,5 @@
   "uclcheminformatics/scaffoldgraph": {
     "code": "import scaffoldgraph as sg\n\n# construct a scaffold network from an SDF file\nnetwork = sg.ScaffoldNetwork.from_sdf('my_sdf_file.sdf')\n\n# construct a scaffold tree from a SMILES file\ntree = sg.ScaffoldTree.from_smiles('my_smiles_file.smi')\n\n# construct a scaffold tree from a pandas dataframe\nimport pandas as pd\ndf = pd.read_csv('activity_data.csv')\nnetwork = sg.ScaffoldTree.from_dataframe(\n    df, smiles_column='Smiles', name_column='MolID',\n    data_columns=['pIC50', 'MolWt'], progress=True,\n)",
     "source": "https://raw.githubusercontent.com/uclcheminformatics/scaffoldgraph/HEAD/README.md"
-  },
-  "isayevlab/aimnetcentral": {
-    "code": "from aimnet.calculators import AIMNet2Calculator\n\ncalc = AIMNet2Calculator(\"aimnet2\")\n\nresult = calc(\n    {\"coord\": coordinates, \"numbers\": atomic_numbers, \"charge\": 0.0},\n    forces=True,\n)\n\nprint(result[\"energy\"])   # eV\nprint(result[\"forces\"])   # eV/Angstrom\nprint(result[\"charges\"])  # e",
-    "source": "https://raw.githubusercontent.com/isayevlab/aimnetcentral/HEAD/README.md"
-  },
-  "microsoft/retrochimera": {
-    "code": "from retrochimera import RetroChimeraModel\nfrom syntheseus import Molecule\n\nmodel = RetroChimeraModel(model_dir=\"/model/checkpoint/dir/\")\nmol = Molecule(\"Oc1ccc(OCc2ccccc2)c(Br)c1\")\n\npredictions = model([mol], num_results=3)\n\nfor p in predictions[0]:\n    print(p, f\"({100. * p.metadata['probability']:.2f}%)\")",
-    "source": "https://raw.githubusercontent.com/microsoft/retrochimera/HEAD/README.md"
-  },
-  "molml/moleculeace": {
-    "code": "from MoleculeACE import MPNN, Data, Descriptors, calc_rmse, calc_cliff_rmse, get_benchmark_config\n\ndataset = 'CHEMBL2034_Ki'\ndescriptor = Descriptors.GRAPH\nalgorithm = MPNN\n\n# Load data\ndata = Data(dataset)\n\n# Get the already optimized hyperparameters\nhyperparameters = get_benchmark_config(dataset, algorithm, descriptor)\n\n# Featurize SMILES strings with a specific method\ndata(descriptor)\n\n# Train and a model\nmodel = algorithm(**hyperparameters)\nmodel.train(data.x_train, data.y_train)\ny_hat = model.predict(data.x_test)\n\n# Evaluate your model on activity cliff compounds\nrmse = calc_rmse(data.y_test, y_hat)\nrmse_cliff = calc_cliff_rmse(y_test_pred=y_hat, y_test=data.y_test, cliff_mols_test=data.cliff_mols_test)\n\nprint(f\"rmse: {rmse}\")\nprint(f\"rmse_cliff: {rmse_cliff}\")",
-    "source": "https://raw.githubusercontent.com/molml/moleculeace/HEAD/README.md"
   }
 }
