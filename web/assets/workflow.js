@@ -5,9 +5,9 @@
 /* ------------------------------------------------------------------ intent */
 // The protocol texts live in the module registry now; this file routes a
 // question to one and resolves what it is about.
-export { RECIPES as PROTOCOLS } from "./modules.js?v=525fe6686f";
-import { REFERENCES } from "./modules.js?v=525fe6686f";
-import { RECIPES, FAMILY_TERMS } from "./modules.js?v=525fe6686f";
+export { RECIPES as PROTOCOLS } from "./modules.js?v=8ffaff60ac";
+import { REFERENCES } from "./modules.js?v=8ffaff60ac";
+import { RECIPES, FAMILY_TERMS } from "./modules.js?v=8ffaff60ac";
 
 const INTENTS = [
   ["network-pharmacology", ["network pharmacology", "network-pharmacology", "systems pharmacology",
@@ -27,6 +27,13 @@ const INTENTS = [
     "phenotypic hit", "phenotypic screen hit", "phenotypic", "unknown target",
     "know what it binds", "know what it hits", "know its target",
     "know the target", "target is unknown", "no known target"]],
+  ["metal-design", ["artificial metalloenzyme", "artificial metalloprotein", "metalloenzyme design",
+    "design a metalloenzyme", "design a metal site", "metal site design", "design a metal binding site",
+    "artificial metallopeptide", "metallopeptide", "metallodrug", "metallo-drug",
+    "biocatalyst design", "artificial enzyme", "de novo enzyme", "enzyme design",
+    "second sphere", "second coordination sphere", "cofactor design", "anchor a cofactor",
+    "metal binding site prediction", "predict metal binding", "predict the metal binding",
+    "metal binding prediction", "find the metal site", "supramolecular catalyst", "nanocage"]],
   ["qm-geometry", ["geometry optimisation", "geometry optimization", "optimise geometry",
     "optimize geometry", "optimise the geometry", "optimize the geometry", "geometry of",
     "dft", "b3lyp", "wb97", "def2", "basis set", "effective core potential", "ecp",
@@ -594,6 +601,7 @@ const UNIPROT = "https://rest.uniprot.org/uniprotkb";
 const RCSB_SEARCH = "https://search.rcsb.org/rcsbsearch/v2/query";
 const RCSB_GQL = "https://data.rcsb.org/graphql";
 const AFDB = "https://alphafold.ebi.ac.uk/api/prediction";
+const CHEMBL = "https://www.ebi.ac.uk/chembl/api/data";
 
 async function jget(url) {
   const r = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
@@ -764,6 +772,56 @@ export async function alphafold(accession) {
     const m = d[0];
     return m ? { id: m.entryId, cif: m.cifUrl, pdb: m.pdbUrl, pae: m.paeImageUrl, version: m.latestVersion } : null;
   } catch { return null; }
+}
+
+/**
+ * How much measured activity exists for this target.
+ *
+ * This is the fork most protocols turn on and the planner could not see it.
+ * A target with thirty thousand measured compounds has a strong, cheap
+ * ligand-based baseline that docking has to beat; one with a dozen has nothing
+ * to learn from, and the plan should say so rather than quietly assuming data
+ * that is not there.
+ *
+ * Counts only, by design: a count is a routing decision, and pulling the
+ * activities themselves would be megabytes the page does not need. Returns
+ * null on anything going wrong, because an unreachable registry must leave the
+ * plan exactly as it was.
+ */
+export async function findActivity(accession) {
+  try {
+    const t = await jget(`${CHEMBL}/target.json?target_components__accession=${encodeURIComponent(accession)}&limit=1`);
+    const id = t?.targets?.[0]?.target_chembl_id;
+    if (!id) return { id: null, total: 0, potent: 0 };
+    const count = async (extra = "") => {
+      const d = await jget(`${CHEMBL}/activity.json?target_chembl_id=${id}`
+        + "&standard_type__in=IC50,Ki,Kd&limit=1" + extra);
+      return d?.page_meta?.total_count ?? 0;
+    };
+    // Measured binding only, and separately how much of it is potent enough to
+    // model: a target with thousands of millimolar values is not a training set.
+    const [total, potent] = await Promise.all([count(), count("&standard_value__lte=1000&standard_units=nM")]);
+    return { id, total, potent };
+  } catch { return null; }
+}
+
+/** The routing consequence of that count, in the planner's own words. */
+export function activityVerdict(a) {
+  if (!a || !a.id) return null;
+  const { total, potent } = a;
+  if (total >= 2000) {
+    return { tier: "rich", headline: `${total.toLocaleString("en")} measured values in ChEMBL`,
+      means: "Enough to train a ligand-based model. Build that baseline first and make any structure-based method beat it, rather than assuming docking is the stronger option.",
+      suggests: ["ligand-discovery", "qsar"] };
+  }
+  if (total >= 100) {
+    return { tier: "some", headline: `${total.toLocaleString("en")} measured values in ChEMBL, ${potent.toLocaleString("en")} at 1 µM or better`,
+      means: "Enough for a similarity baseline and for positive controls in a screen, but thin for a model that has to generalise beyond these series.",
+      suggests: [] };
+  }
+  return { tier: "sparse", headline: total ? `only ${total} measured values in ChEMBL` : "no measured activity in ChEMBL",
+    means: "Too little for a ligand-based model, and too little to validate a screen against known actives. This is a structure-based problem, and the enrichment control has to come from decoys rather than from real actives.",
+    suggests: [] };
 }
 
 /* --------------------------------------------------------------- protocols */

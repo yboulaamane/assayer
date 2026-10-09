@@ -50,6 +50,7 @@ export const INTENTS = [
   ["parameterisation", "derive force field parameters for something that has none: a metal centre, a non-standard residue, a modified cofactor or a ligand; charges, bonded terms, topology files"],
   ["qm-mechanism", "reaction mechanism, transition states, activation barriers, reaction paths, catalytic cycles, regio- or stereoselectivity explained by computed energies"],
   ["qm-properties", "computed molecular properties: pKa, tautomer or protonation state, and predicted NMR, IR or UV spectra compared with measurement"],
+  ["metal-design", "designing a metal site rather than screening against one: artificial metalloenzymes, metallopeptides, metallodrugs, second-sphere design, metal binding site prediction, supramolecular catalysts"],
   ["protein-engineering", "engineer a protein or enzyme itself: thermostability, solubility, expression, activity; point mutations for stability; directed evolution library design"],
   ["peptide-design", "design a peptide, macrocycle, cyclic or stapled peptide as the binder; peptide liabilities and constraint"],
   ["landscape", "what already exists for a target: published chemical matter, clinical pipeline, patent position, competitive white space"],

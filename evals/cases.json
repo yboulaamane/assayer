@@ -1360,6 +1360,72 @@
           ]
         ]
       }
+    },
+    {
+      "id": "metal-design-metalloenzyme",
+      "question": "design an artificial metalloenzyme for a C-H activation",
+      "why": "The group's main design line. Names a design job around a metal centre, which used to route to hit discovery and return a docking campaign against a receptor that does not exist yet.",
+      "source": "InsiliChem research lines, from the group's own research page",
+      "reviewed": false,
+      "expect": {
+        "route": "metal-design",
+        "must_include": [
+          "metaldesign.find_a_scaffold_that_can_host_it",
+          "metaldesign.parameterise_before_you_simulate"
+        ],
+        "order": [
+          [
+            "metaldesign.find_a_scaffold_that_can_host_it",
+            "metaldesign.parameterise_before_you_simulate"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "metal-design-metallodrug",
+      "question": "design a metallodrug based on a ruthenium complex",
+      "why": "Metallodrug design is a design problem, not a screening one. Checks the mechanism step survives, since a metallodrug claim rests on reactivity rather than on a pose.",
+      "source": "InsiliChem research lines, from the group's own research page",
+      "reviewed": false,
+      "expect": {
+        "route": "metal-design",
+        "must_include": [
+          "metaldesign.test_the_mechanism_quantum_mechanically"
+        ]
+      }
+    },
+    {
+      "id": "metal-design-binding-site",
+      "question": "predict the metal binding site in this protein",
+      "why": "Site prediction is the entry point to the same line and should reach the scaffold step, not a docking campaign.",
+      "source": "InsiliChem research lines, from the group's own research page",
+      "reviewed": false,
+      "expect": {
+        "route": "metal-design",
+        "must_include": [
+          "metaldesign.find_a_scaffold_that_can_host_it"
+        ]
+      }
+    },
+    {
+      "id": "metal-design-not-engineering",
+      "question": "engineer this enzyme for thermostability",
+      "why": "Guards the boundary: engineering an existing protein for a physical property is protein engineering, not metal site design, even though both say enzyme.",
+      "source": "InsiliChem research lines, from the group's own research page",
+      "reviewed": false,
+      "expect": {
+        "route": "protein-engineering"
+      }
+    },
+    {
+      "id": "metal-design-not-mechanism",
+      "question": "reaction mechanism of this palladium catalyst",
+      "why": "Guards the other boundary: studying a known catalyst's mechanism is QM mechanism, not designing a new site, even though both involve a metal.",
+      "source": "InsiliChem research lines, from the group's own research page",
+      "reviewed": false,
+      "expect": {
+        "route": "qm-mechanism"
+      }
     }
   ]
 }

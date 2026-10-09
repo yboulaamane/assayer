@@ -1,7 +1,7 @@
 import { icon } from "./icons.js?v=6212755783";
-import { resolveQuery, findTarget, findStructures, alphafold, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js?v=3260b4322a";
-import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=8840b1ab92";
-import { REFERENCES } from "./modules.js?v=525fe6686f";
+import { resolveQuery, findTarget, findStructures, alphafold, findActivity, activityVerdict, planToMarkdown, PROTOCOL_LIST, intentUsesProtein } from "./workflow.js?v=cc9cbb6bc3";
+import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=a073bcd3b9";
+import { REFERENCES } from "./modules.js?v=8ffaff60ac";
 import { matchesAccess } from "./catalog.js?v=d3a394a1b9";
 
 const app = document.getElementById("app");
@@ -644,8 +644,15 @@ async function lookupEvidence(parsed, order, revision, host) {
     const { entries, total } = await findStructures(out.target.accession, out.target.organism);
     if (revision !== planRevision) return null;
     out.structures = entries; out.total = total;
-    out.af = await alphafold(out.target.accession);
+    // Structures and measured activity together: the two things that decide
+    // whether this is a structure-based or a ligand-based problem.
+    const [af, activity] = await Promise.all([
+      alphafold(out.target.accession), findActivity(out.target.accession),
+    ]);
     if (revision !== planRevision) return null;
+    out.af = af;
+    out.activity = activity;
+    out.verdict = activityVerdict(activity);
   } catch {
     out.failed = true;
   }
@@ -703,6 +710,29 @@ async function selectModules(query, brief, evidence) {
   }
 }
 
+function reportUrl(q, plan, parsed, ev) {
+  const steps = (plan.steps || []).map((s, i) => `${i + 1}. ${s.title}  \`${s.id}\``).join("\n");
+  const body = [
+    "<!-- Thank you. Everything above the line is filled in; please answer the two questions below it. -->",
+    "", "## What should it have done?", "",
+    "_Wrong protocol? A step missing, in the wrong order, or one that should not be there? Be as specific as you can._",
+    "", "## Who you are (optional)", "",
+    "_Your field and how long you have worked in it. It tells me how much weight to give this._",
+    "", "---", "",
+    `**Question asked:** ${q}`,
+    `**Protocol chosen:** \`${plan.intent || parsed.intent}\` — ${plan.label}`,
+    parsed.target ? `**Target resolved:** ${parsed.target}${ev?.target ? ` → ${ev.target.name} (${ev.target.accession}, ${ev.target.organism})` : " — not resolved"}` : "**Target:** none named",
+    ev?.verdict ? `**Measured activity:** ${ev.verdict.headline}` : "",
+    ev?.total != null ? `**Experimental structures:** ${ev.total}` : "",
+    parsed.via ? `**Routed by:** ${parsed.via}` : "",
+    "", "**Plan as given:**", "", steps,
+    "", `_Reported from ${location.href}_`,
+  ].filter(Boolean).join("\n");
+  const title = `Plan looks wrong: ${q.slice(0, 60)}${q.length > 60 ? "…" : ""}`;
+  return "https://github.com/yboulaamane/assayer/issues/new?labels=plan-feedback"
+    + `&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body.slice(0, 5800))}`;
+}
+
 function workflowCorrection(q, activeIntent) {
   return `<details class="route-correction">
     <summary>Wrong workflow? Choose another</summary>
@@ -755,6 +785,8 @@ async function drawPlan(q, forcedIntent = "") {
     host.innerHTML = workflowLoading(order, order.indexOf("select"), parsed.target || "");
     const selection = await selectModules(q, brief, {
       target, structures: structures.slice(0, 4), total: ev.total, alphafold: Boolean(ev.af),
+      measured: ev.activity && { chembl: ev.activity.id, values: ev.activity.total,
+                                 potent: ev.activity.potent, reading: ev.verdict?.means },
     });
     if (revision !== planRevision) return;
     if (selection) {
@@ -833,7 +865,7 @@ async function drawPlan(q, forcedIntent = "") {
               : "").filter(Boolean).join(" · ")}</span>` : ""}</p>` : ""}
           ${s.pitfall ? `<p class="pit"><b>Common failure:</b> ${esc(s.pitfall)}</p>` : ""}
           ${s.live === "structures" ? `<div id="struct-slot">${
-            target ? renderStructures(structures, ev.total, ev.af, target)
+            target ? renderActivity(ev.verdict, ev.activity, target) + renderStructures(structures, ev.total, ev.af, target)
             : parsed.target ? ""
             : `<p class="count-note" style="margin:0 0 12px">Name a protein in your question and the ranked PDB table appears here.</p>`}</div>` : ""}
           ${s.tools?.length ? `<div class="minitools">${s.tools.map(toolChip).join("")}</div>` : ""}
@@ -843,6 +875,7 @@ async function drawPlan(q, forcedIntent = "") {
     <div class="plan-actions">
       <button class="btn" id="dl">Download as Markdown</button>
       <button class="btn" id="cp">Copy protocol</button>
+      <button class="btn" id="wrong">This plan is wrong</button>
     </div>
     <p class="note" style="margin-top:18px">Nothing on this page runs docking, MD or enrichment, those are yours to run
       on your own machine or cluster. This plans the work and tells you what each step has to prove.</p>`;
@@ -862,6 +895,9 @@ async function drawPlan(q, forcedIntent = "") {
     await navigator.clipboard.writeText(md());
     e.target.textContent = "Copied";
     setTimeout(() => (e.target.textContent = "Copy protocol"), 1400);
+  };
+  document.getElementById("wrong").onclick = () => {
+    open(reportUrl(q, plan, parsed, ev), "_blank", "noopener");
   };
 }
 
@@ -968,6 +1004,20 @@ function linkTools(el) {
     if (seen.size > 12) break;
   }
   el.innerHTML = html;
+}
+
+function renderActivity(verdict, activity, target) {
+  if (!verdict) return "";
+  const cls = { rich: "applied", some: "applied", sparse: "nomatch" }[verdict.tier] || "applied";
+  const link = activity?.id
+    ? `<a href="https://www.ebi.ac.uk/chembl/target_report_card/${esc(activity.id)}/" target="_blank" rel="noopener">${esc(activity.id)}</a>`
+    : "";
+  return `<div class="${cls}" style="margin:0 0 16px">
+    <b>Measured activity:</b> ${esc(verdict.headline)}${link ? ` (${link})` : ""}.
+    ${esc(verdict.means)}
+    <span class="why" style="display:block;margin-top:6px">Counted live from ChEMBL for ${esc(target.accession)};
+    IC50, Ki and Kd only. A count is not a curated training set — check the assays before modelling them.</span>
+  </div>`;
 }
 
 function renderStructures(entries, total, af, target) {
