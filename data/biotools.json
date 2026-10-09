@@ -4219,7 +4219,6 @@
     "language": "R",
     "url": "https://git.bioconductor.org/packages/bcSeq",
     "publications": [
-      "10.1093/bioinformatics/bty402",
       "10.1093/bioinformatics/bty402"
     ]
   },
@@ -7294,6 +7293,29 @@
     ]
   },
   {
+    "biotools_id": "catalyst_evidence_graph",
+    "name": "Catalyst Evidence Graph",
+    "description": "Evidence graph of findings on what compounds, supplements, nutrients and foods do in the human body. Each finding is extracted from a published study, anchored to the verbatim sentence it was drawn from, and given an evidence strength computed from the study design and population. Findings are linked to reference data on proteins, pathways and reactions, and relations inferred from reference databases are labelled as hypotheses. The graph is searchable through a web portal, a REST API and a Model Context Protocol server.",
+    "homepage": "https://catalystproject.ai/",
+    "topics": [
+      "Pharmacology",
+      "Toxicology"
+    ],
+    "functions": [
+      "Data retrieval",
+      "Database search",
+      "Pathway analysis",
+      "Query and retrieval"
+    ],
+    "tool_type": "Database portal",
+    "license": "Other",
+    "cost": "Free of charge (with restrictions)",
+    "maturity": "Emerging",
+    "language": "SQL, TypeScript",
+    "url": "https://github.com/colorcatalyst/catalyst-mcp",
+    "publications": []
+  },
+  {
     "biotools_id": "catalytic_site_identification",
     "name": "Catalytic Site Identification",
     "description": "Provides the ability to find structural matches to a user-specified catalytic site among all Protein Data Bank (PDB) proteins. The web server can also examine a user-specified protein to identify structural matches to a library of catalytic sites.",
@@ -8780,49 +8802,49 @@
     "biotools_id": "chemmineob",
     "name": "ChemmineOB",
     "description": "This package provides an R interface to a subset of cheminformatics functionalities implemented by the OpelBabel C++ project. OpenBabel is an open source cheminformatics toolbox that includes utilities for structure format interconversions, descriptor calculations, compound similarity searching and more. This package aims to make a subset of these utilities available from within R.",
-    "homepage": "http://bioconductor.org/packages/release/bioc/html/ChemmineOB.html",
+    "homepage": "https://bioconductor.org/packages/ChemmineOB",
     "topics": [
       "Cheminformatics"
     ],
     "functions": [
-      "Analysis",
       "Calculation",
-      "Formatting",
+      "Data analysis",
+      "Data formatting",
       "Generation",
       "Optimisation and refinement"
     ],
-    "tool_type": "Command-line tool",
-    "license": null,
+    "tool_type": "Library",
+    "license": "Artistic-2.0",
     "cost": null,
     "maturity": null,
     "language": "R",
-    "url": "http://bioconductor.org/packages/release/bioc/html/ChemmineOB.html",
+    "url": "https://bioconductor.org/packages/ChemmineOB",
     "publications": [
-      "10.1038/nmeth.3252"
+      "10.18129/B9.bioc.ChemmineOB"
     ]
   },
   {
     "biotools_id": "chemminer",
     "name": "ChemmineR",
     "description": "Cheminformatics package for analyzing drug-like small molecule data in R. Its latest version contains functions for efficient processing of large numbers of molecules, physicochemical/structural property predictions, structural similarity searching, classification and clustering of compound libraries with a wide spectrum of algorithms. In addition, it offers visualization functions for compound clustering results and chemical structures.",
-    "homepage": "http://bioconductor.org/packages/release/bioc/html/ChemmineR.html",
+    "homepage": "https://bioconductor.org/packages/ChemmineR",
     "topics": [
       "Cheminformatics"
     ],
     "functions": [
-      "Analysis",
       "Calculation",
       "Clustering",
       "Comparison",
-      "Database search",
-      "Formatting"
+      "Data analysis",
+      "Data formatting",
+      "Database search"
     ],
-    "tool_type": "Command-line tool",
+    "tool_type": "Library",
     "license": "Artistic-2.0",
     "cost": "Free of charge",
     "maturity": null,
     "language": "R",
-    "url": "http://bioconductor.org/packages/release/bioc/html/ChemmineR.html",
+    "url": "https://bioconductor.org/packages/ChemmineR",
     "publications": [
       "10.1093/bioinformatics/btn307"
     ]
@@ -11516,6 +11538,26 @@
     "url": "https://creammist.mtms.dev",
     "publications": [
       "10.1093/nar/gkac911"
+    ]
+  },
+  {
+    "biotools_id": "crem",
+    "name": "CReM",
+    "description": "Fragment-based structure generator of chemically reasonable structures",
+    "homepage": "https://github.com/DrrDom/crem",
+    "topics": [
+      "Cheminformatics",
+      "Drug discovery"
+    ],
+    "functions": [],
+    "tool_type": "Web application",
+    "license": "BSD-3-Clause",
+    "cost": "Free of charge",
+    "maturity": null,
+    "language": "Python",
+    "url": "https://github.com/DrrDom/crem",
+    "publications": [
+      "10.1186/s13321-020-00431-w"
     ]
   },
   {
@@ -18429,6 +18471,27 @@
     "url": "https://biokinet.belozersky.msu.ru/easyAmber",
     "publications": [
       "10.1142/S0219720020400119"
+    ]
+  },
+  {
+    "biotools_id": "easydock",
+    "name": "EasyDock",
+    "description": "Tool for automated and scalable docking of small molecules and analysis of docked poses",
+    "homepage": "https://github.com/ci-lab-cz/easydock",
+    "topics": [
+      "Cheminformatics",
+      "Drug discovery"
+    ],
+    "functions": [],
+    "tool_type": "Command-line tool",
+    "license": "BSD-3-Clause",
+    "cost": "Free of charge",
+    "maturity": "Mature",
+    "language": "Python",
+    "url": "https://github.com/ci-lab-cz/easydock",
+    "publications": [
+      "10.1186/s13321-023-00772-2",
+      "10.1021/acs.jcim.6c01221"
     ]
   },
   {
@@ -37474,7 +37537,7 @@
     "biotools_id": "mwastools",
     "name": "MWASTools",
     "description": "It provides a complete pipeline to perform metabolome-wide association studies. Key functionalities of the package include: quality control analysis of metabonomic data; MWAS using different association models (partial correlations; generalized linear models); model validation using non-parametric bootstrapping; visualization of MWAS results; NMR metabolite identification using STOCSY; and biological interpretation of MWAS results.",
-    "homepage": "http://bioconductor.org/packages/release/bioc/html/MWASTools.html",
+    "homepage": "https://bioconductor.org/packages/MWASTools",
     "topics": [
       "Cheminformatics"
     ],
@@ -38951,14 +39014,13 @@
       "Peak calling",
       "Standardisation and normalisation"
     ],
-    "tool_type": "Library",
+    "tool_type": "Command-line tool",
     "license": "GPL-2.0",
     "cost": null,
     "maturity": null,
     "language": "R",
     "url": "https://bioconductor.org/packages/normr",
     "publications": [
-      "10.1101/082263",
       "10.1101/082263"
     ]
   },
@@ -39429,8 +39491,8 @@
   {
     "biotools_id": "nucleosim",
     "name": "nucleoSim",
-    "description": "This package can generate a synthetic map with reads covering the nucleosome regions as well as a synthetic map with forward and reverse reads emulating next-generation sequencing. The synthetic hybridization data of “Tiling Arrays” can also be generated. The user has choice between three different distributions for the read positioning: Normal, Student and Uniform. In addition, a visualization tool is provided to explore the synthetic nucleosome maps.",
-    "homepage": "https://bioconductor.org/packages/nucleoSim",
+    "description": "This package compares genomic positions and genomic ranges from multiple experiments to extract common regions. The size of the analyzed region is adjustable as well as the number of experiences in which a feature must be present in a potential region to tag this region as a consensus region. In genomic analysis where feature identification generates a position value surrounded by a genomic range, such as ChIP-Seq peaks and nucleosome positions, the replication of an experiment may result in slight differences between predicted values. This package enables the conciliation of the results into consensus regions.",
+    "homepage": "https://bioconductor.org/packages/RJMCMCNucleosomes",
     "topics": [
       "Binding sites"
     ],
@@ -39442,9 +39504,8 @@
     "cost": null,
     "maturity": null,
     "language": "R",
-    "url": "https://bioconductor.org/packages/nucleoSim",
+    "url": "https://bioconductor.org/packages/RJMCMCNucleosomes",
     "publications": [
-      "10.1093/bioinformatics/btr345",
       "10.1515/sagmb-2014-0098"
     ]
   },
@@ -39517,21 +39578,21 @@
     "biotools_id": "nupop",
     "name": "NuPoP",
     "description": "R package for Nucleosome Positioning Prediction. This package is built upon a duration hidden Markov model proposed in Xi et al, 2010; Wang et al, 2008. The core of the package was written in Fotran. In addition to the R package, a stand-alone Fortran software tool is also available.",
-    "homepage": "http://bioconductor.org/packages/release/bioc/html/NuPoP.html",
+    "homepage": "https://bioconductor.org/packages/NuPoP",
     "topics": [
       "Binding sites"
     ],
     "functions": [
-      "Nucleosome formation or exclusion sequence prediction"
+      "Nucleosome position prediction"
     ],
-    "tool_type": "Command-line tool",
+    "tool_type": "Library",
     "license": "GPL-2.0",
     "cost": null,
     "maturity": null,
     "language": "R",
-    "url": "http://bioconductor.org/packages/release/bioc/html/NuPoP.html",
+    "url": "https://bioconductor.org/packages/NuPoP",
     "publications": [
-      "10.1186/1471-2105-11-346"
+      "10.18129/B9.bioc.NuPoP"
     ]
   },
   {
@@ -39782,20 +39843,21 @@
   {
     "biotools_id": "olivers_mtor_atlas",
     "name": "Olivers mTOR Atlas",
-    "description": "Hand-curated knowledge base of mTOR biology, linking 360+ primary studies to genes, drugs, diseases, pathways and outcomes. Every study carries a code for the kind of study behind it - synthesis of human data, human, animal, molecular or review - which names the system a finding was established in rather than ranking it, alongside open research questions.",
+    "description": "Hand-curated knowledge base of mTOR biology, linking 428 primary studies to genes, drugs, diseases, pathways and outcomes. Every study carries a code for the kind of study behind it - synthesis of human data, human, animal, molecular or review - which names the system a finding was established in rather than ranking it, alongside open research questions. The data are also available through a read-only JSON API (OpenAPI 3.1) and an MCP server for AI assistants.",
     "homepage": "https://mtor-atlas.org",
     "topics": [
       "Pharmacology"
     ],
     "functions": [],
-    "tool_type": "Database portal",
+    "tool_type": "Web API",
     "license": "CC-BY-4.0",
     "cost": "Free of charge",
     "maturity": "Emerging",
     "language": null,
     "url": "https://github.com/open-mtor-atlas/atlas",
     "publications": [
-      "10.5281/zenodo.22059963"
+      "10.5281/zenodo.22059963",
+      "10.6084/m9.figshare.33772297"
     ]
   },
   {
@@ -43010,7 +43072,7 @@
     "functions": [
       "Sequence analysis"
     ],
-    "tool_type": "Library",
+    "tool_type": "Command-line tool",
     "license": "GPL-3.0-or-later",
     "cost": null,
     "maturity": null,
@@ -49485,22 +49547,22 @@
     "biotools_id": "r3cpet",
     "name": "R3CPET",
     "description": "The package provides a method to infer the set of proteins that are more probably to work together to maintain chormatin interaction given a ChIA-PET experiment results.",
-    "homepage": "http://bioconductor.org/packages/release/bioc/html/R3CPET.html",
+    "homepage": "https://bioconductor.org/packages/R3CPET",
     "topics": [
       "Molecular modelling"
     ],
     "functions": [
       "Pathway or network prediction",
       "Pathway or network visualisation",
-      "Protein-protein interaction prediction",
+      "Protein-protein binding site prediction",
       "Statistical inference"
     ],
-    "tool_type": "Command-line tool",
+    "tool_type": "Library",
     "license": "GPL-2.0",
     "cost": null,
     "maturity": null,
     "language": "R",
-    "url": "http://bioconductor.org/packages/release/bioc/html/R3CPET.html",
+    "url": "https://bioconductor.org/packages/R3CPET",
     "publications": [
       "10.1186/s13059-015-0851-6"
     ]
@@ -54300,7 +54362,7 @@
       "Statistical calculation",
       "Visualisation"
     ],
-    "tool_type": "Suite",
+    "tool_type": "Command-line tool",
     "license": "GPL-3.0",
     "cost": null,
     "maturity": null,
@@ -54351,7 +54413,6 @@
     "language": "R",
     "url": "https://bioconductor.org/packages/signatureSearchData",
     "publications": [
-      "10.1093/nar/gkaa878",
       "10.1093/nar/gkaa878"
     ]
   },
@@ -55769,6 +55830,23 @@
     ]
   },
   {
+    "biotools_id": "spice_gui",
+    "name": "SPICE GUI",
+    "description": "Gene editing, protein design, and project management — all in one place, all on your machine.",
+    "homepage": "https://github.com/SPICE-Protein/SPICE_GUI",
+    "topics": [
+      "Computational chemistry"
+    ],
+    "functions": [],
+    "tool_type": "Desktop application",
+    "license": "Apache-2.0",
+    "cost": "Free of charge",
+    "maturity": null,
+    "language": "TypeScript, Rust",
+    "url": "https://github.com/SPICE-Protein/SPICE_GUI",
+    "publications": []
+  },
+  {
     "biotools_id": "spices",
     "name": "SPICES",
     "description": "A particle-based Molecular Structure Line Notation and Support Library for Mesoscopic Simulation.",
@@ -56434,6 +56512,25 @@
     "url": "https://stoptox.mml.unc.edu/",
     "publications": [
       "10.26434/CHEMRXIV.13283930.V1"
+    ]
+  },
+  {
+    "biotools_id": "streamd",
+    "name": "StreaMD",
+    "description": "Tool to perform classical molecular dynamic simulations in fully automated fashion at large scale and analysis of output trajectories",
+    "homepage": "https://github.com/ci-lab-cz/streamd",
+    "topics": [
+      "Drug discovery"
+    ],
+    "functions": [],
+    "tool_type": "Command-line tool",
+    "license": "MIT",
+    "cost": "Free of charge",
+    "maturity": "Mature",
+    "language": "Python",
+    "url": "https://github.com/ci-lab-cz/streamd",
+    "publications": [
+      "10.1186/s13321-024-00918-w"
     ]
   },
   {
