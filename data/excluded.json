@@ -1,5 +1,5 @@
 {
- "count": 1144,
+ "count": 1150,
  "entries": [
   {
    "name": "AlphaFold-MCP-Server",
@@ -651,6 +651,13 @@
    "reason": "nothing here could say what it is for",
    "url": "http://www.polyhedron.com/dtmm-dtmm0html",
    "description": "Desktop Molecular Modeller (DTMM) Version 4.2 is a simple-to-use molecular modelling program that enables you to perform"
+  },
+  {
+   "name": "EasyPubPlot",
+   "stage": "other",
+   "reason": "nothing here could say what it is for",
+   "url": "https://github.com/Pharmaco-OmicsLab/EasyPubPlot",
+   "description": "Shiny app to easily create publishable plots for scientific papers"
   },
   {
    "name": "Expasy",
@@ -2021,8 +2028,8 @@
    "name": "nucleoSim",
    "stage": "binding-site",
    "reason": "real science, different field (binding-site)",
-   "url": "https://bioconductor.org/packages/nucleoSim",
-   "description": "This package can generate a synthetic map with reads covering the nucleosome regions as well as a synthetic map with for"
+   "url": "https://bioconductor.org/packages/RJMCMCNucleosomes",
+   "description": "This package compares genomic positions and genomic ranges from multiple experiments to extract common regions. The size"
   },
   {
    "name": "Nucleosome Dynamics",
@@ -2042,7 +2049,7 @@
    "name": "NuPoP",
    "stage": "binding-site",
    "reason": "real science, different field (binding-site)",
-   "url": "http://bioconductor.org/packages/release/bioc/html/NuPoP.html",
+   "url": "https://bioconductor.org/packages/NuPoP",
    "description": "R package for Nucleosome Positioning Prediction. This package is built upon a duration hidden Markov model proposed in X"
   },
   {
@@ -2408,6 +2415,13 @@
    "reason": "real science, different field (binding-site)",
    "url": "https://github.com/hiteshpatel379/PyWATER",
    "description": "PyMOL plugin to find conserved water molecules in X-ray protein structure."
+  },
+  {
+   "name": "R3CPET",
+   "stage": "binding-site",
+   "reason": "real science, different field (binding-site)",
+   "url": "https://bioconductor.org/packages/R3CPET",
+   "description": "The package provides a method to infer the set of proteins that are more probably to work together to maintain chormatin"
   },
   {
    "name": "RBPmap",
@@ -3397,13 +3411,6 @@
    "description": "DiffusionLab is software designed to extract valuable information about the motion from single-molecule or particle traj"
   },
   {
-   "name": "DIMOS",
-   "stage": "md",
-   "reason": "real science, different field (md)",
-   "url": "https://github.com/nec-research/DIMOS",
-   "description": "DIfferentiable MOlecular Simulator (DIMOS): A pyTorch based framework for machine-learning enhanced simulations"
-  },
-  {
    "name": "DIPEND",
    "stage": "md",
    "reason": "real science, different field (md)",
@@ -3913,13 +3920,6 @@
    "reason": "real science, different field (md)",
    "url": "https://github.com/glotzerlab/hoomd-examples",
    "description": "HOOMD-blue example scripts."
-  },
-  {
-   "name": "hoomd-tf",
-   "stage": "md",
-   "reason": "real science, different field (md)",
-   "url": "https://github.com/ur-whitelab/hoomd-tf",
-   "description": "A plugin that allows the use of Tensorflow in Hoomd-Blue for GPU-accelerated ML+MD"
   },
   {
    "name": "HOPMA",
@@ -5487,7 +5487,7 @@
    "stage": "md",
    "reason": "real science, different field (md)",
    "url": "https://github.com/bracerino/uMLIP-Interactive",
-   "description": "GUI for running simulations with universal MLIPs (MACE, CHGNet, SevenNet, Nequix, ORB, Allegro, MatterSim, UPET, GRACE, "
+   "description": "Interface for simulations and standalone Python script generation with universal machine-learning interatomic potentials"
   },
   {
    "name": "UnityMol-APBS",
@@ -5903,6 +5903,13 @@
    "description": "Open Source electronic lab notebook for chemists in academia."
   },
   {
+   "name": "Computational-chemistry-skill",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/jianzushen/Computational-chemistry-skill",
+   "description": "An AI-assisted workflow for computational chemistry planning, model design, input generation, result analysis, and repro"
+  },
+  {
    "name": "ConfVAE-ICML21",
    "stage": "qm",
    "reason": "real science, different field (qm)",
@@ -6225,6 +6232,13 @@
    "description": "Rapidly perform normal mode analysis on PDB files using Tirion's simplified model."
   },
   {
+   "name": "pdb2reaction",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/t-0hmura/pdb2reaction",
+   "description": "End-to-end Reaction-Path Modeling from PDB Structures Using Machine-Learning Interatomic Potentials"
+  },
+  {
    "name": "PDynA",
    "stage": "qm",
    "reason": "real science, different field (qm)",
@@ -6337,6 +6351,13 @@
    "description": "Calculation of 2D molecular descriptors based on the bilinear, quadratic and linear algebraic forms. Compute these kinds"
   },
   {
+   "name": "QUESTDB",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/pfloos/QUESTDB",
+   "description": "QUESTDB: A Database of Highly-Accurate Excitation Energies"
+  },
+  {
    "name": "r3dmol",
    "stage": "qm",
    "reason": "real science, different field (qm)",
@@ -6405,6 +6426,13 @@
    "reason": "real science, different field (qm)",
    "url": "http://stoop.ini.uzh.ch/research/clustering",
    "description": "The tool provides an implementation and graphical user interface for: Superparamagnetic Clustering and Sequential Superp"
+  },
+  {
+   "name": "SPICE GUI",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/SPICE-Protein/SPICE_GUI",
+   "description": "Gene editing, protein design, and project management — all in one place, all on your machine."
   },
   {
    "name": "std2",
@@ -6657,6 +6685,13 @@
    "reason": "real science, different field (structure)",
    "url": "http://stormo.wustl.edu/consensus/",
    "description": "The Consensus server aligns a sequence to a structural template using a consensus of 5 different alignment methods. A me"
+  },
+  {
+   "name": "COSMolKit",
+   "stage": "structure",
+   "reason": "real science, different field (structure)",
+   "url": "https://github.com/cosmol-studio/COSMolKit",
+   "description": "Pure-Rust cheminformatics toolkit and RDKit-compatible alternative for SMILES/SMARTS, SDF, fingerprints, substructure se"
   },
   {
    "name": "CPHmodels-3.0",
@@ -7875,6 +7910,13 @@
    "reason": "teaching material",
    "url": "https://github.com/MobleyLab/drug-computing",
    "description": "Educational materials for, and related to, UC Irvine's Drug Discovery Computing Techniques course (PharmSci 175/275), cu"
+  },
+  {
+   "name": "famd-course",
+   "stage": "md",
+   "reason": "teaching material",
+   "url": "https://github.com/molmod/famd-course",
+   "description": "OpenMM tutorial for the FAMD course"
   },
   {
    "name": "graphene_tensile_test",
