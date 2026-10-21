@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
-from curated_standard_tools import check, is_protected  # noqa: E402
+from curated_standard_tools import TLS, check, is_protected  # noqa: E402
 
 DATA = os.path.join(ROOT, "data", "curated_standard_tools.json")
 UA = {"User-Agent": "assayer-link-check/1.0 (https://assayer.vercel.app)"}
@@ -41,7 +41,7 @@ def repo_state(repo):
     if token:
         req.add_header("Authorization", "Bearer " + token)
     try:
-        with urllib.request.urlopen(req, timeout=25) as r:
+        with urllib.request.urlopen(req, timeout=25, context=TLS) as r:
             d = json.load(r)
         if d.get("archived"):
             return "archived"

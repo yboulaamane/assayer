@@ -17,6 +17,7 @@ Fields: name, stage, description, url, repo (owner/name on GitHub), access
 import csv
 import json
 import os
+import ssl
 import sys
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -434,6 +435,25 @@ FIELDS = ["name", "stage", "stage_label", "description", "url", "repo", "access"
 STAGE_LABELS = dict(STAGES)
 
 
+def _tls_context():
+    """Verify certificates against certifi's CA bundle when it is installed.
+
+    The system store on a CI runner can lag behind: www.ks.uiuc.edu (NAMD, VMD)
+    chains to emSign Root CA - G1, which certifi carries and some Ubuntu images
+    do not, so those links failed as unreachable while opening fine in a browser.
+    """
+    try:
+        import certifi
+    except ImportError:
+        print("warning: certifi not installed; checking links against the system CA store",
+              file=sys.stderr)
+        return ssl.create_default_context()
+    return ssl.create_default_context(cafile=certifi.where())
+
+
+TLS = _tls_context()
+
+
 def check(url):
     """HEAD the URL, falling back to GET; returns an HTTP status or an error string."""
     for method in ("HEAD", "GET"):
@@ -442,7 +462,7 @@ def check(url):
             headers={"User-Agent": "Mozilla/5.0 (compatible; link-check/1.0)"},
         )
         try:
-            with urllib.request.urlopen(req, timeout=25) as r:
+            with urllib.request.urlopen(req, timeout=25, context=TLS) as r:
                 # a redirect is a live site, not a dead link
                 return 200 if 200 <= r.status < 400 else r.status
         except HTTPError as e:
@@ -454,7 +474,11 @@ def check(url):
         except (URLError, OSError, ValueError) as e:
             if method == "HEAD":
                 continue
-            return f"error: {type(e).__name__}"
+            # name the underlying cause: a rejected certificate reads very
+            # differently from a timeout when deciding whether a link is dead
+            reason = getattr(e, "reason", None)
+            cause = type(reason).__name__ if isinstance(reason, BaseException) else type(e).__name__
+            return f"error: {cause}"
     return "error: unreachable"
 
 
