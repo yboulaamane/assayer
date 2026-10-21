@@ -1,7 +1,7 @@
 # Assayer
 <img width="1546" height="982" alt="assayer" src="https://github.com/user-attachments/assets/89d7ff51-4aac-40fe-aea4-95a20f081ea4" />
 
-A catalogue of medicinal and computational chemistry tools (<!--n:curated-->302<!--/n--> chosen and
+A catalogue of medicinal and computational chemistry tools (<!--n:curated-->303<!--/n--> chosen and
 written up by hand, <!--n:tools-->2,391<!--/n--> listed in all), plus <!--n:protocols-->29<!--/n--> protocols that lay out how to
 actually run a piece of work.
 
@@ -33,16 +33,16 @@ cross-origin requests, so the browser talks to them directly.
 | Stage | Curated | Listed | | Stage | Curated | Listed |
 |---|--:|--:|---|---|--:|--:|
 | Docking & virtual screening | 28 | 576 | | Quantum chemistry | 12 | 89 |
-| ADMET, PK & toxicity | 11 | 325 | | Protein structures | 19 | 67 |
+| ADMET, PK & toxicity | 11 | 325 | | Protein structures | 19 | 66 |
 | Cheminformatics | 19 | 251 | | Target & druggability | 40 | 62 |
 | Dynamics & free energy | 32 | 195 | | Workflow & infrastructure | 8 | 56 |
-| Binding sites & pockets | 18 | 166 | | Peptides & protein design | 16 | 52 |
+| Binding sites & pockets | 19 | 167 | | Peptides & protein design | 16 | 52 |
 | Generative & de novo design | 11 | 158 | | Clinical & competitive | 10 | 34 |
 | Compounds & bioactivity | 21 | 111 | | Synthesis & retrosynthesis | 23 | 29 |
 | QSAR & property models | 17 | 105 | | Benchmarks & datasets | 8 | 16 |
 | Visualisation | 9 | 99 | | | | |
 
-302 of the 2,391 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 192 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 34 quote one from the project's own README. No example is generated.
+303 of the 2,391 entries were chosen and written up by hand; the rest are listed from public registries and marked as such on every card. 192 carry a verified `pip` or `conda` command and 118 a Python version the authors declared. 34 have a hand-written example and 34 quote one from the project's own README. No example is generated.
 <!--/block:stages-->
 
 ## Where the data comes from
@@ -51,7 +51,7 @@ cross-origin requests, so the browser talks to them directly.
 |---|--:|---|
 | [bio.tools](https://bio.tools), <!--n:biotools_topics-->10<!--/n--> drug-discovery EDAM topics | <!--n:biotools_rows-->2,751<!--/n--> | CC BY 4.0 |
 | GitHub repos with 30+ stars across <!--n:github_topics-->23<!--/n--> topics | <!--n:github_rows-->722<!--/n--> | public metadata |
-| Written for this project | <!--n:curated_rows-->302<!--/n--> | ours |
+| Written for this project | <!--n:curated_rows-->303<!--/n--> | ours |
 | My own starred repos, filtered | <!--n:stars_rows-->131<!--/n--> | ours |
 
 Both topic lists are deliberately narrow: **medicinal and computational chemistry
@@ -62,11 +62,11 @@ cone-beam CT backprojection, MRI browsers and image-registration toolboxes. Real
 software, correctly labelled, and nothing to do with designing a drug.
 
 bio.tools gives breadth within that scope. The GitHub layer answers a question
-registries can't: is anyone still maintaining this. The <!--n:curated-->302<!--/n--> curated
+registries can't: is anyone still maintaining this. The <!--n:curated-->303<!--/n--> curated
 entries cover what a project actually runs on, which both other sources are
 patchy about.
 
-<!--n:multi_source-->334<!--/n--> of <!--n:index_rows-->3,906<!--/n--> rows appear in more than one source. They get merged into one
+<!--n:multi_source-->336<!--/n--> of <!--n:index_rows-->3,907<!--/n--> rows appear in more than one source. They get merged into one
 entry that remembers where it came from.
 
 ### What gets thrown away, and why
@@ -120,7 +120,7 @@ caught by the gate is a tool to curate by hand, not a reason to widen the rule.
 
 ### Two layers, said out loud
 
-The catalogue is <!--n:curated-->302<!--/n--> entries someone chose and wrote up, and <!--n:listed-->2,089<!--/n--> that arrived
+The catalogue is <!--n:curated-->303<!--/n--> entries someone chose and wrote up, and <!--n:listed-->2,088<!--/n--> that arrived
 from a registry and were only filtered. Those are different promises, so the site
 does not render them identically: browsing opens on the curated layer, the wider
 one is one click away and says on the page that nobody here has read it.
@@ -535,7 +535,7 @@ for 60 days. It emails first, but it is a quiet way for this to stop.
 
 ## Known limits
 
-- **Stage assignment is keyword-driven.** The <!--n:curated-->302<!--/n--> curated tools carry their
+- **Stage assignment is keyword-driven.** The <!--n:curated-->303<!--/n--> curated tools carry their
   stage by hand; everything else goes through a category lookup table, then
   keyword scoring, then a short list of last-resort rules for families that
   kept falling through (crystallography, drug repurposing, tautomer handling).

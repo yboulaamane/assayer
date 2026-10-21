@@ -2918,6 +2918,20 @@
     "url_status": 200
   },
   {
+    "name": "Lacuna",
+    "stage": "binding-site",
+    "stage_label": "Binding site detection",
+    "description": "Finds cryptic pockets by generating a conformational ensemble from one structure (normal modes by default, optionally MD or Boltz-2), detecting pockets in every conformer and clustering them across the ensemble; can emit Boltz constraints and Vina boxes. Default backend needs no GPU.",
+    "url": "https://github.com/mooreneural/lacuna",
+    "repo": "mooreneural/lacuna",
+    "access": "open-source",
+    "tags": [
+      "cryptic-pocket",
+      "pocket-detection"
+    ],
+    "url_status": null
+  },
+  {
     "name": "deeptime",
     "stage": "md",
     "stage_label": "Molecular dynamics & free energy",
