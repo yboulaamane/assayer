@@ -34,6 +34,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      # certifi's CA bundle is newer than the runner's system store; see
+      # _tls_context() in scripts/curated_standard_tools.py
+      - run: pip install certifi
+
       - name: Check every curated URL and repository
         id: check
         env:
