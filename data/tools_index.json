@@ -3782,6 +3782,24 @@
     "source": "curated",
     "stars": null,
     "stage": "md",
+    "name": "BioEmu2",
+    "description": "Microsoft Research generative model for biomolecular structure and dynamics: predicts folded structures, samples equilibrium ensembles and propagates structures forward in time, for systems with proteins, nucleic acids and ligands; supports steering toward desired properties. Linux with an NVIDIA GPU only; weights released as a preview checkpoint.",
+    "url": "https://github.com/microsoft/bioemu2",
+    "code_url": "https://github.com/microsoft/bioemu2",
+    "paper_url": null,
+    "categories": [
+      "ensemble",
+      "conformational-sampling"
+    ],
+    "year": null,
+    "license": "open-source",
+    "repo": "microsoft/bioemu2",
+    "also_in": []
+  },
+  {
+    "source": "curated",
+    "stars": null,
+    "stage": "md",
     "name": "SuMD",
     "description": "Supervised MD: biases nothing but discards trajectories heading the wrong way, so ligand binding and unbinding pathways emerge in accessible wall-clock time.",
     "url": "https://github.com/molecularmodelingsection/SuMD",
