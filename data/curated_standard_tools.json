@@ -2845,6 +2845,20 @@
     "url_status": 200
   },
   {
+    "name": "BioEmu2",
+    "stage": "md",
+    "stage_label": "Molecular dynamics & free energy",
+    "description": "Microsoft Research generative model for biomolecular structure and dynamics: predicts folded structures, samples equilibrium ensembles and propagates structures forward in time, for systems with proteins, nucleic acids and ligands; supports steering toward desired properties. Linux with an NVIDIA GPU only; weights released as a preview checkpoint.",
+    "url": "https://github.com/microsoft/bioemu2",
+    "repo": "microsoft/bioemu2",
+    "access": "open-source",
+    "tags": [
+      "ensemble",
+      "conformational-sampling"
+    ],
+    "url_status": null
+  },
+  {
     "name": "SuMD",
     "stage": "md",
     "stage_label": "Molecular dynamics & free energy",
