@@ -138,11 +138,13 @@
     "python": ">=3.11",
     "conda": "openff-toolkit"
   },
-  "choderalab/openmmtools": {
-    "conda": "openmmtools"
-  },
   "openfreeenergy/openfe": {
     "conda": "openfe"
+  },
+  "choderalab/openmmtools": {
+    "pypi": "openmmtools",
+    "python": ">=3.6",
+    "conda": "openmmtools"
   },
   "alchemistry/alchemlyb": {
     "pypi": "alchemlyb",
@@ -190,6 +192,10 @@
     "pypi": "pensa",
     "python": "==3.10.*"
   },
+  "ci-lab-cz/streamd": {
+    "pypi": "streamd",
+    "python": ">=3.6"
+  },
   "essex-lab/grand": {
     "conda": "grand"
   },
@@ -206,10 +212,6 @@
     "pypi": "fastmdxplora",
     "python": "<3.14,>=3.10",
     "conda": "fastmdxplora"
-  },
-  "ci-lab-cz/streamd": {
-    "pypi": "streamd",
-    "python": ">=3.6"
   },
   "atomistic-machine-learning/schnetpack": {
     "conda": "schnetpack"
@@ -339,11 +341,11 @@
     "python": ">=3.7",
     "conda": "cclib"
   },
-  "pytlab/vaspy": {
-    "pypi": "vaspy"
-  },
   "jensengroup/xyz2mol": {
     "conda": "xyz2mol"
+  },
+  "pytlab/vaspy": {
+    "pypi": "vaspy"
   },
   "lukasturcani/stk": {
     "pypi": "stk",
@@ -420,11 +422,6 @@
     "pypi": "auto-qchem",
     "python": ">=3.8"
   },
-  "jageo/lobsterpy": {
-    "pypi": "lobsterpy",
-    "python": "<3.15,>=3.11",
-    "conda": "lobsterpy"
-  },
   "smtg-bham/shakenbreak": {
     "pypi": "shakenbreak",
     "python": ">=3.10",
@@ -468,6 +465,10 @@
     "pypi": "ScaffoldGraph",
     "python": ">=3.6"
   },
+  "drrdom/crem": {
+    "pypi": "crem",
+    "python": ">=3.8"
+  },
   "datamol-io/datamol": {
     "pypi": "datamol",
     "python": ">=3.11",
@@ -483,10 +484,6 @@
   },
   "chembl/chembl_structure_pipeline": {
     "conda": "chembl_structure_pipeline"
-  },
-  "drrdom/crem": {
-    "pypi": "crem",
-    "python": ">=3.8"
   },
   "ianawatson/lilly-medchem-rules": {
     "conda": "lilly-medchem-rules"
@@ -620,7 +617,7 @@
   },
   "liugangcode/torch-molecule": {
     "pypi": "torch-molecule",
-    "python": ">=3.8"
+    "python": ">=3.10"
   },
   "ersilia-os/ersilia": {
     "pypi": "ersilia",
@@ -668,7 +665,7 @@
   },
   "asad/smsd": {
     "pypi": "smsd",
-    "python": ">=3.9"
+    "python": ">=3.12"
   },
   "swansonk14/admet_ai": {
     "pypi": "admet-ai",
