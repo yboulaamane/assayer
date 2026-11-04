@@ -44,6 +44,13 @@
    "description": "A collection of simulation recipes for the atomic-scale modeling of materials and molecules"
   },
   {
+   "name": "Atomistic-Machine-Learning-for-Computational-Chemistry",
+   "stage": "qm",
+   "reason": "a list of other people's work",
+   "url": "https://github.com/Eipgen/Atomistic-Machine-Learning-for-Computational-Chemistry",
+   "description": "A collection of Neural Network Models for chemistry"
+  },
+  {
    "name": "BioDrugScreen",
    "stage": "docking",
    "reason": "a list of other people's work",
@@ -212,13 +219,6 @@
    "description": "A web portal providing access to in silico tools for drug discovery. New E-Resource for Drug Discovery. Regioselectivity"
   },
   {
-   "name": "Neural-Network-Models-for-Chemistry",
-   "stage": "qm",
-   "reason": "a list of other people's work",
-   "url": "https://github.com/Eipgen/Neural-Network-Models-for-Chemistry",
-   "description": "A collection of Neural Network Models for chemistry"
-  },
-  {
    "name": "NLM-Chem-BC7",
    "stage": "admet",
    "reason": "a list of other people's work",
@@ -329,13 +329,6 @@
    "reason": "a paper's code, not a tool",
    "url": "https://github.com/AstraZeneca/DiffAbXL",
    "description": "The official implementation of DiffAbXL benchmarked in the paper \"Exploring Log-Likelihood Scores for Ranking Antibody S"
-  },
-  {
-   "name": "DrugGPS_ICML23",
-   "stage": "generative",
-   "reason": "a paper's code, not a tool",
-   "url": "https://github.com/zaixizhang/DrugGPS_ICML23",
-   "description": "Implementation of ICML23 paper \"Learning Subpocket Prototypes for Generalizable Structure-based Drug Design\""
   },
   {
    "name": "dyMEAN",
@@ -3166,6 +3159,13 @@
    "description": "Open source diffusive transport solver for biological problems. It can solve for the diffusion of tens or hundreds of su"
   },
   {
+   "name": "bioinformatics-agent-skills",
+   "stage": "md",
+   "reason": "real science, different field (md)",
+   "url": "https://github.com/ssinder/bioinformatics-agent-skills",
+   "description": "Agent Skills for computational biology — RNA-seq, single-cell, protein structure, molecular dynamics, peptide design, li"
+  },
+  {
    "name": "BioNSi",
    "stage": "md",
    "reason": "real science, different field (md)",
@@ -4720,13 +4720,6 @@
    "description": "OpenNucleome is an open-source software designed for GPU-accelerated molecular dynamics simulations of the human nucleus"
   },
   {
-   "name": "openqp",
-   "stage": "md",
-   "reason": "real science, different field (md)",
-   "url": "https://github.com/Open-Quantum-Platform/openqp",
-   "description": "The main repository of Open Quantum Platform (OpenQP) maintained by Choi Group at KNU."
-  },
-  {
    "name": "OPLSAA-DB",
    "stage": "md",
    "reason": "real science, different field (md)",
@@ -5399,13 +5392,6 @@
    "description": "A program for analyzing molecular dynamics trajectories based on internal bond-angle-torsion coordinates. The program co"
   },
   {
-   "name": "tidynamics",
-   "stage": "md",
-   "reason": "real science, different field (md)",
-   "url": "https://github.com/pdebuyl-lab/tidynamics",
-   "description": "A tiny package to compute the dynamics of stochastic and molecular simulations"
-  },
-  {
    "name": "TiFoSi",
    "stage": "md",
    "reason": "real science, different field (md)",
@@ -5621,6 +5607,13 @@
    "reason": "real science, different field (protein-design)",
    "url": "https://abemap.cluspro.org/",
    "description": "Web server for the prediction of antibody epitopes."
+  },
+  {
+   "name": "ampml",
+   "stage": "protein-design",
+   "reason": "real science, different field (protein-design)",
+   "url": "https://github.com/ssinder/ampml",
+   "description": "Reproducible, auditable benchmark for antimicrobial peptide classification: 4921 features, 6 models, a 30-check verifica"
   },
   {
    "name": "cycpeptmp",
@@ -5924,6 +5917,13 @@
    "description": "A workflow to create computation-ready metal-organic framework database."
   },
   {
+   "name": "Crystal-Builder",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/JulesOpp/Crystal-Builder",
+   "description": "A complete software environment for modeling and simulating materials, tailored for a MOF chemist"
+  },
+  {
    "name": "CYANA",
    "stage": "qm",
    "reason": "real science, different field (qm)",
@@ -6104,6 +6104,13 @@
    "reason": "real science, different field (qm)",
    "url": "http://www.cosbi.eu/research/prototypes/kinfer",
    "description": "Generates a generalized mass action model from the chemical equations of reactions and an estimation of the structural p"
+  },
+  {
+   "name": "lammps-web-gui",
+   "stage": "qm",
+   "reason": "real science, different field (qm)",
+   "url": "https://github.com/Shuvam-Banerji-Seal/lammps-web-gui",
+   "description": "Run LAMMPS molecular dynamics in your browser: visual input-script builder, MD notebook with an engine checked against n"
   },
   {
    "name": "libmolgrid",
@@ -6356,13 +6363,6 @@
    "reason": "real science, different field (qm)",
    "url": "https://github.com/pfloos/QUESTDB",
    "description": "QUESTDB: A Database of Highly-Accurate Excitation Energies"
-  },
-  {
-   "name": "r3dmol",
-   "stage": "qm",
-   "reason": "real science, different field (qm)",
-   "url": "https://github.com/swsoyee/r3dmol",
-   "description": "🧬 An R package for visualizing molecular data in 3D"
   },
   {
    "name": "ReX",
@@ -7916,7 +7916,7 @@
    "stage": "md",
    "reason": "teaching material",
    "url": "https://github.com/molmod/famd-course",
-   "description": "OpenMM tutorial for the FAMD course"
+   "description": "OpenMM tutorial for the course \"Foundations and Applications of Molecular Dynamics\""
   },
   {
    "name": "graphene_tensile_test",
