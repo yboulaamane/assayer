@@ -4437,11 +4437,12 @@
     "stars": null,
     "stage": "qsar-ml",
     "name": "MolSkill",
-    "description": "Learns medicinal chemists' implicit preferences from pairwise choices to score compound attractiveness.",
+    "description": "Scores compounds with a model trained on medicinal chemists' preferences, the code for the Nature Communications paper on extracting medicinal chemistry intuition via preference machine learning. Archived in October 2026, and its conda package supports only Python 3.9-3.10 on Linux, so plan to pin its environment.",
     "url": "https://github.com/microsoft/molskill",
     "code_url": "https://github.com/microsoft/molskill",
     "paper_url": null,
     "categories": [
+      "archived",
       "scoring",
       "med-chem"
     ],
