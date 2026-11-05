@@ -67,6 +67,12 @@ jobs:
           python3 scripts/scrape_github_topics.py
           python3 scripts/scrape_github_stars.py
 
+      - name: Record when each repository was last pushed
+        if: contains(fromJSON('["all","github"]'), inputs.layers || 'all')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/scrape_repo_health.py
+
       - name: Re-check the curated URLs, without rewriting the entries
         run: python3 scripts/curated_standard_tools.py
 
