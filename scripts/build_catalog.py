@@ -506,7 +506,7 @@ def excluded_because(entry):
 # it, so a cached shard from an older build can never be paired with a newer
 # core and leave a panel without its install line.
 CARD_FIELDS = ("id", "name", "stage", "description", "curated", "archived",
-               "license", "repo", "tags")
+               "license", "repo", "tags", "pushed", "repo_archived")
 
 
 def write_split(payload):
@@ -528,6 +528,7 @@ def write_split(payload):
         "build": build,
         "curated": payload["curated"], "excluded": payload["excluded"],
         "total": len(tools),
+        "health_as_of": payload.get("health_as_of"),
         "stages": payload["stages"],
         "tools": [c for c in cards if c.get("curated")],
     })
@@ -594,13 +595,28 @@ def load_extras():
         key = norm(name)
         snips[key] = {"lang": lang, "code": code}
         snips[key.replace(" ", "")] = {"lang": lang, "code": code}
-    return packages, snips, quickstarts
+    return packages, snips, quickstarts, load_health()
+
+
+def load_health():
+    """Last push and archive state per repository, from GitHub.
+
+    data/repo_health.json is written by scripts/scrape_repo_health.py, which
+    the monthly refresh runs for every repository in the catalogue. Repos it
+    has not covered fall back to what the topic and star scrapes recorded.
+    """
+    path = os.path.join(DATA, "repo_health.json")
+    if not os.path.exists(path):
+        return {"fetched": None, "repos": {}}
+    d = json.load(open(path))
+    return {"fetched": d.get("fetched"),
+            "repos": {k.lower(): v for k, v in (d.get("repos") or {}).items()}}
 
 
 def main():
     global PLANNER_TOOLS
     PLANNER_TOOLS = planner_tools()
-    packages, snips, quickstarts = load_extras()
+    packages, snips, quickstarts, health = load_extras()
     rows = json.load(open(os.path.join(DATA, "tools_index.json")))
     groups = {}
     for row in rows:
@@ -724,6 +740,21 @@ def main():
             "stars": stars or None,
             "rank": round(rank, 1),
         }
+        # Maintenance signal for the card. The dedicated health scrape is the
+        # fresher source when it has the repo; otherwise use what the topic and
+        # star scrapes saw. Shown to people, never used to rank or exclude.
+        # Only a record for this entry's own repository counts: members merge
+        # by name too, and a same-named fork or mirror (UWPRG/GROMACS for
+        # GROMACS) would otherwise lend the entry its dates.
+        repo = (entry.get("repo") or "").lower()
+        own = [m for m in members if repo and (m.get("repo") or "").lower() == repo]
+        h = health["repos"].get(repo) if repo else None
+        pushes = [m["pushed_at"] for m in own if m.get("pushed_at")]
+        if h and h.get("pushed_at"):
+            pushes.append(h["pushed_at"])
+        entry["pushed"] = max(pushes) if pushes else None
+        entry["repo_archived"] = (bool(h.get("archived")) if h and "archived" in h
+                                  else any(m.get("repo_archived") for m in own))
         pkg = packages.get(entry.get("repo") or "")
         if pkg:
             entry["pypi"] = pkg.get("pypi")
@@ -769,6 +800,10 @@ def main():
     curated_counts = Counter(e["stage"] for e in catalogue if e.get("curated"))
     payload = {
         "generated_from": "data/tools_index.json",
+        # The date the push dates were read, so "no commits for two years" is
+        # measured from when we looked, not from whenever someone opens the page.
+        "health_as_of": health["fetched"] or max(
+            (r.get("pushed_at") for r in rows if r.get("pushed_at")), default=None),
         "curated": sum(curated_counts.values()),
         "excluded": len(excluded),
         "stages": [

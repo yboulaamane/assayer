@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import { matchesAccess } from "../web/assets/catalog.js";
+import { toolHealth } from "../web/assets/exports.js";
 
 test("open-source filter includes explicit licences and their version suffixes", () => {
   for (const license of ["open-source", "MIT", "Apache-2.0", "BSD-3-Clause", "ISC",
@@ -158,6 +159,7 @@ async function browseView(query, mangle) {
     scrollTo() {},
     icon: () => "<svg></svg>",
     matchesAccess,
+    toolHealth,
     PROTOCOL_LIST: () => [],
     fetch: async (url) => ({ ok: true, json: async () => serve(url) }),
     AbortSignal,
@@ -343,7 +345,7 @@ test("the curated layer works even if the registry never arrives", async () => {
     window: {}, location: { hash: "#/" }, URLSearchParams, addEventListener() {}, setTimeout, clearTimeout,
     console, localStorage: { getItem: () => null, setItem() {} }, matchMedia: () => ({ matches: false }),
     IntersectionObserver: class { observe() {} disconnect() {} }, scrollTo() {},
-    icon: () => "", matchesAccess, PROTOCOL_LIST: () => [], AbortSignal,
+    icon: () => "", matchesAccess, toolHealth, PROTOCOL_LIST: () => [], AbortSignal,
     fetch: async (url) => String(url).startsWith("catalog-core.json")
       ? { ok: true, json: async () => core }
       : { ok: false, status: 503, json: async () => ({}) },

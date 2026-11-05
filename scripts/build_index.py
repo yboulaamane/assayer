@@ -20,7 +20,8 @@ import re
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 FIELDS = ["source", "stage", "name", "description", "url", "code_url", "paper_url",
-          "categories", "year", "license", "repo", "stars", "also_in"]
+          "categories", "year", "license", "repo", "stars", "pushed_at", "repo_archived",
+          "also_in"]
 
 REPO_RE = re.compile(r"https?://(?:www\.)?github\.com/([^/\s#?]+)/([^/\s#?]+)", re.I)
 
@@ -60,6 +61,8 @@ def from_curated(rows):
             "year": None,
             "license": r.get("access"),
             "repo": r.get("repo"),
+            "pushed_at": None,
+            "repo_archived": None,
         }
 
 
@@ -146,6 +149,10 @@ def from_github_topics(rows):
             "year": (r.get("created_at") or "")[:4] or None,
             "license": r.get("license"),
             "repo": repo_key(r.get("url")),
+            # What GitHub said when this was scraped; shown on the card as a
+            # maintenance signal, never used to rank or exclude.
+            "pushed_at": r.get("pushed_at"),
+            "repo_archived": bool(r.get("archived")),
         }
 
 
@@ -169,6 +176,10 @@ def from_stars(rows, user):
             "year": (r.get("created_at") or "")[:4] or None,
             "license": r.get("license"),
             "repo": repo_key(r.get("url")),
+            # What GitHub said when this was scraped; shown on the card as a
+            # maintenance signal, never used to rank or exclude.
+            "pushed_at": r.get("pushed_at"),
+            "repo_archived": bool(r.get("archived")),
         }
 
 
@@ -198,7 +209,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         for r in rows:
-            w.writerow({k: "; ".join(r[k]) if isinstance(r[k], list) else r[k] for k in FIELDS})
+            w.writerow({k: "; ".join(r[k]) if isinstance(r.get(k), list) else r.get(k) for k in FIELDS})
 
     by_source = {}
     for r in rows:

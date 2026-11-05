@@ -3,6 +3,7 @@ import { resolveQuery, findTarget, findStructures, alphafold, findActivity, acti
 import { buildBrief, compose, composeFromSelection, validate } from "./compose.js?v=a073bcd3b9";
 import { REFERENCES } from "./modules.js?v=8ffaff60ac";
 import { matchesAccess } from "./catalog.js?v=d3a394a1b9";
+import { toolHealth, environmentFor, methodsDraft, citeFromCrossref, bibtexFromCrossref, bibtexFallback } from "./exports.js?v=092dfe9a0c";
 
 const app = document.getElementById("app");
 let DATA = null, BY_NAME = new Map(), BY_ID = new Map(), STAGE = new Map();
@@ -350,12 +351,21 @@ function card(t) {
     <p class="desc">${esc(t.description || "No description recorded in the source.")}</p>
     <div class="foot">
       ${t.curated ? `<span class="pill curated">curated</span>` : ""}
-      ${t.archived ? `<span class="pill archived">archived</span>` : ""}
+      ${healthPill(t)}
       ${t.license ? `<span class="pill acc">${esc(t.license)}</span>` : ""}
       ${t.repo ? `<span class="pill">${esc(t.repo.split("/")[0])}</span>` : ""}
     </div>
   </button>`;
 }
+// Archived, or quiet for long enough that a reader should check it still runs.
+// An active repository gets no pill: the absence of a warning is the signal.
+function healthPill(t) {
+  const h = toolHealth(t, DATA.health_as_of);
+  if (!h?.label) return "";
+  return h.state === "archived" ? `<span class="pill archived">archived</span>`
+    : `<span class="pill archived" title="${esc(h.detail)}">${esc(h.label)}</span>`;
+}
+
 window.updateTool = (id) => {
   const { path, params } = parseHash();
   params.set("tool", id);
@@ -471,6 +481,11 @@ async function openDrawer(id) {
         ${t.license ? `<dt>Access</dt><dd>${esc(t.license)}</dd>` : ""}
         ${t.repo ? `<dt>Repo</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.repo)}</dd>` : ""}
         ${t.year ? `<dt>Year</dt><dd>${esc(t.year)}</dd>` : ""}
+        ${(() => {
+          const h = toolHealth(t, DATA.health_as_of);
+          return h ? `<dt>Maintenance</dt><dd>${esc(h.detail)}${DATA.health_as_of && t.pushed
+            ? ` <span style="color:var(--ink-3)">(GitHub, read ${esc(DATA.health_as_of)})</span>` : ""}</dd>` : "";
+        })()}
         ${t.pypi || t.conda ? `<dt>Package</dt><dd style="font-family:var(--mono);font-size:12.5px">${
           [t.pypi ? "pypi: " + esc(t.pypi) : "", t.conda ? "conda-forge: " + esc(t.conda) : ""].filter(Boolean).join("<br>")}</dd>` : ""}
         ${t.python ? `<dt>Python</dt><dd style="font-family:var(--mono);font-size:12.5px">${esc(t.python)}</dd>` : ""}
@@ -875,8 +890,11 @@ async function drawPlan(q, forcedIntent = "") {
     <div class="plan-actions">
       <button class="btn" id="dl">Download as Markdown</button>
       <button class="btn" id="cp">Copy protocol</button>
+      <button class="btn" id="env">Environment file</button>
+      <button class="btn" id="methods">Methods and citations</button>
       <button class="btn" id="wrong">This plan is wrong</button>
     </div>
+    <div id="export-slot"></div>
     <p class="note" style="margin-top:18px">Nothing on this page runs docking, MD or enrichment, those are yours to run
       on your own machine or cluster. This plans the work and tells you what each step has to prove.</p>`;
 
@@ -899,6 +917,109 @@ async function drawPlan(q, forcedIntent = "") {
   document.getElementById("wrong").onclick = () => {
     open(reportUrl(q, plan, parsed, ev), "_blank", "noopener");
   };
+  document.getElementById("env").onclick = () => showEnvironment(plan);
+  document.getElementById("methods").onclick = () => showMethods(plan);
+}
+
+/* ----------------------------------------------------------------- exports */
+// Install lines and papers live in the stage shards, so load those first.
+async function planTools(plan) {
+  await registryReady;
+  const names = [...new Set(plan.steps.flatMap((s) => s.tools || []))];
+  const found = names.map((name) => ({ name, entry: lookupTool(name) }));
+  await Promise.all(found.filter((x) => x.entry).map((x) => withDetails(x.entry)));
+  return found;
+}
+
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function exportPanel(title, body) {
+  const slot = document.getElementById("export-slot");
+  slot.innerHTML = `<section class="export"><h3>${esc(title)}</h3>${body}</section>`;
+  slot.querySelectorAll(".copy").forEach((b) => {
+    b.onclick = async () => {
+      await navigator.clipboard.writeText(b.dataset.code);
+      b.textContent = "Copied";
+      setTimeout(() => (b.textContent = "Copy"), 1400);
+    };
+  });
+  slot.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  return slot;
+}
+
+async function showEnvironment(plan) {
+  exportPanel("Environment file", `<p class="note">Collecting install details for this plan's tools…</p>`);
+  const tools = await planTools(plan);
+  const env = environmentFor(plan.id, plan.label, tools);
+  const notes = [
+    `${env.installed} of the ${tools.length} tools this plan names ${env.installed === 1 ? "has" : "have"} a verified conda-forge or PyPI package and ${env.installed === 1 ? "is" : "are"} in the file, on Python ${env.python}.`,
+    env.conflicts.length ? `${env.conflicts.map((c) => c.name).join(", ")} declare${env.conflicts.length === 1 ? "s" : ""} a Python range that excludes ${env.python}; the file says so and leaves ${env.conflicts.length === 1 ? "it" : "them"} for a separate environment.` : "",
+    env.manual.length ? `${env.manual.length} have no verified package (databases, web services, desktop apps, or software that installs another way); the file lists where to get them.` : "",
+    "Python is the newest version every declared range allows, up to 3.12 by default.",
+  ].filter(Boolean);
+  const slot = exportPanel("Environment file", `
+    ${notes.map((n) => `<p class="note">${esc(n)}</p>`).join("")}
+    ${codeBlock(env.filename, env.yaml, "yaml")}
+    <div class="plan-actions"><button class="btn" id="env-dl">Download ${esc(env.filename)}</button></div>
+    <p class="note">Then: <code>conda env create -f ${esc(env.filename)}</code></p>`);
+  slot.querySelector("#env-dl").onclick = () => download(env.filename, env.yaml, "text/yaml");
+}
+
+// Bibliographic details come from Crossref, in the reader's browser, never
+// from memory. A DOI Crossref does not know falls back to a marked stub.
+const crossref = new Map();
+function crossrefWork(doi) {
+  if (!crossref.has(doi)) {
+    crossref.set(doi, fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, { signal: AbortSignal.timeout(15000) })
+      .then((r) => (r.ok ? r.json() : null)).then((d) => d?.message || null).catch(() => null));
+  }
+  return crossref.get(doi);
+}
+
+async function showMethods(plan) {
+  exportPanel("Methods and citations", `<p class="note">Collecting this plan's tools and references…</p>`);
+  const tools = await planTools(plan);
+  const byName = new Map(tools.filter((x) => x.entry).map((x) => [x.name, x.entry]));
+  const draft = methodsDraft(plan, byName, REFERENCES);
+  const works = await Promise.all(draft.refs.map((r) => (r.doi ? crossrefWork(r.doi) : null)));
+  const keys = new Set();
+  const unique = (entry) => {          // two references can share author and year
+    const k = entry.match(/^@\w+\{([^,]+),/)[1];
+    let n = k, i = 0;
+    while (keys.has(n)) n = k + "abcdefghijklmnopqrstuvwxyz"[i++];
+    keys.add(n);
+    return entry.replace(`{${k},`, `{${n},`);
+  };
+  const lines = draft.refs.map((r, i) => {
+    const w = works[i];
+    const where = r.doi ? `https://doi.org/${r.doi}` : (r.url || "");
+    let text;
+    if (w) text = `${r.kind === "tool" ? `${r.name}: ` : ""}${citeFromCrossref(w)}. ${(w.title || [])[0] || ""}. ${where}`;
+    else if (r.kind === "gate") text = `${r.cite}. ${where}${r.doi ? " (not fetched from Crossref)" : ""}`;
+    else if (r.doi) text = `${r.name}: ${where} (could not be fetched from Crossref)`;
+    else text = `${r.name} (software). ${where}`;
+    return { text: `[${r.n}] ${text.replace(/\.\. /g, ". ")}`, source: r.source };
+  });
+  const bibtex = draft.refs.map((r, i) => unique(works[i] ? bibtexFromCrossref(works[i], r.name) : bibtexFallback(r))).join("\n\n") + "\n";
+  const text = [...draft.paragraphs, "", "References", ...lines.map((l) => l.text)].join("\n\n");
+  const failed = draft.refs.filter((r, i) => r.doi && !works[i]).length;
+  const slot = exportPanel("Methods and citations", `
+    <p class="note">A draft to edit, not a finished section. Tool references come from registry
+      records and are not checked: the title Crossref returns is shown next to each, so a paper that
+      is not the tool's own is easy to spot.${failed ? ` ${failed} DOI${failed === 1 ? "" : "s"} could not be fetched from Crossref and ${failed === 1 ? "is" : "are"} marked.` : ""}</p>
+    ${codeBlock("Methods draft", text, "text")}
+    <ol class="refsrc">${lines.map((l) => `<li>${esc(l.text.replace(/^\[\d+\] /, ""))} <span>${esc(l.source)}</span></li>`).join("")}</ol>
+    <div class="plan-actions">
+      <button class="btn" id="bib-dl">Download references.bib</button>
+      <button class="btn" id="methods-dl">Download methods.txt</button>
+    </div>`);
+  slot.querySelector("#bib-dl").onclick = () => download(`${plan.id}-references.bib`, bibtex, "application/x-bibtex");
+  slot.querySelector("#methods-dl").onclick = () => download(`${plan.id}-methods.txt`, text, "text/plain");
 }
 
 function offerTailor(plan, parsed, target, structures) {
