@@ -20,6 +20,10 @@ A drug-discovery tool catalogue and workflow planner. Live at https://assayer.ve
 ## Commands
 
 ```sh
+# Export the curated list after editing scripts/curated_standard_tools.py (checks every URL, needs network;
+# --no-check skips the checks but blanks every url_status, so do not commit its output as is)
+python3 scripts/curated_standard_tools.py
+
 # Rebuild the catalogue (build_catalog also rewrites the split files and README figures via scripts/readme_counts.py)
 python3 scripts/build_index.py && python3 scripts/build_catalog.py && python3 scripts/build_artifact.py
 
@@ -52,11 +56,10 @@ Network: scrapers and live checks need bio.tools, GitHub, ChEMBL, RCSB and Cross
 
 - `.github/workflows/link-check.yml` (Mondays): opens, updates and closes a "rot" issue. Cloudflare bot challenges count as protected, not dead.
 - `.github/workflows/refresh-catalogue.yml` (monthly, 1st): re-scrapes, rebuilds, tests, opens a PR. Never merges.
-- `scripts/refresh_gate.py` (in PR #5, not yet wired in): judges whether a refresh PR is safe. Intended use is "one-click": label `safe-to-merge` or `needs-review` with reasoning in the PR body, never auto-merge.
+- `scripts/refresh_gate.py` (merged in PR #5, not yet wired into a workflow): judges whether a refresh PR is safe. Intended use is "one-click": label `safe-to-merge` or `needs-review` with reasoning in the PR body, never auto-merge.
 
-## Known open items (as of 2026-10-13; check GitHub for current state)
+## Known open items (as of 2026-11-05; check GitHub for current state)
 
-- PR #3: October catalogue refresh (+8, -2), awaiting owner review.
-- PR #5: `scripts/refresh_gate.py`, not yet wired into the workflow.
-- Issue #4: link check reports NAMD, VMD (same UIUC server) and FoldX unreachable. Possibly a temporary outage; unverified.
+- `scripts/refresh_gate.py` is merged but not yet called from `refresh-catalogue.yml`.
+- Issue #4 (link rot, 2026-11-02 run): MolSkill archived on 2026-10-21 and now tagged `archived`. Repeated 403s from RosettaCommons, PubMed and DVC are probably bot protection, not yet checked in a browser. Repeated timeouts from the docking.org hosts (ZINC22, DOCK 6, DUD-E) and BATMAN-TCM are unverified. IBM RXN failed DNS lookup once. NAMD, VMD and FoldX have recovered.
 - The metal-design protocol (metal site and metalloenzyme design) is new and unreviewed. No eval case has been checked by a domain expert.
